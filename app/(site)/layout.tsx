@@ -23,6 +23,9 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+    : undefined,
   title: "Criticals and Fumbles",
   description: "Singapore's most chaotic tabletop RPG community.",
 };

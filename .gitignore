@@ -21,6 +21,10 @@
 /.open-next/
 /.wrangler/
 
+# sanity studio build output (from `sanity deploy` / `npm run studio:deploy`)
+/dist/
+/.sanity/
+
 # production
 /build
 

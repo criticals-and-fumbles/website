@@ -2,15 +2,20 @@
 
 # Criticals and Fumbles (cnf.sg) — Project Memory
 
-Phase 1 scaffold: static-content-driven pages backed by Sanity CMS, deployed to
-Cloudflare Pages via `@opennextjs/cloudflare`. No newsletter/email/payment
-integrations yet — those are a later phase.
+Phase 1 scaffold: static-content-driven pages backed by Sanity CMS, deployed
+to Cloudflare as a Worker via `@opennextjs/cloudflare`, with Sanity Studio
+hosted separately. No newsletter/email/payment integrations yet — those are
+a later phase.
+
+**Live URLs:**
+- Site: https://cnf-website.criticalsandfumbles.workers.dev
+- Studio: https://cnf-website.sanity.studio
 
 ## Stack
 
 - **Framework:** Next.js 16.3 (App Router, TypeScript, no `src/` directory)
 - **Styling:** Tailwind CSS v4 (CSS-variable theme in `app/(site)/globals.css`) — no component libraries
-- **CMS:** Sanity v6, embedded Studio at `/studio`
+- **CMS:** Sanity v6, Studio hosted separately (see below) — **not** embedded in the Next.js app
 - **Cloudflare adapter:** `@opennextjs/cloudflare`
 - **Content rendering:** `@portabletext/react` (added beyond the original dependency list — required to render Sanity Portable Text fields and the custom `calloutBlock` type; not optional)
 - **Node:** 20 LTS · npm
@@ -24,42 +29,85 @@ Workers-with-static-assets shape, not a Pages `_worker.js`. If you connect
 this repo to Cloudflare for automatic deploys, use **Workers Builds** (Git
 integration for Workers), not the classic Pages dashboard flow.
 
-**Pinned versions — do not casually bump:**
-- `wrangler` is pinned to `4.86.0` (devDependency) and `compatibility_date` in
-  `wrangler.toml` is `2026-05-03`. Every wrangler version from `4.87.0` on
-  requires **Node ≥22**, which conflicts with this project's Node 20 LTS. If
-  you ever move this project to Node 22+, you can bump both `wrangler` and
-  `compatibility_date` together — just don't bump one without the other, or
-  local preview breaks with a "compatibility date not supported" error.
+Deploy manually with `npm run deploy` (runs `opennextjs-cloudflare build`
+under the hood — if that step is skipped and you run `opennextjs-cloudflare
+deploy` directly, it errors with "Could not find compiled Open Next config";
+always build first).
+
+### Sanity Studio is hosted separately — not deployed with the site
+
+**This was a mid-build architecture change from the original spec**, which
+called for an embedded `/studio` route. That produced a **21 MB** server
+Worker bundle (Sanity Studio — its visual editor, image tooling, syntax
+highlighting, etc. — is enormous), versus Cloudflare's 3 MiB (free) / 10 MiB
+(paid) limits. There is no config fix for this; Studio just cannot ship
+inside the same Worker as the site. Confirmed by removing `app/studio/` and
+comparing: bundle dropped from 21 MB to 3.5 MB (0.86 MB gzipped) — Studio
+alone was ~83% of the bundle.
+
+Studio is instead deployed via Sanity's own free hosting:
+```
+npm run studio:deploy   # sanity deploy — reads sanity.config.ts + sanity.cli.ts
+npm run studio          # sanity dev — local Studio dev server, separate from `next dev`
+```
+`sanity.cli.ts` pins the project/dataset and the Studio `appId` so `deploy`
+doesn't prompt interactively. If you ever want Studio embedded again, you'd
+need a genuinely separate deployment target for it (it cannot coexist with
+the site in one Worker) — not a small change.
+
+**Runtime dependency you might not expect:** `styled-components` had to be
+added as a direct dependency — `sanity`'s `peerDependencies` requires it,
+but it isn't auto-installed. `sanity deploy` fails with "Declared dependency
+`styled-components` is not installed" without it.
+
+### Pinned versions — do not casually bump
+
+- **`wrangler` → `4.86.0`, `compatibility_date` → `2026-05-03`.** Every
+  wrangler version from `4.87.0` on requires **Node ≥22**, which conflicts
+  with this project's Node 20 LTS — there is no version satisfying both. If
+  you move this project to Node 22+, bump both together, or local
+  preview/deploy breaks with a "compatibility date not supported" error.
+- **`@sanity/cli` → `7.2.3`.** Every version from `7.3.0` on also requires
+  Node ≥22 (the main `sanity` package itself only has an *advisory* engines
+  field and works fine on Node 20 — this pin is specifically about the CLI
+  binary's hardcoded runtime check). Bump alongside `wrangler`/Node together
+  if you move to Node 22+, not independently.
+- **No `[limits] cpu_ms` in `wrangler.toml`.** The original spec included
+  `cpu_ms = 50`, but CPU limits are a paid-Cloudflare-plan-only feature —
+  including it blocks every deploy on the Free plan with "CPU limits are not
+  supported for the Free plan." Add it back if/when the account upgrades.
 
 **R2 bucket required for ISR caching to actually persist:** `wrangler.toml`
 declares an `[[r2_buckets]]` binding (`NEXT_INC_CACHE_R2_BUCKET`,
 `bucket_name = "cnf-website-cache"`) for `open-next.config.ts`'s
-`r2IncrementalCache`. Locally, `wrangler dev`/`preview` emulate this
-automatically — no real bucket needed. **For production**, create the real
-bucket first: `wrangler r2 bucket create cnf-website-cache` — without it,
-ISR revalidation silently no-ops (pages still render, just never cache;
-`R2IncrementalCache` throws an `IgnorableError` that OpenNext catches).
+`r2IncrementalCache`. The real bucket has already been created
+(`wrangler r2 bucket create cnf-website-cache`) — locally, `wrangler
+dev`/`preview` emulate it automatically regardless. Without a real bucket in
+production, ISR revalidation would silently no-op (pages still render, just
+never cache; `R2IncrementalCache` throws an `IgnorableError` that OpenNext
+catches) — this is already handled, just noting why the binding exists.
 
 **No D1 database.** The original scaffold spec included a D1 binding with a
 placeholder ID; it was omitted since nothing in the app uses D1 (the cache
 is R2-backed) and a placeholder ID would have blocked `wrangler deploy`. Add
 one later if a real use case needs it.
 
-## Route structure — why there are two "root" segments
+## Route structure — the `(site)` route group
 
-Sanity Studio needs a full-screen layout with no site Nav/Footer. Next.js only
-allows one `<html>/<body>` per root layout, so this project uses **multiple
-root layouts** via route groups:
+All pages live under `app/(site)/` — **`(site)` is a folder name, not a URL
+segment**, so `app/(site)/about/page.tsx` serves `/about`, not `/(site)/about`.
+When adding a new page, put it under `app/(site)/`.
 
-- `app/(site)/` — the marketing/content site. Has its own `layout.tsx`
-  (fonts, theme script, `<Nav>`, `<ToastHost>`). All pages live here.
-- `app/studio/[[...tool]]/` — the embedded Sanity Studio. Has its own minimal
-  `layout.tsx` (re-exports `metadata`/`viewport` from `next-sanity/studio`).
-
-**`(site)` is a folder name, not a URL segment** — `app/(site)/about/page.tsx`
-serves `/about`, not `/(site)/about`. When adding a new site page, put it
-under `app/(site)/`.
+This route group exists for a reason that no longer applies but isn't worth
+undoing: Sanity Studio originally lived at `app/studio/[[...tool]]/` with its
+own root layout (Next.js requires one `<html>/<body>` per root layout, and
+Studio needed a full-screen one with no site Nav/Footer), which meant the
+site itself also needed to be a named route group rather than living directly
+in `app/`. Studio has since been removed from this app entirely (see
+Cloudflare deployment → Sanity Studio is hosted separately) — so today
+there's only one root layout and the group isn't strictly necessary — but
+flattening `app/(site)/*` back to `app/*` is a pure-organization change with
+no functional upside, so it's been left as-is.
 
 ### Footer is per-page, not global
 

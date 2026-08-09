@@ -102,12 +102,14 @@ export async function Footer({
                 </li>
               ))}
               <li>
-                <Link
-                  href="/studio"
+                <a
+                  href="https://cnf-website.sanity.studio"
+                  target="_blank"
+                  rel="noreferrer"
                   className="text-xs text-text-muted transition-colors hover:text-emerald"
                 >
                   Studio
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
