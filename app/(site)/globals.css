@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-forest: var(--bg-forest);
+  --color-surface: var(--surface);
+  --color-border: var(--border-color);
+  --color-text: var(--text-color);
+  --color-text-muted: var(--text-muted);
+  --color-emerald: var(--emerald);
+  --color-amber: var(--amber);
+  --color-magenta: var(--magenta);
+
+  --font-display: var(--font-bebas-neue);
+  --font-body: var(--font-crimson-pro);
+  --font-ui: var(--font-space-mono);
+
+  /* Custom body text scale (4K-display tuning). This project uses Tailwind
+     v4's CSS-based theme config — there is no tailwind.config.ts — so these
+     are defined here rather than as a JS `fontSize` object. Each generates a
+     `text-*` utility (e.g. `text-body`), with the paired `--text-*--line-height`
+     variable supplying that utility's line-height. */
+  --text-body-sm: 1rem;
+  --text-body-sm--line-height: 1.6;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.65;
+  --text-body-lg: 1.25rem;
+  --text-body-lg--line-height: 1.7;
+  --text-body-xl: 1.375rem;
+  --text-body-xl--line-height: 1.7;
+}
+
+/* Dark mode (Concept A) — default */
+:root,
+.dark {
+  --bg: #111111;
+  --bg-forest: #0c1a10;
+  --surface: #1a1a1a;
+  --border-color: #2a2a2a;
+  --text-color: #f0eae0;
+  --text-muted: #666666;
+  --emerald: #2ec56b;
+  --amber: #c8893a;
+  --magenta: #d946a8;
+}
+
+/* Light mode (Concept B) — toggled */
+.light {
+  --bg: #fbf0e0;
+  --bg-forest: #1a1208;
+  --surface: #f0e8d8;
+  --border-color: #e0d4c0;
+  --text-color: #1a1208;
+  --text-muted: #8a7055;
+  --emerald: #1a7a45;
+  --amber: #b36a1a;
+  --magenta: #c4306a;
+}
+
+/* Base rem size — 18px instead of the browser default 16px, tuned for 4K
+   displays. Scales every rem-based size (including Tailwind's own spacing
+   and type scale) proportionally across the whole site. */
+html {
+  font-size: 18px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-color);
+  font-family: var(--font-crimson-pro), serif;
+  font-size: 1.125rem;
+}
+
+.font-display {
+  font-family: var(--font-bebas-neue), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-ui {
+  font-family: var(--font-space-mono), monospace;
+}
+
+/* Applied to components/portable-text/Renderer.tsx's wrapper — long-form
+   article/lore/session prose content. */
+.prose-content {
+  font-size: 1.25rem;
+}
+
+/* Applied to card excerpt/description/summary text (ArticleCard,
+   ResourceCard, LoreCard). */
+.card-description {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 639px) {
+  a,
+  button {
+    min-height: 44px;
+  }
+}
