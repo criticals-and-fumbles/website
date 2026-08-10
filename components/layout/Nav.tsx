@@ -85,19 +85,22 @@ export function Nav() {
       </nav>
 
       {drawerOpen && (
-        <div className="fixed inset-0 md:hidden">
+        <div className="md:hidden">
+          {/* Dark backdrop behind the drawer — closes on click */}
           <button
             type="button"
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
-            className="absolute inset-0 z-[49] bg-black/60"
+            className="fixed inset-0 z-[49] bg-black/70"
           />
-          <div className="absolute right-0 top-0 z-50 flex h-full w-72 flex-col bg-bg p-6">
+
+          {/* Drawer — solid background, no transparency/blur */}
+          <div className="fixed right-0 top-0 z-50 h-screen w-[280px] overflow-y-auto bg-bg p-[24px] opacity-100">
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
               aria-label="Close menu"
-              className="ml-auto flex h-11 w-11 items-center justify-center text-text"
+              className="absolute right-[16px] top-[16px] flex h-11 w-11 items-center justify-center text-text"
             >
               <svg
                 aria-hidden="true"
@@ -111,20 +114,20 @@ export function Nav() {
               </svg>
             </button>
 
-            <div className="mt-8 flex flex-1 flex-col gap-6">
+            <div className="mt-12 flex flex-col items-end gap-6">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setDrawerOpen(false)}
-                  className="font-display text-3xl text-text transition-colors hover:text-emerald"
+                  className="text-right font-display text-3xl text-text transition-colors hover:text-emerald"
                 >
                   {link.label}
                 </Link>
               ))}
             </div>
 
-            <div className="border-t border-border pt-6">
+            <div className="mt-8 flex justify-end border-t border-border pt-6">
               <ThemeToggle />
             </div>
           </div>

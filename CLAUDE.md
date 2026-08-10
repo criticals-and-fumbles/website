@@ -244,6 +244,12 @@ arrays, easy to change):
 homepage ("All Articles →"), article cards, and author bylines all link to
 them — added as the obvious missing piece.
 
+## TODO / Follow-ups
+
+- Phase 1.3: Add recent wiki activity feed to homepage — show last 3 lore or
+  session entries across all worlds ordered by `_updatedAt desc`. New section
+  below WorldStrip.
+
 ## Component conventions
 
 - Data-fetching pages are `async` Server Components calling `client.fetch()`

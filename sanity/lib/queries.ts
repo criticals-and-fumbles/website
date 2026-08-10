@@ -26,14 +26,15 @@ export const PHILOSOPHY_QUERY = groq`*[_type == "philosophy"][0]`;
 /* ---------------------------------------------------------------------- */
 
 export const HOME_LATEST_ARTICLES_QUERY = groq`
-  *[_type == "article" && status == "published"] | order(publishedAt desc)[0...3] {
+  *[_type == "article" && status == "published"]
+    | order(coalesce(publishedAt, _updatedAt) desc)[0...3] {
     ${articleCardFields}
   }
 `;
 
 export const HOME_NEXT_MAJOR_EVENT_QUERY = groq`
   *[_type == "majorEvent" && status in ["registration-open", "coming-soon", "watch-this-space", "full"]]
-    | order(startDate asc)[0] {
+    | order(coalesce(startDate, _createdAt) asc)[0] {
     _id, title, "slug": slug.current, tagline, status,
     eventDate, startDate, location, coverImage, splashImage, registrationUrl
   }
@@ -41,7 +42,7 @@ export const HOME_NEXT_MAJOR_EVENT_QUERY = groq`
 
 export const HOME_UPCOMING_EVENTS_QUERY = groq`
   *[_type == "majorEvent" && status != "cancelled" && status != "completed"]
-    | order(startDate asc)[0...3] {
+    | order(coalesce(startDate, _createdAt) asc)[0...3] {
     _id, title, "slug": slug.current, eventType, eventDate, startDate,
     location, status, coverImage
   }
@@ -61,7 +62,7 @@ export const HOME_WORLDS_QUERY = groq`
 export const ARTICLES_QUERY = groq`
   *[_type == "article" && status == "published"
     && (!defined($category) || category == $category)]
-    | order(publishedAt desc) {
+    | order(coalesce(publishedAt, _updatedAt) desc) {
     ${articleCardFields}
   }
 `;
