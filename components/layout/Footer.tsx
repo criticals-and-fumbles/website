@@ -42,7 +42,7 @@ export async function Footer({
   return (
     <>
       {pageFooterCTA && pageFooterCTA.length > 0 && (
-        <section className="bg-bg-forest px-4 py-16 text-text md:px-8">
+        <section className="bg-bg-forest px-4 py-16 text-on-forest md:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <Renderer value={pageFooterCTA} />
           </div>

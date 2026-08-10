@@ -64,9 +64,9 @@ export function Hero({
             <Badge variant="amber">
               {STATUS_LABELS[nextEvent.status] ?? nextEvent.status}
             </Badge>
-            <h2 className="font-display text-3xl text-text">{nextEvent.title}</h2>
+            <h2 className="font-display text-3xl text-on-forest">{nextEvent.title}</h2>
             {nextEvent.eventDate && (
-              <p className="font-ui text-sm text-text-muted">{nextEvent.eventDate}</p>
+              <p className="font-ui text-sm text-on-forest-muted">{nextEvent.eventDate}</p>
             )}
             {nextEvent.startDate && <CountdownTimer target={nextEvent.startDate} />}
           </Link>
@@ -86,13 +86,13 @@ export function Hero({
               </div>
             )}
             <Badge variant="emerald">Latest Roll</Badge>
-            <h2 className="font-display text-3xl text-text">{fallbackArticle.title}</h2>
+            <h2 className="font-display text-3xl text-on-forest">{fallbackArticle.title}</h2>
             {fallbackArticle.excerpt && (
-              <p className="text-sm text-text-muted">{fallbackArticle.excerpt}</p>
+              <p className="text-sm text-on-forest-muted">{fallbackArticle.excerpt}</p>
             )}
           </Link>
         ) : (
-          <p className="relative z-10 font-ui text-sm text-text-muted">
+          <p className="relative z-10 font-ui text-sm text-on-forest-muted">
             Watch this space — something is brewing.
           </p>
         )}

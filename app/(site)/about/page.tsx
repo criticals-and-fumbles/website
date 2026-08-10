@@ -168,7 +168,7 @@ export default async function AboutPage() {
 
       {settings?.discordUrl && (
         <section className="bg-bg-forest px-4 py-16 text-center md:px-8">
-          <h2 className="font-display text-3xl text-text">
+          <h2 className="font-display text-3xl text-on-forest">
             Want to roll with us?
           </h2>
           <div className="mt-6">

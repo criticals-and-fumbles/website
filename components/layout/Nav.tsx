@@ -85,14 +85,14 @@ export function Nav() {
       </nav>
 
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 md:hidden">
           <button
             type="button"
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 z-[49] bg-black/60"
           />
-          <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-surface p-6">
+          <div className="absolute right-0 top-0 z-50 flex h-full w-72 flex-col bg-bg p-6">
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}

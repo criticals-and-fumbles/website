@@ -7,6 +7,12 @@
   --color-border: var(--border-color);
   --color-text: var(--text-color);
   --color-text-muted: var(--text-muted);
+  /* Fixed (non-theme-switching) text colours for content sitting on
+     --color-bg-forest, which is intentionally dark in both themes — unlike
+     --color-text/--color-text-muted, these must NOT flip in light mode or
+     the text disappears against the still-dark background. */
+  --color-on-forest: var(--on-forest);
+  --color-on-forest-muted: var(--on-forest-muted);
   --color-emerald: var(--emerald);
   --color-amber: var(--amber);
   --color-magenta: var(--magenta);
@@ -28,6 +34,16 @@
   --text-body-lg--line-height: 1.7;
   --text-body-xl: 1.375rem;
   --text-body-xl--line-height: 1.7;
+}
+
+/* Fixed text colours for the always-dark bg-forest panels (Hero's right
+   panel, PhilosophyStrip, Footer's CTA band, About's Discord CTA) —
+   intentionally the same in both themes, so declared once outside the
+   .dark/.light blocks. Values match dark mode's --text-color/--text-muted,
+   so dark mode renders byte-for-byte identical to before this fix. */
+:root {
+  --on-forest: #f0eae0;
+  --on-forest-muted: #666666;
 }
 
 /* Dark mode (Concept A) — default */
