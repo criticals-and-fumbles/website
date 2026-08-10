@@ -8,7 +8,7 @@ hosted separately. No newsletter/email/payment integrations yet — those are
 a later phase.
 
 **Live URLs:**
-- Site: https://cnf-website.criticalsandfumbles.workers.dev
+- Site (production): https://cnf-sg.criticalsandfumbles.workers.dev
 - Studio: https://cnf-website.sanity.studio
 
 ## Stack
@@ -32,7 +32,16 @@ integration for Workers), not the classic Pages dashboard flow.
 Deploy manually with `npm run deploy` (runs `opennextjs-cloudflare build`
 under the hood — if that step is skipped and you run `opennextjs-cloudflare
 deploy` directly, it errors with "Could not find compiled Open Next config";
-always build first).
+always build first). This promotes straight to production traffic.
+
+**Preview a branch without touching production:** build (`npm run
+build:cloudflare`), then `npx wrangler versions upload --preview-alias
+<name>`. This uploads a version and gives back two URLs — a random one
+(`https://<version-id>-cnf-sg.criticalsandfumbles.workers.dev`) and a
+stable alias one (`https://<name>-cnf-sg.criticalsandfumbles.workers.dev`)
+— without shifting any production traffic to it. Promote a previewed
+version to production with `wrangler versions deploy`, or just do a normal
+`npm run deploy` once the branch is merged to `main`.
 
 ### Sanity Studio is hosted separately — not deployed with the site
 
