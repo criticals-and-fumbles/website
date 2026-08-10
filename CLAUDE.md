@@ -11,6 +11,39 @@ a later phase.
 - Site (production): https://cnf-sg.criticalsandfumbles.workers.dev
 - Studio: https://cnf-website.sanity.studio
 
+## Release History
+
+**v0.1-pre-mvr — 2026-08-10.** Consolidation baseline before further feature
+work; tagged at commit `42d6cdc`. What's actually in it:
+
+- Full site scaffold deployed to Cloudflare as a Worker (`cnf-sg`, via
+  `@opennextjs/cloudflare` — see Cloudflare deployment below; not Pages)
+- Sanity Studio deployed separately at `cnf-website.sanity.studio`
+- All four worlds scaffolded in the wiki (Titan's Gate, Temasek Tales,
+  SingaporeZ, Shattered Tales)
+- Homepage: latest-articles strip, upcoming-events strip, world cards strip
+  (three separate sections, not a combined feed — see TODO below for that)
+- Light mode text contrast fixed on always-dark panels (Hero, PhilosophyStrip,
+  Footer CTA, About Discord CTA)
+- Mobile hamburger drawer: solid background, right-aligned, exact spec
+  (280px, 24px padding, z-49/z-50, etc.)
+- `article.status` defaults to `"published"` (was `"draft"`, which silently
+  excluded newly-published articles from every query)
+- Homepage/articles/events GROQ queries order by
+  `coalesce(publishedAt, _updatedAt)` / `coalesce(startDate, _createdAt)`,
+  so undated-but-published content doesn't get stranded out of a `[0...3]`
+  slice
+- ISR: `revalidate = 300` (5 min) on every page — unchanged since scaffold
+- Worker bundle: 0.86 MB gzipped (well under the 3 MiB free-tier limit)
+- Base font size 18px, custom body-text scale — tuned for 4K displays
+  (done, not outstanding)
+
+Known TODOs (not started):
+- Phase 1.3: homepage recent-wiki-activity feed (see TODO / Follow-ups below)
+- Visual Editing — mentioned in a consolidation request but not yet scoped
+  anywhere in this repo's history; needs a real spec before starting
+- Newsletter integration (Phase 2) — static "coming soon" UI only right now
+
 ## Stack
 
 - **Framework:** Next.js 16.3 (App Router, TypeScript, no `src/` directory)
