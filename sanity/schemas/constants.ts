@@ -50,3 +50,15 @@ export const SESSION_TONES = [
   "Combat-Heavy",
   "Mixed",
 ];
+
+export const TEAM_MEMBER_ROLES = [
+  { title: "Dungeon Keeper", value: "dungeon-keeper" },
+  { title: "World Builder", value: "world-builder" },
+  { title: "Lore Master", value: "lore-master" },
+  { title: "Lore Keeper", value: "lore-keeper" },
+  { title: "Sage", value: "sage" },
+  { title: "Journeyman", value: "journeyman" },
+  { title: "Chronicler", value: "chronicler" },
+  { title: "Artisan", value: "artisan" },
+  { title: "Architect", value: "architect" },
+];

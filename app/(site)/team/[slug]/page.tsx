@@ -7,10 +7,15 @@ import {
 } from "@/sanity/lib/queries";
 import { urlForImage } from "@/sanity/lib/image";
 import type { ArticleCard, TeamMember } from "@/sanity/lib/types";
+import { TEAM_MEMBER_ROLES } from "@/sanity/schemas/constants";
 import { Badge } from "@/components/ui/Badge";
 import { StatBar } from "@/components/team/StatBar";
 import { ArticleGrid } from "@/components/content/ArticleGrid";
 import { Footer } from "@/components/layout/Footer";
+
+const ROLE_LABELS: Record<string, string> = Object.fromEntries(
+  TEAM_MEMBER_ROLES.map((r) => [r.value, r.title]),
+);
 
 export const revalidate = 300;
 
@@ -46,7 +51,15 @@ export default async function TeamMemberPage({
           </div>
           <h1 className="font-display text-5xl text-text">{member.handle}</h1>
           {member.realName && <p className="text-text-muted">{member.realName}</p>}
-          {member.role && <Badge variant="emerald">{member.role}</Badge>}
+          {member.roles && member.roles.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1">
+              {member.roles.map((role) => (
+                <Badge key={role} variant="surface">
+                  {ROLE_LABELS[role] ?? role}
+                </Badge>
+              ))}
+            </div>
+          )}
           <p className="font-ui text-sm text-text-muted">
             {[member.dndClass, member.race, member.alignment].filter(Boolean).join(" · ")}
           </p>

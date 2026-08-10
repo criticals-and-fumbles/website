@@ -2,11 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import type { TeamMember } from "@/sanity/lib/types";
 import { urlForImage } from "@/sanity/lib/image";
+import { TEAM_MEMBER_ROLES } from "@/sanity/schemas/constants";
 import { Badge } from "@/components/ui/Badge";
 import { StatBar } from "./StatBar";
 
 const GOOD_ALIGNMENTS = ["Lawful Good", "Neutral Good", "Chaotic Good"];
 const EVIL_ALIGNMENTS = ["Lawful Evil", "Neutral Evil", "Chaotic Evil"];
+
+const ROLE_LABELS: Record<string, string> = Object.fromEntries(
+  TEAM_MEMBER_ROLES.map((r) => [r.value, r.title]),
+);
 
 function alignmentRingClass(alignment?: string) {
   if (!alignment) return "ring-border";
@@ -49,7 +54,15 @@ export function CharacterCard({
         )}
       </div>
 
-      {member.role && <Badge variant="emerald">{member.role}</Badge>}
+      {member.roles && member.roles.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-1">
+          {member.roles.map((role) => (
+            <Badge key={role} variant="surface">
+              {ROLE_LABELS[role] ?? role}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       <p className="font-ui text-xs text-text-muted">
         {[member.dndClass, member.race, member.alignment].filter(Boolean).join(" · ")}

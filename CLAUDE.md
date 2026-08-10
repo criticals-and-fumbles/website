@@ -295,7 +295,16 @@ defaults were chosen — **confirm with the team and edit the schema file
 directly if they want different values** (all are plain `options.list`
 arrays, easy to change):
 
-- `teamMember.role` — left as **free text**, not an enum (no guild-title list existed to work from)
+- `teamMember.roles` — **renamed from `role`** (2026-08-10): was a single free-text
+  string, now a multi-select array of an enum list (Dungeon Keeper, World
+  Builder, Lore Master, Lore Keeper, Sage, Journeyman, Chronicler, Artisan,
+  Architect — see `TEAM_MEMBER_ROLES` in `sanity/schemas/constants.ts`). Any
+  GROQ query or component that still references singular `role` on a
+  `teamMember` document is stale — use `roles` (array) instead.
+  `teamMember.tier` values were also renamed the same session: `Leadership` →
+  `Horsemen`, `RegularPlayer` → `UnclesLeague`, `Alumni` → `CriticalFumblers`,
+  `DMCouncil` unchanged. `/team` now renders four sections: Horsemen, DM
+  Council, Uncle's League, Critical Fumblers.
 - `teamMember.socialLinks[].platform` — Discord, Twitter, Twitch, Instagram, YouTube (from the Character Sheet Card spec)
 - `siteSettings.socialLinks[].platform` — Twitter, Instagram, YouTube, Twitch, TikTok (from the Footer spec)
 - `regularEvent.eventType` — Campaign, One-Shot Series, Drop-In

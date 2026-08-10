@@ -327,8 +327,8 @@ async function main() {
 
   await upsertBySlug("teamMember", "founder", {
     handle: "Founder",
-    tier: "Leadership",
-    role: "Founder",
+    tier: "Horsemen",
+    roles: ["architect"],
     dndClass: "Wizard",
     backstory: PLACEHOLDER_BACKSTORY,
     active: true,
@@ -337,7 +337,7 @@ async function main() {
   await upsertBySlug("teamMember", "dm-01", {
     handle: "DM_01",
     tier: "DMCouncil",
-    role: "Dungeon Master (DM)",
+    roles: ["dungeon-keeper"],
     dndClass: "Dungeon Master (DM)",
     backstory: PLACEHOLDER_BACKSTORY,
     worlds: Object.values(worldRefs).map((w) => ({
@@ -350,7 +350,7 @@ async function main() {
 
   await upsertBySlug("teamMember", "player-01", {
     handle: "Player_01",
-    tier: "RegularPlayer",
+    tier: "UnclesLeague",
     dndClass: "Rogue",
     backstory: PLACEHOLDER_BACKSTORY,
     active: true,

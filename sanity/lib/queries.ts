@@ -71,7 +71,7 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
   *[_type == "article" && slug.current == $slug][0] {
     ...,
     "slug": slug.current,
-    "author": author->{ ${teamMemberRefFields}, realName, role },
+    "author": author->{ ${teamMemberRefFields}, realName, roles },
     "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
   }
 `;
@@ -124,7 +124,7 @@ export const MAJOR_EVENT_BY_SLUG_QUERY = groq`
 
 export const TEAM_MEMBERS_QUERY = groq`
   *[_type == "teamMember" && active == true] | order(tier asc, handle asc) {
-    _id, handle, "slug": slug.current, realName, role, tier,
+    _id, handle, "slug": slug.current, realName, roles, tier,
     dndClass, race, alignment, stats, backstory, signatureMove,
     avatar, socialLinks,
     "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }

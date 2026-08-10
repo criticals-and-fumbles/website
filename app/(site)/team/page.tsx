@@ -9,9 +9,10 @@ export const revalidate = 300;
 export default async function TeamPage() {
   const members = await client.fetch<TeamMember[]>(TEAM_MEMBERS_QUERY);
 
-  const leadership = members.filter((m) => m.tier === "Leadership");
+  const horsemen = members.filter((m) => m.tier === "Horsemen");
   const dmCouncil = members.filter((m) => m.tier === "DMCouncil");
-  const regularPlayers = members.filter((m) => m.tier === "RegularPlayer");
+  const unclesLeague = members.filter((m) => m.tier === "UnclesLeague");
+  const criticalFumblers = members.filter((m) => m.tier === "CriticalFumblers");
 
   return (
     <>
@@ -22,11 +23,11 @@ export default async function TeamPage() {
           Party, Your Campaign.
         </p>
 
-        {leadership.length > 0 && (
+        {horsemen.length > 0 && (
           <section className="mt-14">
-            <h2 className="mb-6 font-display text-3xl text-text">Leadership</h2>
+            <h2 className="mb-6 font-display text-3xl text-text">Horsemen</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {leadership.map((member) => (
+              {horsemen.map((member) => (
                 <CharacterCard key={member._id} member={member} />
               ))}
             </div>
@@ -44,13 +45,26 @@ export default async function TeamPage() {
           </section>
         )}
 
-        {regularPlayers.length > 0 && (
+        {unclesLeague.length > 0 && (
           <section className="mt-14">
             <h2 className="mb-6 font-display text-3xl text-text">
-              Regular Players
+              Uncle&apos;s League
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {regularPlayers.map((member) => (
+              {unclesLeague.map((member) => (
+                <CharacterCard key={member._id} member={member} compact />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {criticalFumblers.length > 0 && (
+          <section className="mt-14">
+            <h2 className="mb-6 font-display text-3xl text-text">
+              Critical Fumblers
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {criticalFumblers.map((member) => (
                 <CharacterCard key={member._id} member={member} compact />
               ))}
             </div>
