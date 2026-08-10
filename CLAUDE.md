@@ -13,6 +13,43 @@ a later phase.
 
 ## Release History
 
+**v0.1.1 — 2026-08-11.**
+
+- Team member tiers renamed: `Horsemen`, `DM Council`, `Uncle's League`,
+  `Critical Fumblers` (schema values are the no-space camelCase form —
+  `Horsemen`/`DMCouncil`/`UnclesLeague`/`CriticalFumblers` — display titles
+  carry the spaces/apostrophe). `teamMember.tier` now has `initialValue:
+  "UnclesLeague"` so new documents default to a valid tier.
+- `teamMember.role` (single free-text string) renamed to `roles` (multi-select
+  array, 9 options: Dungeon Keeper, World Builder, Lore Master, Lore Keeper,
+  Sage, Journeyman, Chronicler, Artisan, Architect — see `TEAM_MEMBER_ROLES`
+  in `sanity/schemas/constants.ts`)
+- Fixed a real production bug this rename caused: the schema/Studio side of
+  the rename shipped (via `npx sanity deploy`) before the website code did,
+  so `/team` (still on the old tier strings, no 4th section) silently
+  dropped 6 of 7 team members — anyone whose tier had been re-saved in
+  Studio under the new scheme matched no bucket. Fixed by finishing and
+  merging the pending website-code branch — no data migration was needed,
+  since the underlying document values were already consistent (see Lessons
+  Learned below).
+- Homepage Hero right panel replaced entirely: was a single "next event"
+  card (picked the *oldest* event, a separate bug, since `startDate` is
+  usually unset), now `HeroRightPanel`
+  (`components/home/HeroRightPanel.tsx`) — a pinned-event banner (any
+  `majorEvent` with status `registration-open`/`coming-soon`/
+  `watch-this-space`, preferring registration-open) plus a merged
+  "Latest Updates" feed spanning articles, events (major + regular), lore,
+  sessions, and team members, newest-edited-first, capped at 5 (3 on
+  mobile). See `HOME_PINNED_EVENT_QUERY` / `HOME_RSS_FEED_QUERY`.
+- 1440p layout: added a `.container` utility (max-width 1440px, centred,
+  1.5rem gutters) and applied it to the Hero section, which previously had
+  no width cap and stretched full-bleed on wide monitors while every other
+  section was already capped (this project's 18px root font-size makes
+  Tailwind's `max-w-7xl` resolve to exactly 1440px). Article grid now goes
+  to 4 columns at `min-[1440px]`.
+- Cloudflare Workers Builds Git auto-deploy fixed and confirmed working
+  (see Cloudflare deployment section)
+
 **v0.1-pre-mvr — 2026-08-10.** Consolidation baseline before further feature
 work; tagged at commit `42d6cdc`. What's actually in it:
 
@@ -21,8 +58,6 @@ work; tagged at commit `42d6cdc`. What's actually in it:
 - Sanity Studio deployed separately at `cnf-website.sanity.studio`
 - All four worlds scaffolded in the wiki (Titan's Gate, Temasek Tales,
   SingaporeZ, Shattered Tales)
-- Homepage: latest-articles strip, upcoming-events strip, world cards strip
-  (three separate sections, not a combined feed — see TODO below for that)
 - Light mode text contrast fixed on always-dark panels (Hero, PhilosophyStrip,
   Footer CTA, About Discord CTA)
 - Mobile hamburger drawer: solid background, right-aligned, exact spec
@@ -39,7 +74,6 @@ work; tagged at commit `42d6cdc`. What's actually in it:
   (done, not outstanding)
 
 Known TODOs (not started):
-- Phase 1.3: homepage recent-wiki-activity feed (see TODO / Follow-ups below)
 - Visual Editing — mentioned in a consolidation request but not yet scoped
   anywhere in this repo's history; needs a real spec before starting
 - Newsletter integration (Phase 2) — static "coming soon" UI only right now
@@ -323,9 +357,76 @@ them — added as the obvious missing piece.
 
 ## TODO / Follow-ups
 
-- Phase 1.3: Add recent wiki activity feed to homepage — show last 3 lore or
-  session entries across all worlds ordered by `_updatedAt desc`. New section
-  below WorldStrip.
+(none outstanding — Phase 1.3's homepage activity feed shipped as the Hero
+"Latest Updates" panel; see HeroRightPanel and Release History above)
+
+## HeroRightPanel
+
+`components/home/HeroRightPanel.tsx` — renders the homepage Hero's right
+half. Two independent sections:
+
+- **Pinned event banner** — renders only if `pinnedEvent` is non-null.
+  Sourced from `HOME_PINNED_EVENT_QUERY`: any `majorEvent` with status
+  `registration-open`/`coming-soon`/`watch-this-space`, preferring
+  registration-open, then coming-soon, then most-recently-updated. GROQ
+  note: ordering by a boolean comparison needs parens —
+  `(status == "x") desc`, not `status == "x" desc` (the latter is a GROQ
+  parse error, "unexpected postfix operator desc").
+- **"Latest Updates" feed** — a flat, pre-merged, pre-sorted
+  `RssFeedItem[]` (merging + sorting happens in `app/(site)/page.tsx`, not
+  inside the component) spanning `article`, `majorEvent`, `regularEvent`,
+  `loreEntry`, `sessionLog`, `teamMember`, newest `date` first, capped at 5.
+  Items past index 2 are hidden below the `md` breakpoint (3 items on
+  mobile, 5 from tablet up) via a per-item `hidden md:flex` class, not a
+  separate query/prop.
+
+Sourced from `HOME_PINNED_EVENT_QUERY` and `HOME_RSS_FEED_QUERY` in
+`sanity/lib/queries.ts`; typed as `PinnedEvent` / `RssFeedItem` /
+`RssFeedData` in `sanity/lib/types.ts`.
+
+Unlike every other `bg-forest` panel on the site (which is deliberately
+dark in both themes, paired with fixed `--on-forest`/`--on-forest-muted`
+tokens), this panel **does** flip with the theme — dark green in dark mode,
+`--surface` (light cream) in light mode — via the `.hero-right-panel` CSS
+class in `globals.css`, paired with the normal theme-flipping
+`text-text`/`text-text-muted` tokens. Don't reuse the on-forest tokens here.
+
+The "live" pulsing dot next to the "Latest Updates" heading is the
+`.live-dot` class + `@keyframes pulse-dot` in `globals.css`.
+
+## Lessons learned
+
+**Enum rename rule — don't skip the migration step.** This project hit the
+consequence of skipping it once already (see v0.1.1 in Release History):
+the `teamMember.tier` schema enum was renamed and deployed to Studio
+(`npx sanity deploy`) in one session, but the website code that reads
+`tier` (the `/team` page's section-bucketing logic) stayed on an unmerged
+branch. Result: editors started saving the *new* tier values in Studio
+(schema allowed it) while production still matched on the *old* string
+literals — 6 of 7 team members silently stopped rendering anywhere. Nothing
+in Sanity enforces enum values at the data layer; `options.list` is a
+Studio-form-only constraint, so GROQ happily returns documents with
+values that predate — or postdate — whatever the current schema says.
+Correct order of operations for a live enum rename:
+1. Deploy the schema and website code **together** (same merge, same
+   deploy) — never let Studio's allowed values and the website's
+   string-literal comparisons drift apart, even briefly.
+2. If old documents might already hold the previous values, write a dry-run
+   migration script before deploying, not after something breaks.
+3. Only widen `options.list` to accept old+new values as a *transition*
+   aid if the deploy can't be atomic — remove the old values once data is
+   confirmed clean.
+
+**Default values.** Enum/select fields should always set `initialValue` so
+new documents aren't created in an invalid or ambiguous state. Current
+defaults: `article.status` → `"published"`, `teamMember.tier` →
+`"UnclesLeague"`, `teamMember.active` → `true`.
+
+**Query safety.** A GROQ filter on an enum field (`status == "x"`) will
+silently exclude any document whose stored value doesn't match — no error,
+just missing content. When content that should exist doesn't appear,
+check enum-based filters (and, as above, page-level string comparisons on
+enum fields) before assuming the query itself is broken.
 
 ## Component conventions
 
@@ -357,6 +458,14 @@ See `.env.local.example`. Required: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
 `SANITY_API_READ_TOKEN` (Viewer role, server-only — never expose to the
 client), `NEXT_PUBLIC_SITE_URL` (filled in after the first Cloudflare Pages
 deploy), `NEXT_PUBLIC_SITE_NAME`.
+
+**`SANITY_API_WRITE_TOKEN`** — not currently in `.env.local` or
+`.env.local.example` despite being referenced in a 2026-08-11 session (as
+"the CNFSG-seed token, Editor role, for migration scripts") — that session
+ended up not needing a write token (see Lessons learned above), so it was
+never actually added. If a future migration script needs write access: add
+it to `.env.local` (never commit it), keep it server/script-only, and
+document the actual token/role here once it exists.
 
 ## Seed script
 

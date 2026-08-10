@@ -32,13 +32,83 @@ export const HOME_LATEST_ARTICLES_QUERY = groq`
   }
 `;
 
-export const HOME_NEXT_MAJOR_EVENT_QUERY = groq`
-  *[_type == "majorEvent" && status in ["registration-open", "coming-soon", "watch-this-space", "full"]]
-    | order(coalesce(startDate, _createdAt) asc)[0] {
-    _id, title, "slug": slug.current, tagline, status,
-    eventDate, startDate, location, coverImage, splashImage, registrationUrl
+/**
+ * Hero right panel — pinned event banner. Any majorEvent still "live" in the
+ * announcement sense (not full/completed/cancelled), preferring
+ * registration-open, then coming-soon, then most-recently-updated among
+ * watch-this-space entries.
+ */
+export const HOME_PINNED_EVENT_QUERY = groq`
+  *[_type == "majorEvent"
+    && status in ["registration-open", "coming-soon", "watch-this-space"]
+  ] | order(
+    (status == "registration-open") desc,
+    (status == "coming-soon") desc,
+    _updatedAt desc
+  )[0] {
+    _id,
+    title,
+    status,
+    eventDate,
+    startDate,
+    location,
+    tagline,
+    "slug": slug.current,
+    splashImage,
+    coverImage,
+    watchThisSpaceTeaser
   }
 `;
+
+/**
+ * Hero right panel — RSS-style feed grouped by content type. Merged and
+ * sorted client-side (in app/(site)/page.tsx) into a single newest-first
+ * list, capped at 5 (3 on mobile).
+ */
+export const HOME_RSS_FEED_QUERY = groq`{
+  "articles": *[_type == "article"
+    && status == "published"
+  ] | order(coalesce(publishedAt, _updatedAt) desc)[0...5] {
+    _type, _id, title,
+    "slug": slug.current,
+    "date": coalesce(publishedAt, _updatedAt),
+    category,
+    "author": author->handle
+  },
+  "events": *[_type in ["majorEvent", "regularEvent"]
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id, title,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "subtitle": coalesce(eventType, status)
+  },
+  "lore": *[_type == "loreEntry"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id, title,
+    "slug": slug.current,
+    "date": _updatedAt,
+    category,
+    "worldSlug": world->slug.current
+  },
+  "sessions": *[_type == "sessionLog"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": coalesce(sessionTitle, "Session " + string(sessionNumber)),
+    "slug": slug.current,
+    "date": coalesce(sessionDate, _updatedAt),
+    "worldSlug": world->slug.current,
+    campaignName
+  },
+  "team": *[_type == "teamMember"
+    && active == true
+  ] | order(_updatedAt desc)[0...3] {
+    _type, _id,
+    "title": handle,
+    "slug": slug.current,
+    "date": _updatedAt,
+    roles
+  }
+}`;
 
 export const HOME_UPCOMING_EVENTS_QUERY = groq`
   *[_type == "majorEvent" && status != "cancelled" && status != "completed"]

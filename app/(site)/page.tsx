@@ -2,7 +2,8 @@ import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import {
   HOME_LATEST_ARTICLES_QUERY,
-  HOME_NEXT_MAJOR_EVENT_QUERY,
+  HOME_PINNED_EVENT_QUERY,
+  HOME_RSS_FEED_QUERY,
   HOME_UPCOMING_EVENTS_QUERY,
   HOME_WORLDS_QUERY,
   PHILOSOPHY_QUERY,
@@ -11,7 +12,9 @@ import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type {
   ArticleCard,
   MajorEventCardData,
+  PinnedEvent,
   Philosophy,
+  RssFeedData,
   World,
 } from "@/sanity/lib/types";
 import { Hero } from "@/components/home/Hero";
@@ -25,18 +28,29 @@ import { Footer } from "@/components/layout/Footer";
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [latestArticles, nextEvent, upcomingEvents, worlds, philosophy] =
+  const [latestArticles, pinnedEvent, rssFeedRaw, upcomingEvents, worlds, philosophy] =
     await Promise.all([
       client.fetch<ArticleCard[]>(HOME_LATEST_ARTICLES_QUERY),
-      client.fetch<MajorEventCardData | null>(HOME_NEXT_MAJOR_EVENT_QUERY),
+      client.fetch<PinnedEvent | null>(HOME_PINNED_EVENT_QUERY),
+      client.fetch<RssFeedData>(HOME_RSS_FEED_QUERY),
       client.fetch<MajorEventCardData[]>(HOME_UPCOMING_EVENTS_QUERY),
       client.fetch<World[]>(HOME_WORLDS_QUERY),
       client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
     ]);
 
+  const allUpdates = [
+    ...rssFeedRaw.articles,
+    ...rssFeedRaw.events,
+    ...rssFeedRaw.lore,
+    ...rssFeedRaw.sessions,
+    ...rssFeedRaw.team,
+  ]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
   return (
     <>
-      <Hero nextEvent={nextEvent} fallbackArticle={latestArticles[0] ?? null} />
+      <Hero pinnedEvent={pinnedEvent} rssFeed={allUpdates} />
 
       <ArticleStrip articles={latestArticles} />
 

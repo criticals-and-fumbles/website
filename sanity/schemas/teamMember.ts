@@ -60,6 +60,7 @@ export default defineType({
           { title: "Critical Fumblers", value: "CriticalFumblers" },
         ],
       },
+      initialValue: "UnclesLeague",
       validation: (rule) => rule.required(),
     }),
     defineField({

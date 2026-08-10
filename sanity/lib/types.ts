@@ -62,6 +62,48 @@ export interface MajorEventCardData {
   registrationUrl?: string;
 }
 
+/** Hero right panel — pinned event banner. See HOME_PINNED_EVENT_QUERY. */
+export interface PinnedEvent {
+  _id: string;
+  title: string;
+  status: "watch-this-space" | "coming-soon" | "registration-open";
+  eventDate?: string;
+  startDate?: string;
+  location?: string;
+  tagline?: string;
+  slug: string;
+  splashImage?: SanityImage;
+  coverImage?: SanityImage;
+  watchThisSpaceTeaser?: PortableTextBlock[];
+}
+
+/**
+ * Hero right panel — one entry in the merged RSS-style feed. Different
+ * source types carry different optional fields; components branch on
+ * `_type`. See HOME_RSS_FEED_QUERY.
+ */
+export interface RssFeedItem {
+  _type: "article" | "majorEvent" | "regularEvent" | "loreEntry" | "sessionLog" | "teamMember";
+  _id: string;
+  title: string;
+  slug: string;
+  date: string;
+  category?: string;
+  author?: string;
+  subtitle?: string;
+  worldSlug?: string;
+  campaignName?: string;
+  roles?: string[];
+}
+
+export interface RssFeedData {
+  articles: RssFeedItem[];
+  events: RssFeedItem[];
+  lore: RssFeedItem[];
+  sessions: RssFeedItem[];
+  team: RssFeedItem[];
+}
+
 export interface MajorEvent extends MajorEventCardData {
   capacity?: number;
   ticketPrice?: string;

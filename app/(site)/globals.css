@@ -124,3 +124,38 @@ body {
     min-height: 44px;
   }
 }
+
+/* Hero right panel (components/home/HeroRightPanel.tsx) — unlike the site's
+   other bg-forest panels, this one deliberately DOES flip with the theme:
+   dark green in dark mode, light surface cream in light mode. Paired with
+   the normal (theme-flipping) text-text/text-muted tokens, not the fixed
+   on-forest ones. */
+.hero-right-panel {
+  background: var(--bg-forest);
+  border-color: var(--border-color);
+}
+.light .hero-right-panel {
+  background: var(--surface);
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-emerald);
+  animation: pulse-dot 2s ease-in-out infinite;
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+}
