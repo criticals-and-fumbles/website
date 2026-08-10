@@ -62,22 +62,34 @@ Workers-with-static-assets shape, not a Pages `_worker.js`. If you connect
 this repo to Cloudflare for automatic deploys, use **Workers Builds** (Git
 integration for Workers), not the classic Pages dashboard flow.
 
-**A stray Git-connected auto-build existed and was disconnected
-(2026-08-10).** A Cloudflare project (Pages or Workers Builds — not
-visible via `wrangler pages project list`, which returned empty, so
-CLI-invisible either way) had this repo's `main` branch connected, and
-built on every push with the *wrong* command — plain `npm run build`
-(bare Next.js build) instead of `npm run build:cloudflare` (the OpenNext
-adapter). It also had none of the `NEXT_PUBLIC_SANITY_*` env vars set
-(they only ever lived in the gitignored `.env.local`), so it failed at
-the "Collecting page data" step with `Configuration must contain
-projectId` the moment any page touched `sanity/lib/client.ts`. The Git
-connection was found under that project's **Settings → Build** in the
-dashboard and disconnected. **Do not re-add Git-triggered auto-deploy**
-without also setting the build command to `npm run build:cloudflare` and
-configuring the Sanity env vars in that project's dashboard settings —
-otherwise this exact failure recurs. The only working deploy path
-remains the manual one described below.
+**Git-connected Workers Builds is active and working (fixed 2026-08-10).**
+A Cloudflare project (Pages or Workers Builds — not visible via `wrangler
+pages project list`, which returned empty, so CLI-invisible either way) has
+this repo's Git connection, with **"Builds for non-production branches"
+enabled** — every push to any branch triggers an auto-build, not just
+`main`. It originally built with the *wrong* command (plain `npm run
+build`) and no Sanity env vars configured, so it failed at "Collecting
+page data" with `Configuration must contain projectId`. Both were fixed in
+the dashboard (**Settings → Build**):
+
+- Build command: `npm run build:cloudflare` (not `npm run build` — the
+  bare Next.js build skips the OpenNext/Cloudflare adapter step entirely)
+- Env vars (Settings → Environment Variables), matching
+  `.env.local.example`: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
+  `NEXT_PUBLIC_SANITY_DATASET`, `NEXT_PUBLIC_SANITY_API_VERSION`,
+  `SANITY_API_READ_TOKEN` (as a **secret**, not plain text),
+  `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SITE_NAME`
+
+**Gotcha hit while fixing this:** a trailing whitespace character pasted
+into the `NEXT_PUBLIC_SANITY_DATASET` value caused `Datasets can only
+contain lowercase characters, numbers, underscores and dashes...` —
+Sanity validates the string literally, untrimmed. If a dashboard env var
+value was copy-pasted, check for trailing whitespace before assuming the
+value itself is wrong.
+
+This auto-build is now a second, parallel path alongside the manual one
+below — a push to any branch builds automatically now, in addition to
+(or instead of) manually running `wrangler versions upload`.
 
 That same Build settings page also showed a **"Sanity Deploy Hook"**
 (a Cloudflare deploy-hook URL, presumably pasted into Sanity's webhook
