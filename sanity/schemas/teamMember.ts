@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { TEAM_MEMBER_ROLES } from "./constants";
 
 const ALIGNMENTS = [
   "Lawful Good",
@@ -38,11 +39,14 @@ export default defineType({
       description: "Optional — shown smaller, below the handle",
     }),
     defineField({
-      name: "role",
-      title: "Guild Role",
-      type: "string",
-      description:
-        "Free text guild title, e.g. \"Founder\", \"Event Coordinator\" — no fixed list yet, add one later if the org wants standardised titles.",
+      name: "roles",
+      title: "Roles",
+      type: "array",
+      of: [{ type: "string" }],
+      options: {
+        list: TEAM_MEMBER_ROLES,
+        layout: "grid",
+      },
     }),
     defineField({
       name: "tier",
@@ -50,10 +54,10 @@ export default defineType({
       type: "string",
       options: {
         list: [
-          { title: "Leadership", value: "Leadership" },
+          { title: "Horsemen", value: "Horsemen" },
           { title: "DM Council", value: "DMCouncil" },
-          { title: "Regular Player", value: "RegularPlayer" },
-          { title: "Alumni", value: "Alumni" },
+          { title: "Uncle's League", value: "UnclesLeague" },
+          { title: "Critical Fumblers", value: "CriticalFumblers" },
         ],
       },
       validation: (rule) => rule.required(),
@@ -169,6 +173,18 @@ export default defineType({
     }),
   ],
   preview: {
-    select: { title: "handle", subtitle: "role", media: "avatar" },
+    select: {
+      title: "handle",
+      realName: "realName",
+      role: "roles.0",
+      media: "avatar",
+    },
+    prepare({ title, realName, role, media }) {
+      return {
+        title,
+        subtitle: realName ?? role,
+        media,
+      };
+    },
   },
 });

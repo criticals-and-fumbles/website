@@ -90,8 +90,8 @@ export interface TeamMember {
   handle: string;
   slug: string;
   realName?: string;
-  role?: string;
-  tier: "Leadership" | "DMCouncil" | "RegularPlayer" | "Alumni";
+  roles?: string[];
+  tier: "Horsemen" | "DMCouncil" | "UnclesLeague" | "CriticalFumblers";
   dndClass?: string;
   race?: string;
   alignment?: string;

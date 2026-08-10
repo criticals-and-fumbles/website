@@ -29,7 +29,7 @@ export function Hero({
     .url();
 
   return (
-    <section className="grid grid-cols-1 md:grid-cols-2">
+    <section className="container grid grid-cols-1 !px-0 md:grid-cols-2">
       <div className="flex flex-col justify-center gap-6 bg-bg px-6 py-20 md:px-12 md:py-32">
         <h1 className="font-display text-6xl leading-none md:text-7xl lg:text-8xl">
           <span className="text-emerald">Criticals</span>{" "}

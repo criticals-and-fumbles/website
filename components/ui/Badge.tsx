@@ -5,6 +5,7 @@ const VARIANTS = {
   amber: "border-amber/50 bg-amber/10 text-amber",
   magenta: "border-magenta/50 bg-magenta/10 text-magenta",
   muted: "border-border bg-surface text-text-muted",
+  surface: "border-border bg-surface text-text",
 } as const;
 
 export function Badge({
