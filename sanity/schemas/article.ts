@@ -81,7 +81,7 @@ export default defineType({
           { title: "Published", value: "published" },
         ],
       },
-      initialValue: "draft",
+      initialValue: "published",
     }),
     defineField({
       name: "readTimeMinutes",
