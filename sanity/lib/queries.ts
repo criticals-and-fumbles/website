@@ -32,11 +32,33 @@ export const HOME_LATEST_ARTICLES_QUERY = groq`
   }
 `;
 
-export const HOME_NEXT_MAJOR_EVENT_QUERY = groq`
-  *[_type == "majorEvent" && status in ["registration-open", "coming-soon", "watch-this-space", "full"]]
-    | order(coalesce(startDate, _createdAt) asc)[0] {
-    _id, title, "slug": slug.current, tagline, status,
-    eventDate, startDate, location, coverImage, splashImage, registrationUrl
+/**
+ * Hero panel "latest updates" — spans events, wiki (lore + sessions), and
+ * articles in one feed, newest-edited first. Different types carry
+ * different fields, so this returns a flat, per-type-optional shape;
+ * components branch on _type to pick the right label/link. Excludes
+ * cancelled events (not useful to highlight as a "site update").
+ */
+export const HOME_LATEST_UPDATES_QUERY = groq`
+  *[_type in ["majorEvent", "loreEntry", "sessionLog", "article"]
+    && !(_type == "majorEvent" && status == "cancelled")
+    && !(_type == "article" && status != "published")]
+    | order(_updatedAt desc)[0...3] {
+    _type,
+    _updatedAt,
+    title,
+    "slug": slug.current,
+    // majorEvent
+    status,
+    eventDate,
+    // loreEntry / sessionLog — need the parent world's slug to link
+    "worldSlug": world->slug.current,
+    // loreEntry
+    category,
+    // sessionLog
+    sessionNumber,
+    // article
+    excerpt
   }
 `;
 

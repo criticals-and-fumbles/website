@@ -62,6 +62,20 @@ export interface MajorEventCardData {
   registrationUrl?: string;
 }
 
+/** Hero panel "latest updates" feed item — see HOME_LATEST_UPDATES_QUERY. */
+export interface HomeUpdateItem {
+  _type: "majorEvent" | "loreEntry" | "sessionLog" | "article";
+  _updatedAt: string;
+  title: string;
+  slug: string;
+  status?: string;
+  eventDate?: string;
+  worldSlug?: string;
+  category?: string;
+  sessionNumber?: number;
+  excerpt?: string;
+}
+
 export interface MajorEvent extends MajorEventCardData {
   capacity?: number;
   ticketPrice?: string;

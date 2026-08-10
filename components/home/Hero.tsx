@@ -1,33 +1,55 @@
-import Image from "next/image";
 import Link from "next/link";
-import type { ArticleCard as ArticleCardData, MajorEventCardData } from "@/sanity/lib/types";
-import { urlForImage } from "@/sanity/lib/image";
+import type { HomeUpdateItem } from "@/sanity/lib/types";
 import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { CountdownTimer } from "@/components/events/CountdownTimer";
 
-const STATUS_LABELS: Record<string, string> = {
+const EVENT_STATUS_LABELS: Record<string, string> = {
   "watch-this-space": "Watch This Space",
   "coming-soon": "Coming Soon",
   "registration-open": "Registration Open",
   full: "Full",
+  completed: "Completed",
 };
 
-export function Hero({
-  nextEvent,
-  fallbackArticle,
-}: {
-  nextEvent: MajorEventCardData | null;
-  fallbackArticle: ArticleCardData | null;
-}) {
-  const rightImage = urlForImage(
-    nextEvent?.splashImage ?? nextEvent?.coverImage ?? fallbackArticle?.coverImage,
-  )
-    ?.width(900)
-    .height(900)
-    .auto("format")
-    .url();
+function updateHref(item: HomeUpdateItem): string {
+  switch (item._type) {
+    case "majorEvent":
+      return `/events/${item.slug}`;
+    case "loreEntry":
+      return `/wiki/${item.worldSlug}/lore/${item.slug}`;
+    case "sessionLog":
+      return `/wiki/${item.worldSlug}/sessions/${item.slug}`;
+    case "article":
+      return `/articles/${item.slug}`;
+  }
+}
 
+function updateBadge(item: HomeUpdateItem): { label: string; variant: "amber" | "magenta" | "emerald" | "muted" } {
+  switch (item._type) {
+    case "majorEvent":
+      return {
+        label: EVENT_STATUS_LABELS[item.status ?? ""] ?? item.status ?? "Event",
+        variant: "amber",
+      };
+    case "loreEntry":
+      return { label: item.category ?? "Lore", variant: "magenta" };
+    case "sessionLog":
+      return {
+        label: item.sessionNumber ? `Session ${item.sessionNumber}` : "Session",
+        variant: "emerald",
+      };
+    case "article":
+      return { label: "Article", variant: "muted" };
+  }
+}
+
+function updateMeta(item: HomeUpdateItem): string | undefined {
+  if (item._type === "majorEvent") return item.eventDate;
+  if (item._type === "article") return item.excerpt;
+  return undefined;
+}
+
+export function Hero({ updates }: { updates: HomeUpdateItem[] }) {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2">
       <div className="flex flex-col justify-center gap-6 bg-bg px-6 py-20 md:px-12 md:py-32">
@@ -54,48 +76,35 @@ export function Hero({
           20
         </span>
 
-        {nextEvent ? (
-          <Link href={`/events/${nextEvent.slug}`} className="relative z-10 flex flex-col gap-4">
-            {rightImage && (
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
-                <Image src={rightImage} alt={nextEvent.title} fill className="object-cover" />
-              </div>
-            )}
-            <Badge variant="amber">
-              {STATUS_LABELS[nextEvent.status] ?? nextEvent.status}
-            </Badge>
-            <h2 className="font-display text-3xl text-on-forest">{nextEvent.title}</h2>
-            {nextEvent.eventDate && (
-              <p className="font-ui text-sm text-on-forest-muted">{nextEvent.eventDate}</p>
-            )}
-            {nextEvent.startDate && <CountdownTimer target={nextEvent.startDate} />}
-          </Link>
-        ) : fallbackArticle ? (
-          <Link
-            href={`/articles/${fallbackArticle.slug}`}
-            className="relative z-10 flex flex-col gap-4"
-          >
-            {rightImage && (
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
-                <Image
-                  src={rightImage}
-                  alt={fallbackArticle.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
-            <Badge variant="emerald">Latest Roll</Badge>
-            <h2 className="font-display text-3xl text-on-forest">{fallbackArticle.title}</h2>
-            {fallbackArticle.excerpt && (
-              <p className="text-sm text-on-forest-muted">{fallbackArticle.excerpt}</p>
-            )}
-          </Link>
-        ) : (
-          <p className="relative z-10 font-ui text-sm text-on-forest-muted">
-            Watch this space — something is brewing.
-          </p>
-        )}
+        <div className="relative z-10 flex flex-col gap-6">
+          <span className="font-ui text-sm uppercase tracking-wider text-on-forest-muted">
+            Latest Updates
+          </span>
+
+          {updates.length > 0 ? (
+            updates.map((item) => {
+              const badge = updateBadge(item);
+              const meta = updateMeta(item);
+              return (
+                <Link
+                  key={`${item._type}-${item.slug}`}
+                  href={updateHref(item)}
+                  className="flex flex-col gap-1 border-b border-white/10 pb-4 last:border-b-0 last:pb-0"
+                >
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                  <h2 className="font-display text-2xl text-on-forest">{item.title}</h2>
+                  {meta && (
+                    <p className="line-clamp-1 font-ui text-sm text-on-forest-muted">{meta}</p>
+                  )}
+                </Link>
+              );
+            })
+          ) : (
+            <p className="font-ui text-sm text-on-forest-muted">
+              Watch this space — something is brewing.
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

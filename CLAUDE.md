@@ -21,8 +21,10 @@ work; tagged at commit `42d6cdc`. What's actually in it:
 - Sanity Studio deployed separately at `cnf-website.sanity.studio`
 - All four worlds scaffolded in the wiki (Titan's Gate, Temasek Tales,
   SingaporeZ, Shattered Tales)
-- Homepage: latest-articles strip, upcoming-events strip, world cards strip
-  (three separate sections, not a combined feed — see TODO below for that)
+- Homepage: Hero panel now shows a cross-type "Latest Updates" feed (events +
+  lore + sessions + articles, newest-edited first — see
+  `HOME_LATEST_UPDATES_QUERY`), plus separate latest-articles, upcoming-events,
+  and world-cards strips further down the page
 - Light mode text contrast fixed on always-dark panels (Hero, PhilosophyStrip,
   Footer CTA, About Discord CTA)
 - Mobile hamburger drawer: solid background, right-aligned, exact spec
@@ -39,7 +41,6 @@ work; tagged at commit `42d6cdc`. What's actually in it:
   (done, not outstanding)
 
 Known TODOs (not started):
-- Phase 1.3: homepage recent-wiki-activity feed (see TODO / Follow-ups below)
 - Visual Editing — mentioned in a consolidation request but not yet scoped
   anywhere in this repo's history; needs a real spec before starting
 - Newsletter integration (Phase 2) — static "coming soon" UI only right now
@@ -302,9 +303,8 @@ them — added as the obvious missing piece.
 
 ## TODO / Follow-ups
 
-- Phase 1.3: Add recent wiki activity feed to homepage — show last 3 lore or
-  session entries across all worlds ordered by `_updatedAt desc`. New section
-  below WorldStrip.
+(none outstanding — Phase 1.3's homepage activity feed shipped as the Hero
+"Latest Updates" panel; see Release History above)
 
 ## Component conventions
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import {
   HOME_LATEST_ARTICLES_QUERY,
-  HOME_NEXT_MAJOR_EVENT_QUERY,
+  HOME_LATEST_UPDATES_QUERY,
   HOME_UPCOMING_EVENTS_QUERY,
   HOME_WORLDS_QUERY,
   PHILOSOPHY_QUERY,
@@ -10,6 +10,7 @@ import {
 import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type {
   ArticleCard,
+  HomeUpdateItem,
   MajorEventCardData,
   Philosophy,
   World,
@@ -25,10 +26,10 @@ import { Footer } from "@/components/layout/Footer";
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [latestArticles, nextEvent, upcomingEvents, worlds, philosophy] =
+  const [latestArticles, latestUpdates, upcomingEvents, worlds, philosophy] =
     await Promise.all([
       client.fetch<ArticleCard[]>(HOME_LATEST_ARTICLES_QUERY),
-      client.fetch<MajorEventCardData | null>(HOME_NEXT_MAJOR_EVENT_QUERY),
+      client.fetch<HomeUpdateItem[]>(HOME_LATEST_UPDATES_QUERY),
       client.fetch<MajorEventCardData[]>(HOME_UPCOMING_EVENTS_QUERY),
       client.fetch<World[]>(HOME_WORLDS_QUERY),
       client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
@@ -36,7 +37,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero nextEvent={nextEvent} fallbackArticle={latestArticles[0] ?? null} />
+      <Hero updates={latestUpdates} />
 
       <ArticleStrip articles={latestArticles} />
 
