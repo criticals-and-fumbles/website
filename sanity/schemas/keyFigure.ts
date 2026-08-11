@@ -140,6 +140,13 @@ export default defineType({
           description: "humanoid, dragon, undead, beast, fiend, etc.",
         }),
         defineField({
+          name: "alignment",
+          title: "Alignment",
+          type: "string",
+          description:
+            'e.g. "Chaotic Evil" — matches the Fight Club XML <alignment> element',
+        }),
+        defineField({
           name: "ac",
           title: "Armor Class",
           type: "string",

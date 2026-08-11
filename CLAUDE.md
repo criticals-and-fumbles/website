@@ -446,10 +446,10 @@ whose field names are a deliberate 1:1 mirror of the Fight Club 5e XML
 `cha` under `abilities`, `cr` → `challengeRating`, etc.) so a future export
 script can map straight across with no field renaming. **No export
 tooling exists yet — only the schema and the `StatBlockCard` display.**
-Note: the Fight Club XML reference format includes `<alignment>`, but the
-session that built this schema didn't include an `alignment` field — a
-real gap between the schema and the export target it's meant to support;
-add it if/when the export is actually built. `magicItem.hasMechanics`
+`statBlock.alignment` (added 2026-08-11, after the initial gap was flagged
+and caught) matches the Fight Club XML `<alignment>` element — distinct
+from any narrative alignment a keyFigure might have elsewhere; this one is
+specifically for the export-mapped stat block. `magicItem.hasMechanics`
 gates a simpler `magicItem.mechanics` object (type/attunement/effect
 text), displayed via `ItemMechanicsCard` — not XML-mapped, just a
 consistent display pattern.

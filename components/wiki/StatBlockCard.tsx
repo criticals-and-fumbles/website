@@ -58,7 +58,8 @@ export function StatBlockCard({
   name: string;
   statBlock: StatBlock;
 }) {
-  const meta = [statBlock.size, statBlock.creatureType].filter(Boolean).join(" ");
+  const sizeType = [statBlock.size, statBlock.creatureType].filter(Boolean).join(" ");
+  const meta = [sizeType, statBlock.alignment].filter(Boolean).join(", ");
 
   const hasMetaLine = [statBlock.savingThrows, statBlock.skills].some(Boolean);
   const hasSensesLine = [

@@ -248,6 +248,7 @@ export interface StatBlockNamedText {
 export interface StatBlock {
   size?: "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan";
   creatureType?: string;
+  alignment?: string;
   ac?: string;
   hp?: string;
   speed?: string;
