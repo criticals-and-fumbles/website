@@ -114,7 +114,9 @@ Phase 1.3: wiki unit architecture + stat blocks. Purely additive — see
   unit-scoped lore/sessions
 - `dmNotes` (private Portable Text) on all 4 new entry types — never
   selected in any public GROQ query, verified by grep before shipping
-- Worker bundle: ~1.10 MB gzipped (still well under 3 MiB)
+- Worker bundle: ~1.10 MB gzipped as of v0.1.2 — **stale, see Known Risks
+  → Bundle size** for the current figure (this grew substantially in the
+  very next release, v0.1.3)
 
 **v0.1.1 — 2026-08-11.**
 
@@ -172,9 +174,10 @@ work; tagged at commit `42d6cdc`. What's actually in it:
   so undated-but-published content doesn't get stranded out of a `[0...3]`
   slice
 - ISR: `revalidate = 300` (5 min) on every page — unchanged since scaffold
-- Worker bundle: ~1.09 MB gzipped as of v0.1.1 (well under the 3 MiB
-  free-tier limit; was 0.86 MB at the original scaffold baseline, grew with
-  the Hero RSS feed panel)
+- Worker bundle: ~1.09 MB gzipped as of v0.1.1 (was 0.86 MB at the
+  original scaffold baseline, grew with the Hero RSS feed panel) — **this
+  figure is stale**, see Known Risks → Bundle size for the current,
+  substantially higher number
 - Base font size 18px, custom body-text scale — tuned for 4K displays
   (done, not outstanding)
 
@@ -182,6 +185,43 @@ Known TODOs (not started):
 - Visual Editing — mentioned in a consolidation request but not yet scoped
   anywhere in this repo's history; needs a real spec before starting
 - Newsletter integration (Phase 2) — static "coming soon" UI only right now
+
+## Known Risks
+
+### Bundle size — ACTIVE RISK (as of Phase 1.4 session)
+
+**Current: ~2.08 MB gzip / 3 MiB free-tier limit (71% used). Headroom
+remaining: ~0.87 MB.** This is the authoritative current figure — bundle
+size numbers quoted inside Release History entries below are point-in-time
+snapshots from when each release shipped, not live state; this section is
+what to check before adding anything.
+
+**Cause:** `next/og`'s `ImageResponse` (used in `app/og-default/route.tsx`
+and `app/(site)/events/[slug]/opengraph-image.tsx`) bundles a WASM-based
+image renderer (Satori + a PNG encoder) for dynamic OG image generation.
+This nearly doubled the bundle in one session (1.10 MB → 2.08 MB gzip) —
+the single largest contributor to date, larger than the entire wiki
+architecture session that preceded it.
+
+**Decision made:** keep dynamic OG images, proceed as-is. Trade-off
+accepted knowingly, not by default — flagged to and confirmed by the user
+before shipping (see Release History v0.1.3).
+
+**Implications for future sessions:**
+- Before adding any new dependency, check bundle size impact with
+  `npm run build:cloudflare` (then `npx wrangler versions upload
+  --preview-alias <name>` to get the real gzip figure) BEFORE and AFTER
+- Remaining headroom (~0.87 MB) is materially less than it was — do not
+  assume the 3 MB budget is generous
+- If bundle approaches 2.5 MB gzip, STOP and flag to the user before
+  proceeding — do not just note it and continue
+- Known future features that may compete for this remaining budget:
+  Visual Editing (Phase 1.2, not yet built), newsletter integration
+  (Phase 2), any additional image/media processing libraries
+- If budget becomes tight, the first candidate to reduce is `next/og` —
+  options: static default OG image only (no per-event dynamic
+  generation), or move dynamic image generation to a separate lightweight
+  edge function outside the main Worker bundle
 
 ## Stack
 
