@@ -22,6 +22,34 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**Branch/tag status, corrected 2026-08-11 (late).** A prompt this session
+referred to "v0.1.2 tag details" as already recorded/merged — verified via
+`git tag -l` and `git log main`, and that's not accurate: **no `v0.1.2`
+tag exists** (only `v0.1-pre-mvr` and `v0.1.1` are real tags), and
+**neither `feat/wiki-unit-architecture` nor `feat/seo-and-discord-funnel`
+has been merged to `main`** — `main`'s tip is still `f457840` (the
+pre-Phase-1.3 CLAUDE.md accuracy fix). The `unitLabel` patches and
+`statBlock.alignment` field described below are real and committed, but
+only on those two still-open, unmerged, stacked branches. Don't treat the
+"v0.1.2"/"v0.1.3" labels in this doc as git tags — they're informal
+version labels for this doc's own bookkeeping, not `git tag` output.
+
+**v0.1.4 — 2026-08-11 (branch `feat/hero-eyebrow`, not yet merged; stacked
+on `feat/seo-and-discord-funnel`, itself stacked on
+`feat/wiki-unit-architecture`).** Small isolated addition: an eyebrow line
+above the "Criticals & Fumbles" title in `components/home/Hero.tsx` — a
+16px outline d20 icon (`var(--color-emerald)`) + "Singapore's Tabletop RPG
+Community" (Space Mono, uppercase, letter-spaced,
+`var(--color-text-muted)`). Wrapped together with the `<h1>` in its own
+`gap-2` flex column (tighter than the hero's outer `gap-6` rhythm) so the
+eyebrow sits close to the title specifically, not spaced like the other
+hero elements. Nothing else in Hero.tsx touched. Uses only theme-aware
+semantic classes (`text-emerald`/`text-text-muted`), so dark/light
+correctness follows from the existing CSS variable system by construction
+— confirmed the markup renders correctly via dev server output, but no
+actual screenshot was taken (no browser/screenshot tool available this
+session).
+
 **v0.1.3 — 2026-08-11 (branch `feat/seo-and-discord-funnel`, not yet
 merged).** Phase 1.4: SEO + Discord funnel. See "SEO & Discord funnel"
 section below for the full breakdown. Highlights:
