@@ -1,21 +1,51 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   GALLERY_PHOTOS_QUERY,
   MAJOR_EVENT_BY_SLUG_QUERY,
   MAJOR_EVENTS_UPCOMING_QUERY,
+  SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import { urlForImage } from "@/sanity/lib/image";
-import type { MajorEvent, MajorEventCardData } from "@/sanity/lib/types";
+import type { MajorEvent, MajorEventCardData, SiteSettings } from "@/sanity/lib/types";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { CountdownTimer } from "@/components/events/CountdownTimer";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { EventStructuredData } from "@/components/seo/EventStructuredData";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/events/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await client.fetch<MajorEvent | null>(MAJOR_EVENT_BY_SLUG_QUERY, {
+    slug,
+  });
+  if (!event) return {};
+
+  const descriptionText = plainTextFromBlocks(event.description);
+
+  return buildMetadata({
+    title: event.title,
+    description:
+      event.tagline ??
+      descriptionText ??
+      `Join Criticals and Fumbles for ${event.title} in Singapore.`,
+    path: `/events/${slug}`,
+    image: urlForImage(event.splashImage ?? event.coverImage)
+      ?.width(1200)
+      .height(630)
+      .url(),
+    type: "event",
+  });
+}
 
 const STATUS_LABELS: Record<string, string> = {
   "watch-this-space": "Watch This Space",
@@ -36,11 +66,12 @@ export default async function MajorEventPage({
 
   if (!event) notFound();
 
-  const [photos, related] = await Promise.all([
+  const [photos, related, siteSettings] = await Promise.all([
     client.fetch<{ _id: string }[]>(GALLERY_PHOTOS_QUERY, {
       eventId: event._id,
     }),
     client.fetch<MajorEventCardData[]>(MAJOR_EVENTS_UPCOMING_QUERY),
+    client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
   ]);
 
   const splashUrl = urlForImage(event.splashImage ?? event.coverImage)
@@ -53,6 +84,8 @@ export default async function MajorEventPage({
 
   return (
     <>
+      <EventStructuredData event={event} />
+
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
         {splashUrl && (
           <div className="relative aspect-[2/1] w-full overflow-hidden rounded-lg">
@@ -130,12 +163,30 @@ export default async function MajorEventPage({
               </div>
             )}
 
-            {event.registrationUrl && (
-              <div className="mt-10">
+            {event.registrationUrl ? (
+              <div className="mt-10 flex flex-wrap items-center gap-4">
                 <LinkButton href={event.registrationUrl} external variant="primary">
                   Register →
                 </LinkButton>
+                {siteSettings?.discordUrl && (
+                  <a
+                    href={siteSettings.discordUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-ui text-sm text-emerald hover:underline"
+                  >
+                    Questions? Ask us on Discord →
+                  </a>
+                )}
               </div>
+            ) : (
+              siteSettings?.discordUrl && (
+                <div className="mt-10">
+                  <LinkButton href={siteSettings.discordUrl} external variant="primary">
+                    Questions? Ask us on Discord →
+                  </LinkButton>
+                </div>
+              )
             )}
 
             {photos.length > 0 && (

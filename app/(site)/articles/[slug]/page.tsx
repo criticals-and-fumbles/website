@@ -1,15 +1,36 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { ARTICLE_BY_SLUG_QUERY } from "@/sanity/lib/queries";
 import { urlForImage } from "@/sanity/lib/image";
 import type { Article } from "@/sanity/lib/types";
+import { buildMetadata } from "@/lib/metadata";
 import { Badge } from "@/components/ui/Badge";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { ArticleStructuredData } from "@/components/seo/ArticleStructuredData";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/articles/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await client.fetch<Article | null>(ARTICLE_BY_SLUG_QUERY, { slug });
+  if (!article) return {};
+
+  return buildMetadata({
+    title: article.title,
+    description:
+      article.excerpt ??
+      `Read "${article.title}" on Criticals and Fumbles, Singapore's tabletop RPG community.`,
+    path: `/articles/${slug}`,
+    image: urlForImage(article.coverImage)?.width(1200).height(630).url(),
+    type: "article",
+  });
+}
 
 export default async function ArticlePage({
   params,
@@ -29,6 +50,16 @@ export default async function ArticlePage({
 
   return (
     <>
+      <ArticleStructuredData
+        article={{
+          title: article.title,
+          excerpt: article.excerpt,
+          publishedAt: article.publishedAt,
+          author: article.author,
+          image: coverUrl,
+        }}
+      />
+
       <article className="mx-auto max-w-3xl px-4 py-16 md:px-8">
         {article.category && <Badge variant="emerald">{article.category}</Badge>}
         <h1 className="mt-4 font-display text-4xl leading-tight text-text md:text-5xl">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
+import { FacebookIcon, InstagramIcon, DiscordIcon } from "@/components/icons/SocialIcons";
 
 const NAV_LINKS = [
   { label: "About", href: "/about" },
@@ -13,7 +14,63 @@ const NAV_LINKS = [
   { label: "Resources", href: "/resources" },
 ];
 
-export function Nav() {
+const SOCIAL_ICONS = {
+  facebook: FacebookIcon,
+  instagram: InstagramIcon,
+  discord: DiscordIcon,
+} as const;
+
+function SocialLinks({
+  facebookUrl,
+  instagramUrl,
+  discordUrl,
+  className = "",
+  iconSize = "h-[18px] w-[18px]",
+}: {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  discordUrl?: string;
+  className?: string;
+  iconSize?: string;
+}) {
+  const links = [
+    { platform: "facebook" as const, url: facebookUrl, label: "Facebook" },
+    { platform: "instagram" as const, url: instagramUrl, label: "Instagram" },
+    { platform: "discord" as const, url: discordUrl, label: "Discord" },
+  ].filter((l) => l.url);
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className={`flex items-center gap-4 ${className}`}>
+      {links.map(({ platform, url, label }) => {
+        const Icon = SOCIAL_ICONS[platform];
+        return (
+          <a
+            key={platform}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            className={`${iconSize} text-text-muted transition-colors hover:text-emerald`}
+          >
+            <Icon />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+export function Nav({
+  facebookUrl,
+  instagramUrl,
+  discordUrl,
+}: {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  discordUrl?: string;
+}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -61,7 +118,12 @@ export function Nav() {
           ))}
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-6 md:flex">
+          <SocialLinks
+            facebookUrl={facebookUrl}
+            instagramUrl={instagramUrl}
+            discordUrl={discordUrl}
+          />
           <ThemeToggle />
         </div>
 
@@ -126,6 +188,13 @@ export function Nav() {
                 </Link>
               ))}
             </div>
+
+            <SocialLinks
+              facebookUrl={facebookUrl}
+              instagramUrl={instagramUrl}
+              discordUrl={discordUrl}
+              className="mt-8 justify-end"
+            />
 
             <div className="mt-8 flex justify-end border-t border-border pt-6">
               <ThemeToggle />

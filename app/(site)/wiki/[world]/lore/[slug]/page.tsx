@@ -1,14 +1,37 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { LORE_ENTRY_BY_SLUG_QUERY } from "@/sanity/lib/queries";
 import type { LoreEntry } from "@/sanity/lib/types";
+import { urlForImage } from "@/sanity/lib/image";
+import { buildMetadata } from "@/lib/metadata";
 import { Badge } from "@/components/ui/Badge";
 import { CanonBadge } from "@/components/ui/CanonBadge";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/lore/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, slug } = await params;
+  const entry = await client.fetch<LoreEntry | null>(LORE_ENTRY_BY_SLUG_QUERY, {
+    worldSlug,
+    slug,
+  });
+  if (!entry) return {};
+
+  return buildMetadata({
+    title: entry.title,
+    description:
+      entry.summary ??
+      `${entry.title} — lore from Criticals and Fumbles' wiki.`,
+    path: `/wiki/${worldSlug}/lore/${slug}`,
+    image: urlForImage(entry.coverImage)?.width(1200).height(630).url(),
+  });
+}
 
 export default async function LoreEntryPage({
   params,

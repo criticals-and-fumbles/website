@@ -7,11 +7,66 @@ to Cloudflare as a Worker via `@opennextjs/cloudflare`, with Sanity Studio
 hosted separately. No newsletter/email/payment integrations yet — those are
 a later phase.
 
+**Site purpose — read this before making priority calls.** cnf.sg is a
+recruitment funnel, not a commerce or content platform. Flow: Google search
+→ site (events/homepage) → Discord enquiry. Wiki/Team/long-form content
+exist for member retention *after* joining, not acquisition. Every
+high-visibility CTA should point to Discord (the live URL lives in
+`siteSettings.discordUrl`, fetched via Sanity — never hardcode the Discord
+invite string in a component) unless there's a specific reason otherwise.
+No e-commerce or payment features planned short-term.
+
 **Live URLs:**
 - Site (production): https://cnf-sg.criticalsandfumbles.workers.dev
 - Studio: https://cnf-website.sanity.studio
 
 ## Release History
+
+**v0.1.3 — 2026-08-11 (branch `feat/seo-and-discord-funnel`, not yet
+merged).** Phase 1.4: SEO + Discord funnel. See "SEO & Discord funnel"
+section below for the full breakdown. Highlights:
+
+- `lib/metadata.ts`'s `buildMetadata()` helper — every dynamic page now
+  exports `generateMetadata` using it (events, articles, team, wiki world/
+  lore/session detail); static pages (home, events index, about) export a
+  plain `metadata` const with it instead
+- Dynamic Open Graph images via `next/og`'s `ImageResponse` — a branded
+  site-wide fallback (`/og-default`) and a per-event generated image
+  (`opengraph-image.tsx`, prefers the event's real splash/cover photo when
+  set). **No static `/public/og-default.png` exists** — deviated from the
+  literal spec since there was no image-generation tool available; used
+  the spec's own sanctioned ImageResponse fallback approach instead
+- Schema.org structured data: `EventStructuredData`, `ArticleStructuredData`,
+  site-wide `OrganizationStructuredData` (in the root layout, `sameAs`
+  populated live from `siteSettings.socialLinks` + `discordUrl`)
+- `app/sitemap.ts` + `app/robots.ts`
+- `siteSettings.socialLinks` platform enum gained `"Facebook"` (additive
+  — existing `Twitter/Instagram/YouTube/Twitch/TikTok` values untouched);
+  Facebook URL seeded via a dry-run-first patch script. **Discord is
+  deliberately not added to `socialLinks`** — it already has its own
+  `discordUrl`/`discordServerName` fields, which predate this session and
+  were reused instead of duplicating
+  - Facebook: `https://www.facebook.com/criticalsandfumbles/`
+  - Instagram was already seeded (`https://www.instagram.com/criticalsandfumbles/`)
+- Footer's contact-email link removed from the rendered page —
+  **`siteSettings.contactEmail`'s schema field and stored value are
+  untouched**, display-only change (see Lessons learned re: schema safety)
+- Discord CTAs added: homepage Hero (secondary button next to "Explore the
+  Archive"), events index page (CTA band above the footer), event detail
+  pages ("Questions? Ask us on Discord" — beside Register if it has a URL,
+  in its place if not). Footer already had a prominent Discord button from
+  an earlier session — left as-is, it already satisfied this requirement
+- Facebook/Instagram/Discord icons added to desktop nav and the mobile
+  drawer (`components/icons/SocialIcons.tsx`, shared — not duplicated
+  between `Nav.tsx` and `Hero.tsx`)
+- **Part B (share buttons) explicitly skipped this session** — the spec
+  itself deprioritized it ("build last or skip if time-constrained"; the
+  session prioritized Parts A/C/D/E/F, all of which shipped)
+- Worker bundle: jumped from ~1.10 MB to **~2.08 MB gzipped** — `next/og`'s
+  `ImageResponse` (WASM-based image rendering) is the dominant cause. Still
+  under the 3 MiB free-tier limit but headroom is now ~0.9 MB, not ~1.9 MB.
+  Flagged to and confirmed by the user before proceeding — watch this if
+  adding more bundle weight in future sessions
 
 **v0.1.2 — 2026-08-11 (branch `feat/wiki-unit-architecture`, not yet merged).**
 Phase 1.3: wiki unit architecture + stat blocks. Purely additive — see
@@ -407,6 +462,19 @@ them — added as the obvious missing piece.
 - Fight Club 5e XML compendium export per world unit (future phase) — the
   `keyFigure.statBlock` field names already mirror the XML element names
   1:1 for this; see "Wiki unit architecture" below
+- Part B (share buttons) from Phase 1.4 — explicitly deprioritized/skipped
+  this session (see Release History v0.1.3); build `ShareButtons` and add
+  to events/articles/wiki-lore detail pages when there's time
+- Fix the `opengraph-image.tsx` precedence caveat noted in "SEO & Discord
+  funnel" above, if the per-event *generated* fallback image (vs. the
+  generic site fallback) turns out to matter in practice
+- **Manual, non-code steps for the site owner** (not something Claude Code
+  can do):
+  - Submit `/sitemap.xml` to Google Search Console
+  - Create a free Google Business Profile for "Criticals and Fumbles"
+  - Test share previews at https://www.opengraph.xyz/ and Facebook's
+    Sharing Debugger once this branch is live
+  - Send a test link to yourself on WhatsApp to verify its preview
 - (the homepage "Latest Updates" activity feed, previously tracked here as
   a TODO, shipped as the Hero panel — see HeroRightPanel and Release
   History above)
@@ -485,6 +553,81 @@ this session was scoped to leave alone.
 alternative to the Sanity `mapImage` field for images under 500KB) renders
 via a plain `<img>`, not `next/image` — its domain isn't and shouldn't be
 added to `next.config.ts`'s `remotePatterns` just for this.
+
+## SEO & Discord funnel (Phase 1.4)
+
+**`lib/metadata.ts`** — `buildMetadata({ title, description, path, image?,
+type? })` returns a `Metadata` object (title with `| Criticals and
+Fumbles` suffix unless already present, Open Graph, Twitter card,
+canonical). Every dynamic detail page (`events/[slug]`, `articles/[slug]`,
+`team/[slug]`, `wiki/[world]`, `wiki/[world]/lore/[slug]`,
+`wiki/[world]/sessions/[slug]`) exports `generateMetadata` using it;
+static pages (`/`, `/events`, `/about`) export a plain `metadata` const
+with it. Falls back to `/og-default` (see below) when no `image` is
+passed. Also exports `plainTextFromBlocks()` — first-span plain text from
+a Portable Text body, used as a description fallback when no dedicated
+excerpt/summary/tagline field is set.
+
+**Dynamic OG images** — `next/og`'s `ImageResponse`, no static image file:
+- `app/og-default/route.tsx` → `/og-default` — branded site-wide fallback
+  (three-colour title treatment, dark background), used by `buildMetadata`
+  whenever no `image` is passed
+- `app/(site)/events/[slug]/opengraph-image.tsx` — per-event image;
+  prefers the event's real `splashImage`/`coverImage` if set, else
+  generates a branded fallback with the event's title. **Caveat:** since
+  `generateMetadata` on the same route always explicitly sets
+  `openGraph.images` (via `buildMetadata`), that explicit value takes
+  precedence over this file-convention image for the actual `og:image`
+  meta tag — the route still exists and is directly fetchable, but isn't
+  automatically wired into the tag. Real photos still show correctly
+  either way (both paths end up finding the same image); only the
+  per-event *generated* fallback (vs. the generic site fallback) doesn't
+  get used when an event has no photo. Not fixed this session — noting it
+  rather than leaving it silently wrong.
+- No explicit `runtime = "edge"` on either — Edge Runtime is deprecated in
+  this Next.js version; both work fine on the default runtime
+- These are the largest single contributor to this session's bundle growth
+  (see Release History) — reuse rather than duplicate if adding more image
+  generation elsewhere
+
+**Structured data** (`components/seo/`) — plain `<script
+type="application/ld+json">` components, no library:
+- `EventStructuredData` — schema.org `Event`, rendered once per event
+  detail page
+- `ArticleStructuredData` — schema.org `Article`, rendered once per
+  article detail page
+- `OrganizationStructuredData` — schema.org `Organization`, rendered once
+  in the root layout `<head>`; `sameAs` is built live from
+  `siteSettings.socialLinks` + `discordUrl`, not hardcoded
+
+**Sitemap & robots** — `app/sitemap.ts`, `app/robots.ts` (both at the app
+root, not under `(site)/`, since neither needs the Nav/Footer layout).
+Sitemap pulls minimal `{slug, _updatedAt}` projections via 3 dedicated
+queries (`SITEMAP_ARTICLES_QUERY`, `SITEMAP_EVENTS_QUERY`,
+`SITEMAP_WORLDS_QUERY` in `sanity/lib/queries.ts`) rather than reusing the
+card queries, which fetch images/refs the sitemap doesn't need. `robots.ts`
+disallows `/api/` (pre-emptive — no API routes exist yet) but *not*
+`/studio` (there is no `/studio` route on this site — Studio is hosted
+entirely separately, see Cloudflare deployment above).
+
+**Discord CTA locations** — homepage Hero (secondary button), events index
+page (CTA band above footer), event detail pages (near/in place of the
+Register button), footer (pre-existing prominent button, left as-is). All
+source the URL from `siteSettings.discordUrl` fetched server-side and
+passed down as props — never a hardcoded string.
+
+**Social links pattern** — `siteSettings.socialLinks` (existing field,
+platform enum: Twitter/Instagram/YouTube/Twitch/TikTok/Facebook) feeds the
+nav/drawer icons (`components/layout/Nav.tsx`) and `sameAs` in structured
+data. Icons themselves are `components/icons/SocialIcons.tsx` (Facebook,
+Instagram, Discord — shared by `Nav.tsx` and `Hero.tsx`, not duplicated).
+Discord is **not** in `socialLinks` — it has its own dedicated
+`discordUrl`/`discordServerName` fields on `siteSettings`.
+
+**Email removed from footer display only** — `Footer.tsx` no longer
+renders `siteSettings.contactEmail`. The schema field and the document's
+stored value are both untouched; this was a component-only change,
+verified by re-fetching the live document afterward (see Lessons learned).
 
 ## HeroRightPanel
 
@@ -605,6 +748,11 @@ re-running with `DRY_RUN=false`.
   documents (Territory/District/Sector/Fragment), since the schema's
   `initialValue` never backfills pre-existing documents. Already run; kept
   as a record and a template for the next one-off patch.
+- `patch-social-links.ts` (2026-08-11) — appends a Facebook entry to
+  `siteSettings.socialLinks` (uses `.append()`, not `.set()` — existing
+  entries, including a stray empty one, are preserved untouched). Skips
+  with a message if a Facebook entry already exists, so it's safe to
+  re-run. Already run.
 
 ## Seed script
 

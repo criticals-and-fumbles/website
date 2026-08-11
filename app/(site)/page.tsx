@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   HOME_LATEST_ARTICLES_QUERY,
@@ -7,6 +8,7 @@ import {
   HOME_UPCOMING_EVENTS_QUERY,
   HOME_WORLDS_QUERY,
   PHILOSOPHY_QUERY,
+  SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type {
@@ -15,8 +17,10 @@ import type {
   PinnedEvent,
   Philosophy,
   RssFeedData,
+  SiteSettings,
   World,
 } from "@/sanity/lib/types";
+import { buildMetadata } from "@/lib/metadata";
 import { Hero } from "@/components/home/Hero";
 import { ArticleStrip } from "@/components/home/ArticleStrip";
 import { EventStrip } from "@/components/home/EventStrip";
@@ -27,8 +31,16 @@ import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
 
+export const metadata: Metadata = buildMetadata({
+  title: "Criticals and Fumbles | Singapore TTRPG Community",
+  description:
+    "Singapore's tabletop RPG community since 2016. Find D&D games, join " +
+    "campaigns, and discover a table that feels like home.",
+  path: "/",
+});
+
 export default async function HomePage() {
-  const [latestArticles, pinnedEvent, rssFeedRaw, upcomingEvents, worlds, philosophy] =
+  const [latestArticles, pinnedEvent, rssFeedRaw, upcomingEvents, worlds, philosophy, siteSettings] =
     await Promise.all([
       client.fetch<ArticleCard[]>(HOME_LATEST_ARTICLES_QUERY),
       client.fetch<PinnedEvent | null>(HOME_PINNED_EVENT_QUERY),
@@ -36,6 +48,7 @@ export default async function HomePage() {
       client.fetch<MajorEventCardData[]>(HOME_UPCOMING_EVENTS_QUERY),
       client.fetch<World[]>(HOME_WORLDS_QUERY),
       client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
+      client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
     ]);
 
   const allUpdates = [
@@ -50,7 +63,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero pinnedEvent={pinnedEvent} rssFeed={allUpdates} />
+      <Hero
+        pinnedEvent={pinnedEvent}
+        rssFeed={allUpdates}
+        discordUrl={siteSettings?.discordUrl}
+      />
 
       <ArticleStrip articles={latestArticles} />
 

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   WORLD_BY_SLUG_QUERY,
@@ -12,6 +13,8 @@ import type {
   World,
   WorldUnitCard as WorldUnitCardData,
 } from "@/sanity/lib/types";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
+import { urlForImage } from "@/sanity/lib/image";
 import { WorldNav } from "@/components/wiki/WorldNav";
 import { LoreCard } from "@/components/wiki/LoreCard";
 import { SessionCard } from "@/components/wiki/SessionCard";
@@ -20,6 +23,26 @@ import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]">): Promise<Metadata> {
+  const { world: worldSlug } = await params;
+  const world = await client.fetch<World | null>(WORLD_BY_SLUG_QUERY, {
+    slug: worldSlug,
+  });
+  if (!world) return {};
+
+  return buildMetadata({
+    title: world.name,
+    description:
+      world.tagline ??
+      plainTextFromBlocks(world.description) ??
+      `Explore ${world.name}, a Criticals and Fumbles campaign setting.`,
+    path: `/wiki/${worldSlug}`,
+    image: urlForImage(world.coverImage)?.width(1200).height(630).url(),
+  });
+}
 
 export default async function WorldHomePage({
   params,

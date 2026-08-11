@@ -143,14 +143,10 @@ export async function Footer({
                 ))}
               </div>
             )}
-            {settings?.contactEmail && (
-              <a
-                href={`mailto:${settings.contactEmail}`}
-                className="mt-4 block text-sm text-text-muted transition-colors hover:text-emerald"
-              >
-                {settings.contactEmail}
-              </a>
-            )}
+            {/* contactEmail intentionally not rendered here — Discord is
+                the funnel's actual conversion point (see CLAUDE.md § Site
+                purpose). The field, and its value in Sanity, are untouched;
+                this is a display-only change. */}
           </div>
         </div>
 

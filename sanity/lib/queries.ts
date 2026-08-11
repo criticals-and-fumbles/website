@@ -436,6 +436,30 @@ export const UNIT_RECENT_ENTRIES_QUERY = groq`
 `;
 
 /* ---------------------------------------------------------------------- */
+/* Sitemap (Phase 1.4) — minimal slug + lastModified projections only,     */
+/* deliberately not reusing the card queries above (those pull in images/  */
+/* author refs the sitemap doesn't need)                                  */
+/* ---------------------------------------------------------------------- */
+
+export const SITEMAP_ARTICLES_QUERY = groq`
+  *[_type == "article" && status == "published"] {
+    "slug": slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_EVENTS_QUERY = groq`
+  *[_type == "majorEvent"] {
+    "slug": slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_WORLDS_QUERY = groq`
+  *[_type == "world"] {
+    "slug": slug.current, _updatedAt
+  }
+`;
+
+/* ---------------------------------------------------------------------- */
 /* Resources                                                                */
 /* ---------------------------------------------------------------------- */
 
