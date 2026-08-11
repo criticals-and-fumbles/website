@@ -327,12 +327,17 @@ you need it somewhere new, or extract one if it starts drifting.
 
 ## The four worlds
 
-| Name | Slug | Colour accent | Intended `unitLabel` |
+| Name | Slug | Colour accent | `unitLabel` |
 |---|---|---|---|
 | Titan's Gate | `titans-gate` | `#8B2FC9` | Territory |
-| Temasek Tales | `temasek-tales` | `#C4692A` | District [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
-| SingaporeZ | `singaporez` | `#2C5F8A` | Sector [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
-| Shattered Tales | `shattered-tales` | `#6B3FA0` | Fragment [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
+| Temasek Tales | `temasek-tales` | `#C4692A` | District |
+| SingaporeZ | `singaporez` | `#2C5F8A` | Sector |
+| Shattered Tales | `shattered-tales` | `#6B3FA0` | Fragment |
+
+All four confirmed live via `sanity/migrations/patch-unit-labels.ts`
+(2026-08-11) — `initialValue` in the schema only applies to new documents
+created in Studio, it never backfills existing ones, so all 4 world
+documents had `unitLabel` genuinely unset until this ran.
 
 ## Sanity schema summary
 
@@ -398,13 +403,6 @@ them — added as the obvious missing piece.
 
 ## TODO / Follow-ups
 
-- **`world.unitLabel` seed values not yet applied.** The schema field
-  defaults to `"Territory"` for new documents, but the 4 existing world
-  documents were never patched with their intended values (Temasek Tales
-  → "District", SingaporeZ → "Sector", Shattered Tales → "Fragment";
-  Titan's Gate already matches the default "Territory"). Set these
-  manually in Studio, or write a small one-off patch script — these are
-  still placeholders pending confirmation, not finalized.
 - CSV export per world unit (future phase, not scoped yet)
 - Fight Club 5e XML compendium export per world unit (future phase) — the
   `keyFigure.statBlock` field names already mirror the XML element names
@@ -587,13 +585,26 @@ See `.env.local.example`. Required: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
 client), `NEXT_PUBLIC_SITE_URL` (filled in after the first Cloudflare Pages
 deploy), `NEXT_PUBLIC_SITE_NAME`.
 
-**`SANITY_API_WRITE_TOKEN`** — not currently in `.env.local` or
-`.env.local.example` despite being referenced in a 2026-08-11 session (as
-"the CNFSG-seed token, Editor role, for migration scripts") — that session
-ended up not needing a write token (see Lessons learned above), so it was
-never actually added. If a future migration script needs write access: add
-it to `.env.local` (never commit it), keep it server/script-only, and
-document the actual token/role here once it exists.
+**`SANITY_API_WRITE_TOKEN`** — added to `.env.local` on 2026-08-11 (Editor
+role) for `sanity/migrations/patch-unit-labels.ts`. Not in
+`.env.local.example` since it's not required for normal dev/build — only
+for running a write-access migration script. Server/script-only, never
+client-side; never commit the actual value.
+
+## Migration scripts
+
+`sanity/migrations/` — one-off data-patch scripts, run manually via
+`npx tsx sanity/migrations/<name>.ts`. Not a generic runner/framework —
+each script is purpose-built for its one patch, following a dry-run-first
+pattern: defaults to logging proposed changes only, real writes require
+`DRY_RUN=false`. Requires `SANITY_API_WRITE_TOKEN` in `.env.local` (see
+Environment variables below). Always read the dry-run output before
+re-running with `DRY_RUN=false`.
+
+- `patch-unit-labels.ts` (2026-08-11) — set `unitLabel` on all 4 `world`
+  documents (Territory/District/Sector/Fragment), since the schema's
+  `initialValue` never backfills pre-existing documents. Already run; kept
+  as a record and a template for the next one-off patch.
 
 ## Seed script
 
