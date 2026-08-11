@@ -69,7 +69,9 @@ work; tagged at commit `42d6cdc`. What's actually in it:
   so undated-but-published content doesn't get stranded out of a `[0...3]`
   slice
 - ISR: `revalidate = 300` (5 min) on every page — unchanged since scaffold
-- Worker bundle: 0.86 MB gzipped (well under the 3 MiB free-tier limit)
+- Worker bundle: ~1.09 MB gzipped as of v0.1.1 (well under the 3 MiB
+  free-tier limit; was 0.86 MB at the original scaffold baseline, grew with
+  the Hero RSS feed panel)
 - Base font size 18px, custom body-text scale — tuned for 4K displays
   (done, not outstanding)
 
@@ -131,10 +133,15 @@ config so publishing content would trigger a rebuild) — left as-is,
 not investigated further. If content publishes ever appear to trigger a
 build, that's why; revisit if it also misbehaves.
 
-Deploy manually with `npm run deploy` (runs `opennextjs-cloudflare build`
-under the hood — if that step is skipped and you run `opennextjs-cloudflare
-deploy` directly, it errors with "Could not find compiled Open Next config";
-always build first). This promotes straight to production traffic.
+Deploy manually with `npm run deploy` (currently just
+`opennextjs-cloudflare deploy` — **verified in `package.json`: the npm
+script does NOT chain a build step itself** [UNVERIFIED — confirm before
+acting: whether the `opennextjs-cloudflare deploy` CLI command builds
+internally before deploying, or requires a prior `build:cloudflare` step,
+has not been re-tested this session]. The safe, verified-working pattern
+used throughout this project is to always run `npm run build:cloudflare`
+immediately before any deploy/preview-upload command, regardless). This
+promotes straight to production traffic.
 
 **Preview a branch without touching production:** build (`npm run
 build:cloudflare`), then `npx wrangler versions upload --preview-alias
@@ -321,6 +328,19 @@ Two singletons (`siteSettings`, `philosophy`) pinned in the Studio structure
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ
 queries, add them to `sanity/lib/queries.ts` and the TS shape to
 `sanity/lib/types.ts`.
+
+**`galleryPhoto` stores a real Sanity `image` asset** (field name `image`,
+type `"image"`, with hotspot + an `alt` subfield) — not a string URL, and
+not R2-backed. `GALLERY_PHOTOS_QUERY` selects `image` directly; `GalleryPhoto`
+in `sanity/lib/types.ts` types it as `SanityImage`. The only R2 bucket in
+this project is `cnf-website-cache` (ISR incremental cache, see Cloudflare
+deployment above) — there is no separate media/gallery R2 bucket.
+
+**Current team roster is live data, not documented here** — it changes as
+editors add members in Studio, so hardcoding names/tiers in this file would
+go stale immediately. To check it, query Studio directly (Vision, or
+`*[_type == "teamMember"]{handle, tier, roles}`) rather than trusting a
+snapshot in this doc.
 
 ### Enum values that were inferred, not specified
 
