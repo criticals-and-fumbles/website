@@ -42,6 +42,14 @@ export default defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "unit",
+      title: "World Unit",
+      type: "reference",
+      to: [{ type: "worldUnit" }],
+      description:
+        "Optional — scope this entry to a specific unit/territory within the world. Leave blank for world-level entries not tied to a single unit.",
+    }),
+    defineField({
       name: "dm",
       title: "DM",
       type: "reference",

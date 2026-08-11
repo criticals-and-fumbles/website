@@ -4,12 +4,17 @@ import calloutBlock from "./objects/calloutBlock";
 import siteSettings from "./siteSettings";
 import philosophy from "./philosophy";
 import world from "./world";
+import worldUnit from "./worldUnit";
 import teamMember from "./teamMember";
 import article from "./article";
 import regularEvent from "./regularEvent";
 import majorEvent from "./majorEvent";
 import loreEntry from "./loreEntry";
 import sessionLog from "./sessionLog";
+import keyFigure from "./keyFigure";
+import notablePlace from "./notablePlace";
+import magicItem from "./magicItem";
+import faction from "./faction";
 import organisation from "./organisation";
 import resource from "./resource";
 import galleryPhoto from "./galleryPhoto";
@@ -21,12 +26,17 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     philosophy,
     // Documents
     world,
+    worldUnit,
     teamMember,
     article,
     regularEvent,
     majorEvent,
     loreEntry,
     sessionLog,
+    keyFigure,
+    notablePlace,
+    magicItem,
+    faction,
     organisation,
     resource,
     galleryPhoto,

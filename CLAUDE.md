@@ -13,6 +13,26 @@ a later phase.
 
 ## Release History
 
+**v0.1.2 — 2026-08-11 (branch `feat/wiki-unit-architecture`, not yet merged).**
+Phase 1.3: wiki unit architecture + stat blocks. Purely additive — see
+"Wiki unit architecture" section below for the full breakdown. Highlights:
+
+- New `worldUnit` document type (world-agnostic; each `world` has a
+  `unitLabel` field for what it calls its subdivisions — Territory/
+  District/Sector/Fragment)
+- 4 new entry-type schemas scoped to a unit: `keyFigure` (with an optional
+  D&D 5e stat block), `notablePlace`, `magicItem` (with optional
+  mechanical stats), `faction`
+- `loreEntry` and `sessionLog` both gained an optional `unit` reference
+  (existing world-level `/wiki/[world]/lore` and `/sessions` pages are
+  unaffected — they don't filter on it)
+- New nested route tree: `/wiki/[world]/[unit]` and 5 index+detail page
+  pairs underneath it (lore, figures, places, items, factions), plus
+  unit-scoped lore/sessions
+- `dmNotes` (private Portable Text) on all 4 new entry types — never
+  selected in any public GROQ query, verified by grep before shipping
+- Worker bundle: ~1.10 MB gzipped (still well under 3 MiB)
+
 **v0.1.1 — 2026-08-11.**
 
 - Team member tiers renamed: `Horsemen`, `DM Council`, `Uncle's League`,
@@ -307,22 +327,23 @@ you need it somewhere new, or extract one if it starts drifting.
 
 ## The four worlds
 
-| Name | Slug | Colour accent |
-|---|---|---|
-| Titan's Gate | `titans-gate` | `#8B2FC9` |
-| Temasek Tales | `temasek-tales` | `#C4692A` |
-| SingaporeZ | `singaporez` | `#2C5F8A` |
-| Shattered Tales | `shattered-tales` | `#6B3FA0` |
+| Name | Slug | Colour accent | Intended `unitLabel` |
+|---|---|---|---|
+| Titan's Gate | `titans-gate` | `#8B2FC9` | Territory |
+| Temasek Tales | `temasek-tales` | `#C4692A` | District [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
+| SingaporeZ | `singaporez` | `#2C5F8A` | Sector [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
+| Shattered Tales | `shattered-tales` | `#6B3FA0` | Fragment [UNVERIFIED — confirm before acting: not yet applied to the live document, see TODO] |
 
 ## Sanity schema summary
 
 All schemas live in `sanity/schemas/`, registered in `sanity/schemas/index.ts`.
 Two singletons (`siteSettings`, `philosophy`) pinned in the Studio structure
-(`sanity.config.ts`) so editors can't create duplicates. Ten document types:
-`world`, `teamMember`, `article`, `regularEvent`, `majorEvent`, `loreEntry`,
-`sessionLog`, `organisation`, `resource`, `galleryPhoto`. One reusable object:
-`calloutBlock` (used inside `article.body`, `loreEntry.body`,
-`sessionLog.fullRecap`).
+(`sanity.config.ts`) so editors can't create duplicates. Fifteen document
+types: `world`, `worldUnit`, `teamMember`, `article`, `regularEvent`,
+`majorEvent`, `loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`,
+`magicItem`, `faction`, `organisation`, `resource`, `galleryPhoto`. One
+reusable object: `calloutBlock` (used inside `article.body`,
+`loreEntry.body`, `sessionLog.fullRecap`).
 
 **To add a new schema:** create the file in `sanity/schemas/`, import and add
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ
@@ -377,8 +398,95 @@ them — added as the obvious missing piece.
 
 ## TODO / Follow-ups
 
-(none outstanding — Phase 1.3's homepage activity feed shipped as the Hero
-"Latest Updates" panel; see HeroRightPanel and Release History above)
+- **`world.unitLabel` seed values not yet applied.** The schema field
+  defaults to `"Territory"` for new documents, but the 4 existing world
+  documents were never patched with their intended values (Temasek Tales
+  → "District", SingaporeZ → "Sector", Shattered Tales → "Fragment";
+  Titan's Gate already matches the default "Territory"). Set these
+  manually in Studio, or write a small one-off patch script — these are
+  still placeholders pending confirmation, not finalized.
+- CSV export per world unit (future phase, not scoped yet)
+- Fight Club 5e XML compendium export per world unit (future phase) — the
+  `keyFigure.statBlock` field names already mirror the XML element names
+  1:1 for this; see "Wiki unit architecture" below
+- (the homepage "Latest Updates" activity feed, previously tracked here as
+  a TODO, shipped as the Hero panel — see HeroRightPanel and Release
+  History above)
+
+## Wiki unit architecture (Phase 1.3)
+
+Each world is subdivided into DM-owned zones — the `worldUnit` document
+type. Deliberately world-agnostic in the schema (never call anything
+"location" in code) — each `world` document has a `unitLabel` string field
+for what that world *calls* its subdivisions in the UI (Territory/
+District/Sector/Fragment are the four current values, see TODO above for
+their seeding status). `worldUnit` has `developmentStatus`
+(draft/in-progress/established/canonical) driving the badge and
+draft-greyed-out treatment on `WorldUnitCard`.
+
+**Four entry-type schemas, each with an optional `unit` reference** (plus
+`world`): `keyFigure` (NPCs — status/threatLevel/faction, optional D&D
+stat block), `notablePlace` (dangerLevel, associated keyFigures/items),
+`magicItem` (rarity, optional mechanical stats, currentHolder/foundAt
+refs), `faction` (members are keyFigure refs). All four also have a
+`dmNotes` Portable Text field — **private, never selected in any public
+GROQ query** (verified by grepping `queries.ts` for `dmNotes` before
+shipping — it only appears in comments explaining the exclusion).
+
+`loreEntry` and `sessionLog` (pre-existing types) both gained an optional
+`unit` reference field, added specifically to make
+`/wiki/[world]/[unit]/lore` and `/sessions` genuinely filterable — the
+existing world-level `/wiki/[world]/lore` and `/sessions` pages/queries
+are untouched and unaffected (they don't filter on `unit` at all, so
+entries with or without a unit set still show up there exactly as before).
+
+### Stat blocks (XML-export-ready, export not built)
+
+`keyFigure.hasStatBlock` (boolean) gates a `keyFigure.statBlock` object
+whose field names are a deliberate 1:1 mirror of the Fight Club 5e XML
+`<monster>` element (`ac`, `hp`, `speed`, `str`/`dex`/`con`/`int`/`wis`/
+`cha` under `abilities`, `cr` → `challengeRating`, etc.) so a future export
+script can map straight across with no field renaming. **No export
+tooling exists yet — only the schema and the `StatBlockCard` display.**
+Note: the Fight Club XML reference format includes `<alignment>`, but the
+session that built this schema didn't include an `alignment` field — a
+real gap between the schema and the export target it's meant to support;
+add it if/when the export is actually built. `magicItem.hasMechanics`
+gates a simpler `magicItem.mechanics` object (type/attunement/effect
+text), displayed via `ItemMechanicsCard` — not XML-mapped, just a
+consistent display pattern.
+
+Both stat display cards (`components/wiki/StatBlockCard.tsx`,
+`ItemMechanicsCard.tsx`) render on a **fixed dark background
+(`#1a1a1a`, not a theme token — always dark regardless of site theme)**,
+using the same fixed `on-forest`/`on-forest-muted` text tokens as the
+Hero/PhilosophyStrip panels (see Design system above), since the card's
+background doesn't flip with the theme.
+
+### URL structure
+
+```
+/wiki/[world]/[unit]                         Unit homepage
+/wiki/[world]/[unit]/lore(/[slug])           Unit-scoped lore
+/wiki/[world]/[unit]/figures(/[slug])        Key Figures (NPCs)
+/wiki/[world]/[unit]/places(/[slug])         Notable Places
+/wiki/[world]/[unit]/items(/[slug])          Magic Items
+/wiki/[world]/[unit]/factions(/[slug])       Factions
+/wiki/[world]/[unit]/sessions(/[slug])       Unit-scoped session logs
+```
+
+`WorldUnitNav` (new, mirrors `WorldNav`'s tab pattern) drives the sub-nav
+on all of these. Unit-scoped lore/sessions use their own card components
+(`UnitLoreCard`, `UnitSessionCard`) rather than the existing `LoreCard`/
+`SessionCard` — those hardcode the two-segment `/wiki/[world]/lore/...`
+href shape, and modifying them to support both URL shapes would have
+touched a component used by the pre-existing world-level pages, which
+this session was scoped to leave alone.
+
+`mapImageUrl` (large/high-res maps hosted externally on R2, as an
+alternative to the Sanity `mapImage` field for images under 500KB) renders
+via a plain `<img>`, not `next/image` — its domain isn't and shouldn't be
+added to `next.config.ts`'s `remotePatterns` just for this.
 
 ## HeroRightPanel
 

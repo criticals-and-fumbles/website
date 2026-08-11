@@ -4,11 +4,18 @@ import {
   WORLD_BY_SLUG_QUERY,
   WORLD_RECENT_LORE_QUERY,
   WORLD_RECENT_SESSIONS_QUERY,
+  WORLD_UNITS_QUERY,
 } from "@/sanity/lib/queries";
-import type { LoreEntryCard, SessionLogCard, World } from "@/sanity/lib/types";
+import type {
+  LoreEntryCard,
+  SessionLogCard,
+  World,
+  WorldUnitCard as WorldUnitCardData,
+} from "@/sanity/lib/types";
 import { WorldNav } from "@/components/wiki/WorldNav";
 import { LoreCard } from "@/components/wiki/LoreCard";
 import { SessionCard } from "@/components/wiki/SessionCard";
+import { WorldUnitCard } from "@/components/wiki/WorldUnitCard";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 
@@ -24,10 +31,13 @@ export default async function WorldHomePage({
 
   if (!world) notFound();
 
-  const [recentLore, recentSessions] = await Promise.all([
+  const [recentLore, recentSessions, units] = await Promise.all([
     client.fetch<LoreEntryCard[]>(WORLD_RECENT_LORE_QUERY, { worldSlug }),
     client.fetch<SessionLogCard[]>(WORLD_RECENT_SESSIONS_QUERY, { worldSlug }),
+    client.fetch<WorldUnitCardData[]>(WORLD_UNITS_QUERY, { worldSlug }),
   ]);
+
+  const unitLabel = world.unitLabel ?? "Territory";
 
   const accent = world.colourAccent ?? "var(--emerald)";
 
@@ -62,6 +72,19 @@ export default async function WorldHomePage({
           <span>{world.sessionCount ?? 0} sessions logged</span>
           <span>{world.loreCount ?? 0} lore entries</span>
         </div>
+
+        {units.length > 0 && (
+          <section className="mb-14">
+            <h2 className="mb-6 font-display text-3xl text-text">
+              Explore {unitLabel}s
+            </h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {units.map((unit) => (
+                <WorldUnitCard key={unit._id} unit={unit} worldSlug={world.slug} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {recentLore.length > 0 && (
           <section className="mb-14">

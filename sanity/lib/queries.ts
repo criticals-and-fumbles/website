@@ -294,6 +294,148 @@ export const SESSION_LOG_BY_SLUG_QUERY = groq`
 `;
 
 /* ---------------------------------------------------------------------- */
+/* World Units (Phase 1.3)                                                 */
+/* ---------------------------------------------------------------------- */
+
+export const WORLD_UNITS_QUERY = groq`
+  *[_type == "worldUnit" && world->slug.current == $worldSlug]
+    | order(developmentStatus desc, name asc) {
+    _id, name, "slug": slug.current,
+    developmentStatus, colourAccent, coverImage,
+    "dmOwner": dmOwner->{ handle, "slug": slug.current }
+  }
+`;
+
+export const WORLD_UNIT_QUERY = groq`
+  *[_type == "worldUnit"
+    && world->slug.current == $worldSlug
+    && slug.current == $unitSlug][0] {
+    _id, name, overview, coverImage, mapImage, mapImageUrl,
+    developmentStatus, colourAccent, pageFooterCTA,
+    "dmOwner": dmOwner->{ handle, "slug": slug.current, avatar },
+    "world": world->{ name, "slug": slug.current, unitLabel }
+  }
+`;
+
+export const WORLD_UNIT_LORE_QUERY = groq`
+  *[_type == "loreEntry" && unit->slug.current == $unitSlug] | order(title asc) {
+    _id, title, "slug": slug.current, category, canonStatus, summary, coverImage
+  }
+`;
+
+export const WORLD_UNIT_SESSIONS_QUERY = groq`
+  *[_type == "sessionLog" && unit->slug.current == $unitSlug] | order(sessionDate desc) {
+    _id, title, "slug": slug.current, sessionNumber, campaignName, sessionDate,
+    tone, synopsis, "dm": dm->{ ${teamMemberRefFields} }
+  }
+`;
+
+export const WORLD_UNIT_LORE_ENTRY_QUERY = groq`
+  *[_type == "loreEntry" && unit->slug.current == $unitSlug && slug.current == $slug][0] {
+    ...,
+    "slug": slug.current,
+    "world": world->{ _id, name, "slug": slug.current, colourAccent },
+    "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
+    "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} }
+  }
+`;
+
+export const WORLD_UNIT_SESSION_QUERY = groq`
+  *[_type == "sessionLog" && unit->slug.current == $unitSlug && slug.current == $slug][0] {
+    ...,
+    "slug": slug.current,
+    "world": world->{ _id, name, "slug": slug.current, colourAccent },
+    "dm": dm->{ ${teamMemberRefFields} },
+    "players": players[]->{ ${teamMemberRefFields} }
+  }
+`;
+
+export const UNIT_KEY_FIGURES_QUERY = groq`
+  *[_type == "keyFigure" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, role, status, threatLevel, portrait, hasStatBlock
+  }
+`;
+
+export const KEY_FIGURE_QUERY = groq`
+  *[_type == "keyFigure" && slug.current == $slug][0] {
+    _id, name, alsoKnownAs, role, status, threatLevel,
+    description, portrait, hasStatBlock, statBlock,
+    "faction": faction->{ name, "slug": slug.current },
+    "world": world->{ name, "slug": slug.current },
+    "unit": unit->{ name, "slug": slug.current }
+  }
+  // dmNotes intentionally excluded — never queried publicly
+`;
+
+export const UNIT_NOTABLE_PLACES_QUERY = groq`
+  *[_type == "notablePlace" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, placeType, dangerLevel
+  }
+`;
+
+export const NOTABLE_PLACE_QUERY = groq`
+  *[_type == "notablePlace" && slug.current == $slug][0] {
+    _id, name, placeType, dangerLevel, description, images,
+    "keyFigures": keyFigures[]->{ _id, name, "slug": slug.current, role, portrait },
+    "items": items[]->{ _id, name, "slug": slug.current },
+    "world": world->{ name, "slug": slug.current },
+    "unit": unit->{ name, "slug": slug.current }
+  }
+  // dmNotes intentionally excluded — never queried publicly
+`;
+
+export const UNIT_MAGIC_ITEMS_QUERY = groq`
+  *[_type == "magicItem" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, rarity, itemArt
+  }
+`;
+
+export const MAGIC_ITEM_QUERY = groq`
+  *[_type == "magicItem" && slug.current == $slug][0] {
+    _id, name, itemType, rarity, lore, itemArt,
+    hasMechanics, mechanics,
+    "currentHolder": currentHolder->{ _id, name, "slug": slug.current },
+    "foundAt": foundAt->{ _id, name, "slug": slug.current },
+    "world": world->{ name, "slug": slug.current },
+    "unit": unit->{ name, "slug": slug.current }
+  }
+  // dmNotes intentionally excluded — never queried publicly
+`;
+
+export const UNIT_FACTIONS_QUERY = groq`
+  *[_type == "faction" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, factionType, banner
+  }
+`;
+
+export const FACTION_QUERY = groq`
+  *[_type == "faction" && slug.current == $slug][0] {
+    _id, name, factionType, description, banner,
+    "members": members[]->{ _id, name, "slug": slug.current, role, portrait },
+    "world": world->{ name, "slug": slug.current },
+    "unit": unit->{ name, "slug": slug.current }
+  }
+  // dmNotes intentionally excluded — never queried publicly
+`;
+
+/**
+ * Unit homepage "recent entries" preview — merges the 4 new entry types
+ * scoped to this unit, newest-created first, capped at 3. loreEntry/
+ * sessionLog are intentionally excluded here (they have their own "Recent
+ * Lore"/"Recent Sessions" precedent at the world level — see
+ * WORLD_RECENT_LORE_QUERY/WORLD_RECENT_SESSIONS_QUERY — and mixing them in
+ * would need extra type-branching for little benefit at unit scale).
+ */
+export const UNIT_RECENT_ENTRIES_QUERY = groq`
+  *[_type in ["keyFigure", "notablePlace", "magicItem", "faction"]
+    && unit->slug.current == $unitSlug]
+    | order(_createdAt desc)[0...3] {
+    _type, _id, name, "slug": slug.current,
+    role, placeType, rarity, factionType
+  }
+`;
+
+/* ---------------------------------------------------------------------- */
 /* Resources                                                                */
 /* ---------------------------------------------------------------------- */
 
