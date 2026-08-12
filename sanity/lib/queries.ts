@@ -314,7 +314,11 @@ export const WORLD_BY_SLUG_QUERY = groq`
   *[_type == "world" && slug.current == $slug][0] {
     ...,
     "slug": slug.current,
-    "dms": dms[]->{ ${teamMemberRefFields} }
+    "dms": dms[]->{ ${teamMemberRefFields} },
+    ${wikiLastEditedBy},
+    "siblingWorlds": *[_type == "world" && _id != ^._id] | order(name asc) [0...4] {
+      _id, name, "slug": slug.current
+    }
   }
 `;
 
