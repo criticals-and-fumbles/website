@@ -104,6 +104,13 @@ export default defineType({
     }),
 
     defineField({
+      name: "lastEditedBy",
+      title: "Last Edited By",
+      type: "reference",
+      to: [{ type: "teamMember" }],
+      description: "Manually set by the editor when they save — not sourced from Sanity's history.",
+    }),
+    defineField({
       name: "dmNotes",
       title: "DM Notes (private)",
       type: "array",

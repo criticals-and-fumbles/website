@@ -209,12 +209,36 @@ export interface WorldUnitCard {
   dmOwner?: TeamMemberRef;
 }
 
+/**
+ * Wiki entry meta panel (Phase 1.5) — "In this unit"/"In this world" list.
+ * See sanity/lib/queries.ts's wikiSiblingEntries GROQ fragment.
+ */
+export interface WikiSiblingEntry {
+  _type: "loreEntry" | "sessionLog" | "keyFigure" | "notablePlace" | "magicItem" | "faction" | "worldUnit";
+  title: string;
+  slug: string;
+  worldSlug?: string;
+  unitSlug?: string;
+}
+
 export interface WorldUnit extends WorldUnitCard {
   overview?: PortableTextBlock[];
   mapImage?: SanityImage;
   mapImageUrl?: string;
   world?: WorldRef & { unitLabel?: string };
   pageFooterCTA?: PortableTextBlock[];
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
+  counts?: {
+    keyFigures: number;
+    notablePlaces: number;
+    magicItems: number;
+    factions: number;
+    loreEntries: number;
+    sessionLogs: number;
+  };
 }
 
 export interface LoreEntryCard {
@@ -235,6 +259,9 @@ export interface LoreEntry extends LoreEntryCard {
   relatedEntries?: LoreEntryCard[];
   lastEditedBy?: TeamMemberRef;
   tags?: string[];
+  _createdAt?: string;
+  _updatedAt?: string;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 export interface SessionLogCard {
@@ -257,6 +284,10 @@ export interface SessionLog extends SessionLogCard {
   loreUpdates?: PortableTextBlock[];
   npcStatusChanges?: PortableTextBlock[];
   nextSession?: string;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 /**
@@ -319,6 +350,10 @@ export interface KeyFigure extends KeyFigureCard {
   faction?: { name: string; slug: string };
   world?: WorldRef;
   unit?: WorldUnitRef;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 export interface NotablePlaceCard {
@@ -336,6 +371,10 @@ export interface NotablePlace extends NotablePlaceCard {
   items?: { _id: string; name: string; slug: string }[];
   world?: WorldRef;
   unit?: WorldUnitRef;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 export interface ItemMechanics {
@@ -361,6 +400,10 @@ export interface MagicItem extends MagicItemCard {
   foundAt?: { _id: string; name: string; slug: string };
   world?: WorldRef;
   unit?: WorldUnitRef;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 export interface FactionCard {
@@ -376,6 +419,10 @@ export interface Faction extends FactionCard {
   members?: KeyFigureCard[];
   world?: WorldRef;
   unit?: WorldUnitRef;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingEntries?: WikiSiblingEntry[];
 }
 
 /** Unit homepage "recent entries" preview item — see UNIT_RECENT_ENTRIES_QUERY. */

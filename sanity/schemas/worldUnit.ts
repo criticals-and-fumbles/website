@@ -91,6 +91,13 @@ export default defineType({
       type: "array",
       of: [{ type: "block" }],
     }),
+    defineField({
+      name: "lastEditedBy",
+      title: "Last Edited By",
+      type: "reference",
+      to: [{ type: "teamMember" }],
+      description: "Manually set by the editor when they save — not sourced from Sanity's history.",
+    }),
   ],
   preview: {
     select: { title: "name", subtitle: "world.name", media: "coverImage" },

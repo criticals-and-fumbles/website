@@ -22,6 +22,65 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.5 — 2026-08-12 (branch `feat/wiki-entry-meta-panel`, not yet
+merged).** Phase 1.5: wiki entry meta panel. Purely additive schema
+change plus one shared component wired into 9 detail/hub pages. Highlights:
+
+- New `lastEditedBy` field (`reference → teamMember`, optional) added to
+  **6** schemas: `keyFigure`, `notablePlace`, `magicItem`, `faction`,
+  `sessionLog`, `worldUnit`. **`loreEntry` deliberately excluded** — it
+  already had a field with this exact name/shape from an earlier session;
+  adding a second `lastEditedBy` definition to the same schema would have
+  been an invalid duplicate field name. Found via a Step 0 investigation
+  before writing any schema, as instructed.
+- Step 0 also found existing Owner-candidate fields for 2 of the 7 types:
+  `worldUnit.dmOwner` and `sessionLog.dm`. `keyFigure`/`notablePlace`/
+  `magicItem`/`faction` have no teamMember reference at all — their meta
+  panel's "Maintained by" row is simply omitted, no new field added (this
+  was explicitly ruled out in the request). `loreEntry` had two candidates
+  (`lastEditedBy`, `submittedBy`) — user chose `lastEditedBy`, which means
+  loreEntry's "Maintained by" and "Last updated by" rows now source the
+  same field/person; a known, accepted redundancy, not a bug.
+- `components/wiki/WikiEntryMetaPanel.tsx` — one shared component, 9 call
+  sites (not 7 — `loreEntry` and `sessionLog` each have both a world-scoped
+  and a unit-scoped detail page, both needed the panel). Right-rail on
+  desktop (`lg:grid-cols-[1fr_240px]`), stacks above the footer below that
+  breakpoint. Small/subtle by design (no big headers) — the wiki entry
+  content stays the dominant visual element, per explicit direction.
+- All 9 detail/hub pages restructured from a single centered
+  `max-w-3xl`/`max-w-6xl` column into a two-column grid to make room for
+  the rail — real layout change, not just filling pre-existing whitespace
+  (that "whitespace" didn't structurally exist before this session; see
+  Lessons learned below for the full flag-before-proceeding writeup).
+- `worldUnit`'s panel shows aggregate counts (keyFigures/notablePlaces/
+  magicItems/factions/loreEntries/sessionLogs scoped to that unit, zero
+  counts filtered out) instead of a single status chip, and "siblings" are
+  other `worldUnit`s in the same world (not sibling entries within
+  itself — that's what the pre-existing "Recent Entries" section already
+  shows; a separate panel section duplicating it would be redundant).
+- `faction`/`loreEntry`/`sessionLog` show no status chip (row #1) — none
+  of the three has a genuine status-ish field; the request's own examples
+  only named `worldUnit.developmentStatus`/`keyFigure.status`+
+  `threatLevel`/`notablePlace.dangerLevel`/`magicItem.rarity`.
+  `loreEntry.canonStatus` exists but wasn't listed — not added, since it's
+  already shown via `CanonBadge` directly on the page.
+- New shared "In this unit"/"In this world" GROQ fragment
+  (`wikiSiblingEntries` in `sanity/lib/queries.ts`) — deliberately named
+  `siblingEntries` in every query, **not** `relatedEntries`, to avoid
+  colliding with `loreEntry`'s pre-existing, manually-curated
+  `relatedEntries` reference array field (a different, editor-curated
+  concept). `lib/wikiLinks.ts`'s `wikiSiblingHref()` builds the correct
+  URL per `_type` — reused by every call site rather than duplicated.
+- First-name-only display (`firstName()` helper in the component, splits
+  on whitespace) applied everywhere this feature shows a person's name,
+  per explicit instruction — never a full name or email. Note: this does
+  **not** retroactively change the pre-existing "Last edited by {full
+  handle}" line already on the loreEntry detail pages (predates this
+  feature, out of scope, left as-is — so loreEntry pages currently show
+  the same editor's name twice, once full and once first-name-only).
+- Bundle size: 2134.59 → 2137.87 KiB gzip (+3.3 KiB) — negligible, no new
+  npm dependencies added, well within the Known Risks budget below.
+
 **Branch/tag status, corrected 2026-08-11 (late).** A prompt this session
 referred to "v0.1.2 tag details" as already recorded/merged — verified via
 `git tag -l` and `git log main`, and that's not accurate: **no `v0.1.2`
@@ -780,6 +839,25 @@ The "live" pulsing dot next to the "Latest Updates" heading is the
 `.live-dot` class + `@keyframes pulse-dot` in `globals.css`.
 
 ## Lessons learned
+
+**"Flag data loss/structural issues before proceeding" caught 3 real
+problems on one feature (wiki entry meta panel, v0.1.5).** Investigating
+before writing schema/component code, rather than implementing a spec
+literally, found: (1) the spec's schema-change list included `loreEntry`,
+which already had a field with the exact name being "added" — would have
+been an invalid duplicate field definition; (2) the spec said "seven call
+sites" for one shared component, but `loreEntry`/`sessionLog` each have
+two detail pages (world-scoped and unit-scoped) — actually nine; (3) the
+spec's premise ("site has room... fills the whitespace") didn't match the
+actual current layout of the affected pages, which were single centered
+columns with no existing sidebar slot — implementing the panel required a
+real two-column restructuring of all 9 pages, not just dropping a
+component into empty space. None of these were visible without reading
+the actual current schema/page files first. General takeaway: when a spec
+describes existing repo state ("X already has Y," "N call sites," "there's
+room for Z"), verify that description against the actual files before
+implementing — specs can be wrong about the codebase's current shape even
+when the *feature intent* is completely clear and correct.
 
 **Enum rename rule — don't skip the migration step.** This project hit the
 consequence of skipping it once already (see v0.1.1 in Release History):
