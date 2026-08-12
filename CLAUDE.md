@@ -748,6 +748,23 @@ half. Two independent sections:
   architecture below), so a static label would be wrong for any world
   that doesn't use "Territory".
 
+  **`article`'s date field, fixed 2026-08-12:** every other type in this
+  feed orders/dates by `_updatedAt` (any edit resurfaces it), but the
+  `articles` subquery used `coalesce(publishedAt, _updatedAt)` — since
+  `publishedAt` is set once and normally never changes, editing an
+  already-published article's title/body afterward did **not** move it in
+  "Latest Updates" or update its shown date, even though `_updatedAt` had
+  genuinely changed. Changed to plain `_updatedAt` so any edit resurfaces
+  the article, matching every other type in this feed. **Deliberately not
+  applied to `ARTICLES_QUERY`/`HOME_LATEST_ARTICLES_QUERY`** (the
+  `/articles` listing page and homepage article strip) — those should stay
+  ordered by publish date, not edit date, so fixing a typo on an old
+  article doesn't reshuffle it to the top of the reading list. Only this
+  feed's "recent activity" framing wants edit-date ordering. `sessionLog`
+  has the identical `coalesce(sessionDate, _updatedAt)` pattern and the
+  same latent issue — not fixed, wasn't asked for, flagged here for when
+  it comes up.
+
 Sourced from `HOME_PINNED_EVENT_QUERY` and `HOME_RSS_FEED_QUERY` in
 `sanity/lib/queries.ts`; typed as `PinnedEvent` / `RssFeedItem` /
 `RssFeedData` in `sanity/lib/types.ts`.
