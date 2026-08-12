@@ -113,10 +113,10 @@ export default async function WorldHomePage({
               createdAt={world._createdAt}
               updatedAt={world._updatedAt}
               lastEditedByHandle={world.lastEditedBy?.handle}
-              siblingsHeading="Other Worlds"
-              siblings={(world.siblingWorlds ?? []).map((w) => ({
-                title: w.name,
-                href: `/wiki/${w.slug}`,
+              siblingsHeading={pluralize(unitLabel)}
+              siblings={units.slice(0, 4).map((unit) => ({
+                title: unit.name,
+                href: `/wiki/${world.slug}/${unit.slug}`,
               }))}
             />
           )}
