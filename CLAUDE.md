@@ -22,6 +22,45 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.10 — 2026-08-12 (branch `feat/code-of-conduct`, merged to
+`main`).** Added a Code of Conduct section to the About page, positioned
+directly after Philosophy and before Activities (`#code-of-conduct`
+anchor, between `#philosophy` and `#activities`). New `codeOfConduct`
+singleton schema (`sanity/schemas/codeOfConduct.ts`) — `introTagline`,
+`tableExpectations` (numbered 1–10, each with a title + bullet points),
+`safetyComfort` (object: heading/introText/tools/points), `diceRules`
+(numbered 11–14, continuing the sequence rather than restarting).
+**Content is sourced verbatim from an existing C&F document, not
+generated** — seeded via `sanity/migrations/seed-code-of-conduct.ts`
+(dry-run-first, same pattern as `patch-unit-labels.ts`), confirmed live
+in Sanity before being wired into the page. Future edits to this content
+should go through Studio, not be rewritten by a future session.
+
+- Singleton enforcement follows this project's actual existing
+  convention (`SINGLETON_TYPES` set + a pinned fixed-ID item in
+  `sanity.config.ts`'s Studio structure, same as `philosophy`/
+  `siteSettings`) — the request that prompted this feature initially
+  proposed a schema-level `__experimental_actions` restriction instead,
+  which isn't how any existing singleton in this project works; caught
+  before writing the schema and built to match the real pattern instead.
+- Component: `components/about/CodeOfConduct.tsx`. Table Expectations and
+  Dice & Rules render as numbered cards (`rounded-lg border-emerald/40
+  bg-surface`, matching `PhilosophyTier.tsx`'s card treatment for visual
+  consistency with the section above). Safety & Comfort is deliberately
+  *not* another numbered card — it's an emerald `border-l-4` callout
+  (matching `CalloutBlock.tsx`'s existing treatment), since it's the most
+  important section: tools render as `Badge` pills, and "Player comfort
+  always outweighs narrative consistency" — which appears twice in the
+  source content (once in the intro line, once as the closing bullet) —
+  has its second occurrence visually promoted to its own emphasized line,
+  since that repetition in the source signals it as the core message.
+- All styling uses existing semantic theme tokens only (`emerald`,
+  `surface`, `text-muted`, etc.) — no new colours, so dark/light
+  correctness follows by construction, same reasoning as other
+  no-screenshot-tool sessions this project.
+- Bundle: 1355.26 → 1355.89 KiB gzip (+0.63 KiB) — negligible, no new
+  dependencies.
+
 **v0.1.9 — 2026-08-12 (branch `feat/og-images-r2`, merged to `main`).**
 Resolved the Known Risks → Bundle size item that had been open since
 Phase 1.4. Full architecture in "OG image generation (v0.1.9)" below —
@@ -616,13 +655,16 @@ documents had `unitLabel` genuinely unset until this ran.
 ## Sanity schema summary
 
 All schemas live in `sanity/schemas/`, registered in `sanity/schemas/index.ts`.
-Two singletons (`siteSettings`, `philosophy`) pinned in the Studio structure
-(`sanity.config.ts`) so editors can't create duplicates. Fifteen document
-types: `world`, `worldUnit`, `teamMember`, `article`, `regularEvent`,
-`majorEvent`, `loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`,
-`magicItem`, `faction`, `organisation`, `resource`, `galleryPhoto`. One
-reusable object: `calloutBlock` (used inside `article.body`,
-`loreEntry.body`, `sessionLog.fullRecap`).
+Three singletons (`siteSettings`, `philosophy`, `codeOfConduct`) pinned in
+the Studio structure (`sanity.config.ts`'s `SINGLETON_TYPES` set + a fixed-ID
+list item each) so editors can't create duplicates — this is the only
+singleton mechanism used in this project; none of the three schemas
+themselves set `__experimental_actions`. Fifteen document types: `world`,
+`worldUnit`, `teamMember`, `article`, `regularEvent`, `majorEvent`,
+`loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`, `magicItem`,
+`faction`, `organisation`, `resource`, `galleryPhoto`. One reusable object:
+`calloutBlock` (used inside `article.body`, `loreEntry.body`,
+`sessionLog.fullRecap`).
 
 **To add a new schema:** create the file in `sanity/schemas/`, import and add
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ
