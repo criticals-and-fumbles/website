@@ -102,6 +102,13 @@ export default defineType({
       type: "number",
       initialValue: 0,
     }),
+    defineField({
+      name: "lastEditedBy",
+      title: "Last Edited By",
+      type: "reference",
+      to: [{ type: "teamMember" }],
+      description: "Manually set by the editor when they save — not sourced from Sanity's history.",
+    }),
   ],
   preview: {
     select: { title: "name", subtitle: "tagline", media: "coverImage" },

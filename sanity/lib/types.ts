@@ -191,6 +191,10 @@ export interface World {
   dms?: TeamMemberRef[];
   /** What this world calls its worldUnit subdivisions, e.g. "Territory". */
   unitLabel?: string;
+  _createdAt?: string;
+  _updatedAt?: string;
+  lastEditedBy?: TeamMemberRef;
+  siblingWorlds?: { _id: string; name: string; slug: string }[];
 }
 
 export interface WorldUnitRef {

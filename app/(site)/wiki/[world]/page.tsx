@@ -19,10 +19,20 @@ import { WorldNav } from "@/components/wiki/WorldNav";
 import { LoreCard } from "@/components/wiki/LoreCard";
 import { SessionCard } from "@/components/wiki/SessionCard";
 import { WorldUnitCard } from "@/components/wiki/WorldUnitCard";
+import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
+
+const STATUS_BADGE: Record<
+  string,
+  { label: string; variant: "amber" | "emerald" | "magenta" | "muted" } | undefined
+> = {
+  active: { label: "Active", variant: "emerald" },
+  hiatus: { label: "Hiatus", variant: "amber" },
+  concluded: { label: "Concluded", variant: "muted" },
+};
 
 /** "Territory" → "Territories", "City" → "Cities", "District" →
  * "Districts". Handles the common consonant+y case; not a full
@@ -86,13 +96,32 @@ export default async function WorldHomePage({
               {world.dms.map((d) => d.handle).join(", ")}
             </p>
           )}
-          {world.description && (
-            <div className="mt-6 max-w-2xl">
-              <Renderer value={world.description} />
-            </div>
-          )}
         </div>
       </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px] lg:items-start">
+          <div>{world.description && <Renderer value={world.description} />}</div>
+
+          {world._createdAt && world._updatedAt && (
+            <WikiEntryMetaPanel
+              title={world.name}
+              image={world.coverImage}
+              typeLabel="World"
+              statusChip={world.status ? STATUS_BADGE[world.status] : undefined}
+              ownerHandle={world.dms?.[0]?.handle}
+              createdAt={world._createdAt}
+              updatedAt={world._updatedAt}
+              lastEditedByHandle={world.lastEditedBy?.handle}
+              siblingsHeading="Other Worlds"
+              siblings={(world.siblingWorlds ?? []).map((w) => ({
+                title: w.name,
+                href: `/wiki/${w.slug}`,
+              }))}
+            />
+          )}
+        </div>
+      </div>
 
       <div className="mx-auto max-w-6xl px-4 md:px-8">
         <WorldNav worldSlug={world.slug} />
