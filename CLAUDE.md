@@ -22,6 +22,20 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.11 — 2026-08-12 (branch `feat/unit-infobox-browse-links`, merged
+to `main`).** Small follow-up to the wiki infobox work: added a "Browse"
+section to the worldUnit hub page's infobox (Lore / Key Figures /
+Notable Places / Magic Items / Factions), always shown regardless of
+whether each category has content yet — the existing `counts` display
+only shows non-zero categories, which meant a freshly-created unit like
+Stonemount showed nothing at all to navigate by. New optional
+`categoryLinks` prop on `WikiEntryMetaPanel` (worldUnit-only; no other
+entry type passes it), rendered between the info rows and the "In this
+world" siblings list. `WorldUnitNav` already links to the same 5 pages
+lower on the page — this doesn't replace that nav, just surfaces the
+same links higher up, in the infobox. Bundle: 1355.89 → 1356.35 KiB gzip
+(+0.46 KiB).
+
 **v0.1.10 — 2026-08-12 (branch `feat/code-of-conduct`, merged to
 `main`).** Added a Code of Conduct section to the About page, positioned
 directly after Philosophy and before Activities (`#code-of-conduct`
