@@ -115,6 +115,13 @@ export default async function WorldUnitPage({
               createdAt={unit._createdAt}
               updatedAt={unit._updatedAt}
               lastEditedByHandle={unit.lastEditedBy?.handle}
+              categoryLinks={[
+                { label: "Lore", href: `/wiki/${worldSlug}/${unitSlug}/lore` },
+                { label: "Key Figures", href: `/wiki/${worldSlug}/${unitSlug}/figures` },
+                { label: "Notable Places", href: `/wiki/${worldSlug}/${unitSlug}/places` },
+                { label: "Magic Items", href: `/wiki/${worldSlug}/${unitSlug}/items` },
+                { label: "Factions", href: `/wiki/${worldSlug}/${unitSlug}/factions` },
+              ]}
               siblingsHeading="In this world"
               siblings={(unit.siblingEntries ?? []).map((s) => ({
                 title: s.title,

@@ -42,6 +42,12 @@ export interface WikiEntryMetaPanelProps {
   updatedAt: string;
   /** From the new lastEditedBy field — omit if not set on the document. */
   lastEditedByHandle?: string;
+  /** worldUnit only — quick links to this unit's content categories
+   * (Lore, Key Figures, Notable Places, Magic Items, Factions), always
+   * shown regardless of whether each category has any entries yet —
+   * unlike `counts`, which only shows categories that already have
+   * content. Omit entirely for non-worldUnit entry types. */
+  categoryLinks?: { label: string; href: string }[];
   siblingsHeading: string;
   siblings: { title: string; href: string }[];
 }
@@ -58,6 +64,7 @@ export function WikiEntryMetaPanel({
   createdAt,
   updatedAt,
   lastEditedByHandle,
+  categoryLinks,
   siblingsHeading,
   siblings,
 }: WikiEntryMetaPanelProps) {
@@ -127,6 +134,26 @@ export function WikiEntryMetaPanel({
           </div>
         )}
       </dl>
+
+      {categoryLinks && categoryLinks.length > 0 && (
+        <div className="flex flex-col gap-2 border-b border-border px-4 py-3">
+          <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+            Browse
+          </span>
+          <ul className="flex flex-col gap-1.5">
+            {categoryLinks.map((c) => (
+              <li key={c.href}>
+                <Link
+                  href={c.href}
+                  className="text-text-muted transition-colors hover:text-emerald"
+                >
+                  {c.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {siblings.length > 0 && (
         <div className="flex flex-col gap-2 px-4 py-3">
