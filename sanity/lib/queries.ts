@@ -68,10 +68,10 @@ export const HOME_PINNED_EVENT_QUERY = groq`
 export const HOME_RSS_FEED_QUERY = groq`{
   "articles": *[_type == "article"
     && status == "published"
-  ] | order(coalesce(publishedAt, _updatedAt) desc)[0...5] {
+  ] | order(_updatedAt desc)[0...5] {
     _type, _id, title,
     "slug": slug.current,
-    "date": coalesce(publishedAt, _updatedAt),
+    "date": _updatedAt,
     category,
     "author": author->handle
   },
