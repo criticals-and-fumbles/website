@@ -4,7 +4,7 @@ import { visionTool } from "@sanity/vision";
 import { schema } from "./sanity/schemas";
 import { StudioLogo } from "./components/studio/StudioLogo";
 
-const SINGLETON_TYPES = new Set(["siteSettings", "philosophy"]);
+const SINGLETON_TYPES = new Set(["siteSettings", "philosophy", "codeOfConduct"]);
 
 // Hardcoded rather than read from process.env: this file's only consumer
 // is now the standalone `sanity` CLI (sanity dev / sanity deploy), which
@@ -59,6 +59,14 @@ export default defineConfig({
               .id("philosophy")
               .child(
                 S.document().schemaType("philosophy").documentId("philosophy"),
+              ),
+            S.listItem()
+              .title("Code of Conduct")
+              .id("codeOfConduct")
+              .child(
+                S.document()
+                  .schemaType("codeOfConduct")
+                  .documentId("codeOfConduct"),
               ),
             S.divider(),
             ...S.documentTypeListItems().filter(

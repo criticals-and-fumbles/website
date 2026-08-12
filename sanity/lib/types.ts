@@ -525,3 +525,23 @@ export interface Philosophy {
   behaviours?: PhilosophyBehaviour[];
   outcomes?: PhilosophyBehaviour[];
 }
+
+export interface NumberedRule {
+  number: number;
+  title: string;
+  points?: string[];
+}
+
+export interface SafetyComfort {
+  heading?: string;
+  introText?: string;
+  tools?: string[];
+  points?: string[];
+}
+
+export interface CodeOfConduct {
+  introTagline?: string;
+  tableExpectations?: NumberedRule[];
+  safetyComfort?: SafetyComfort;
+  diceRules?: NumberedRule[];
+}
