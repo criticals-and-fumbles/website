@@ -83,7 +83,18 @@ export interface PinnedEvent {
  * `_type`. See HOME_RSS_FEED_QUERY.
  */
 export interface RssFeedItem {
-  _type: "article" | "majorEvent" | "regularEvent" | "loreEntry" | "sessionLog" | "teamMember";
+  _type:
+    | "article"
+    | "majorEvent"
+    | "regularEvent"
+    | "loreEntry"
+    | "sessionLog"
+    | "teamMember"
+    | "worldUnit"
+    | "keyFigure"
+    | "notablePlace"
+    | "magicItem"
+    | "faction";
   _id: string;
   title: string;
   slug: string;
@@ -92,8 +103,17 @@ export interface RssFeedItem {
   author?: string;
   subtitle?: string;
   worldSlug?: string;
+  unitSlug?: string;
   campaignName?: string;
   roles?: string[];
+  developmentStatus?: string;
+  /** World's unitLabel (e.g. "Territory"/"District") — worldUnit items
+   * only; used instead of a hardcoded label since it varies per world. */
+  unitLabel?: string;
+  role?: string;
+  placeType?: string;
+  rarity?: string;
+  factionType?: string;
 }
 
 export interface RssFeedData {
@@ -102,6 +122,11 @@ export interface RssFeedData {
   lore: RssFeedItem[];
   sessions: RssFeedItem[];
   team: RssFeedItem[];
+  worldUnits: RssFeedItem[];
+  keyFigures: RssFeedItem[];
+  notablePlaces: RssFeedItem[];
+  magicItems: RssFeedItem[];
+  factions: RssFeedItem[];
 }
 
 export interface MajorEvent extends MajorEventCardData {

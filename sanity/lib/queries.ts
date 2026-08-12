@@ -107,6 +107,56 @@ export const HOME_RSS_FEED_QUERY = groq`{
     "slug": slug.current,
     "date": _updatedAt,
     roles
+  },
+  "worldUnits": *[_type == "worldUnit"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": name,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "worldSlug": world->slug.current,
+    "unitLabel": world->unitLabel,
+    developmentStatus
+  },
+  "keyFigures": *[_type == "keyFigure"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": name,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "worldSlug": world->slug.current,
+    "unitSlug": unit->slug.current,
+    role
+  },
+  "notablePlaces": *[_type == "notablePlace"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": name,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "worldSlug": world->slug.current,
+    "unitSlug": unit->slug.current,
+    placeType
+  },
+  "magicItems": *[_type == "magicItem"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": name,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "worldSlug": world->slug.current,
+    "unitSlug": unit->slug.current,
+    rarity
+  },
+  "factions": *[_type == "faction"
+  ] | order(_updatedAt desc)[0...5] {
+    _type, _id,
+    "title": name,
+    "slug": slug.current,
+    "date": _updatedAt,
+    "worldSlug": world->slug.current,
+    "unitSlug": unit->slug.current,
+    factionType
   }
 }`;
 

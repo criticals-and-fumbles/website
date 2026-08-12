@@ -57,6 +57,11 @@ export default async function HomePage() {
     ...rssFeedRaw.lore,
     ...rssFeedRaw.sessions,
     ...rssFeedRaw.team,
+    ...rssFeedRaw.worldUnits,
+    ...rssFeedRaw.keyFigures,
+    ...rssFeedRaw.notablePlaces,
+    ...rssFeedRaw.magicItems,
+    ...rssFeedRaw.factions,
   ]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);

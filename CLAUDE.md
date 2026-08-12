@@ -553,10 +553,20 @@ Each world is subdivided into DM-owned zones — the `worldUnit` document
 type. Deliberately world-agnostic in the schema (never call anything
 "location" in code) — each `world` document has a `unitLabel` string field
 for what that world *calls* its subdivisions in the UI (Territory/
-District/Sector/Fragment are the four current values, see TODO above for
-their seeding status). `worldUnit` has `developmentStatus`
+District/Sector/Fragment are the four current values — free text,
+editor-renamable in Studio at any time; see "The four worlds" table above
+for current values). `worldUnit` has `developmentStatus`
 (draft/in-progress/established/canonical) driving the badge and
 draft-greyed-out treatment on `WorldUnitCard`.
+
+**`unitLabel` is pluralized for the "Explore ___" heading** on the world
+page (`app/(site)/wiki/[world]/page.tsx`) via a small local `pluralize()`
+helper (consonant+y → "-ies", e.g. "Territory" → "Territories", "City" →
+"Cities"; otherwise appends "s"). Bug fixed 2026-08-12: this used to be a
+naive `{unitLabel}s` template producing "Territorys" — found when an
+editor tested renaming Titan's Gate's `unitLabel` to "Kingdom" and back.
+Not a full pluralization library — covers realistic label values, not
+every irregular English plural.
 
 **Four entry-type schemas, each with an optional `unit` reference** (plus
 `world`): `keyFigure` (NPCs — status/threatLevel/faction, optional D&D
@@ -712,10 +722,31 @@ half. Two independent sections:
 - **"Latest Updates" feed** — a flat, pre-merged, pre-sorted
   `RssFeedItem[]` (merging + sorting happens in `app/(site)/page.tsx`, not
   inside the component) spanning `article`, `majorEvent`, `regularEvent`,
-  `loreEntry`, `sessionLog`, `teamMember`, newest `date` first, capped at 5.
+  `loreEntry`, `sessionLog`, `teamMember`, `worldUnit`, `keyFigure`,
+  `notablePlace`, `magicItem`, `faction`, newest `date` first, capped at 5.
   Items past index 2 are hidden below the `md` breakpoint (3 items on
   mobile, 5 from tablet up) via a per-item `hidden md:flex` class, not a
   separate query/prop.
+
+  **Bug fixed 2026-08-12:** the 5 Phase 1.3 wiki types (`worldUnit` +
+  the 4 unit-scoped entry types) were never added to `HOME_RSS_FEED_QUERY`
+  when Phase 1.3 shipped — that query predates them, from the earlier
+  Phase 1.1 session. Editing/creating a `worldUnit` (or any entry type)
+  silently never appeared in "Latest Updates". Fixed by adding a subquery
+  + `typeConfig`/`itemHref` case for each. If a 6th wiki content type is
+  ever added, remember to wire it into **all** of: the `HOME_RSS_FEED_QUERY`
+  subquery, `RssFeedItem`'s `_type` union and `RssFeedData` in
+  `sanity/lib/types.ts`, the merge array in `app/(site)/page.tsx`, and
+  `typeConfig`/`itemHref` in `HeroRightPanel.tsx` — missing any one of
+  these fails silently (item just doesn't show, or throws if `typeConfig`
+  lookup is missing since `RssItem` doesn't guard against an unknown
+  `_type`).
+
+  `worldUnit` items show the world's actual `unitLabel` (fetched per-item
+  as `"unitLabel": world->unitLabel`) as their badge text, not a hardcoded
+  "Territory" — labels are per-world and editor-renamable (see Wiki unit
+  architecture below), so a static label would be wrong for any world
+  that doesn't use "Territory".
 
 Sourced from `HOME_PINNED_EVENT_QUERY` and `HOME_RSS_FEED_QUERY` in
 `sanity/lib/queries.ts`; typed as `PinnedEvent` / `RssFeedItem` /

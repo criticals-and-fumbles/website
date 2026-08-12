@@ -24,6 +24,14 @@ import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
 
+/** "Territory" → "Territories", "City" → "Cities", "District" →
+ * "Districts". Handles the common consonant+y case; not a full
+ * pluralization library, but covers realistic unitLabel values. */
+function pluralize(label: string): string {
+  if (/[^aeiou]y$/i.test(label)) return `${label.slice(0, -1)}ies`;
+  return `${label}s`;
+}
+
 export async function generateMetadata({
   params,
 }: PageProps<"/wiki/[world]">): Promise<Metadata> {
@@ -99,7 +107,7 @@ export default async function WorldHomePage({
         {units.length > 0 && (
           <section className="mb-14">
             <h2 className="mb-6 font-display text-3xl text-text">
-              Explore {unitLabel}s
+              Explore {pluralize(unitLabel)}
             </h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {units.map((unit) => (
