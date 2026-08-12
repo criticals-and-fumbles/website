@@ -65,6 +65,14 @@ export default defineType({
         }),
     }),
     defineField({
+      name: "unitLabel",
+      title: "Unit Label",
+      description:
+        "What this world calls its subdivisions (e.g. Territory, District, Sector, Fragment)",
+      type: "string",
+      initialValue: "Territory",
+    }),
+    defineField({
       name: "coverImage",
       title: "Cover Image",
       type: "image",

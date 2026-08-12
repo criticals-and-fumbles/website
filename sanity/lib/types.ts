@@ -83,7 +83,18 @@ export interface PinnedEvent {
  * `_type`. See HOME_RSS_FEED_QUERY.
  */
 export interface RssFeedItem {
-  _type: "article" | "majorEvent" | "regularEvent" | "loreEntry" | "sessionLog" | "teamMember";
+  _type:
+    | "article"
+    | "majorEvent"
+    | "regularEvent"
+    | "loreEntry"
+    | "sessionLog"
+    | "teamMember"
+    | "worldUnit"
+    | "keyFigure"
+    | "notablePlace"
+    | "magicItem"
+    | "faction";
   _id: string;
   title: string;
   slug: string;
@@ -92,8 +103,17 @@ export interface RssFeedItem {
   author?: string;
   subtitle?: string;
   worldSlug?: string;
+  unitSlug?: string;
   campaignName?: string;
   roles?: string[];
+  developmentStatus?: string;
+  /** World's unitLabel (e.g. "Territory"/"District") — worldUnit items
+   * only; used instead of a hardcoded label since it varies per world. */
+  unitLabel?: string;
+  role?: string;
+  placeType?: string;
+  rarity?: string;
+  factionType?: string;
 }
 
 export interface RssFeedData {
@@ -102,6 +122,11 @@ export interface RssFeedData {
   lore: RssFeedItem[];
   sessions: RssFeedItem[];
   team: RssFeedItem[];
+  worldUnits: RssFeedItem[];
+  keyFigures: RssFeedItem[];
+  notablePlaces: RssFeedItem[];
+  magicItems: RssFeedItem[];
+  factions: RssFeedItem[];
 }
 
 export interface MajorEvent extends MajorEventCardData {
@@ -164,6 +189,32 @@ export interface World {
   sessionCount?: number;
   loreCount?: number;
   dms?: TeamMemberRef[];
+  /** What this world calls its worldUnit subdivisions, e.g. "Territory". */
+  unitLabel?: string;
+}
+
+export interface WorldUnitRef {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+export interface WorldUnitCard {
+  _id: string;
+  name: string;
+  slug: string;
+  developmentStatus?: "draft" | "in-progress" | "established" | "canonical";
+  colourAccent?: string;
+  coverImage?: SanityImage;
+  dmOwner?: TeamMemberRef;
+}
+
+export interface WorldUnit extends WorldUnitCard {
+  overview?: PortableTextBlock[];
+  mapImage?: SanityImage;
+  mapImageUrl?: string;
+  world?: WorldRef & { unitLabel?: string };
+  pageFooterCTA?: PortableTextBlock[];
 }
 
 export interface LoreEntryCard {
@@ -206,6 +257,137 @@ export interface SessionLog extends SessionLogCard {
   loreUpdates?: PortableTextBlock[];
   npcStatusChanges?: PortableTextBlock[];
   nextSession?: string;
+}
+
+/**
+ * Field names deliberately mirror the Fight Club 5e XML `<monster>` element
+ * (ac, hp, str/dex/con/int/wis/cha, cr, etc.) so a future export script can
+ * map this object straight across. No export tooling exists yet — see
+ * CLAUDE.md § Stat block XML mapping.
+ */
+export interface StatBlockNamedText {
+  name?: string;
+  text?: string;
+}
+
+export interface StatBlock {
+  size?: "Tiny" | "Small" | "Medium" | "Large" | "Huge" | "Gargantuan";
+  creatureType?: string;
+  alignment?: string;
+  ac?: string;
+  hp?: string;
+  speed?: string;
+  abilities?: {
+    str?: number;
+    dex?: number;
+    con?: number;
+    int?: number;
+    wis?: number;
+    cha?: number;
+  };
+  savingThrows?: string;
+  skills?: string;
+  resistances?: string;
+  immunities?: string;
+  vulnerabilities?: string;
+  conditionImmunities?: string;
+  senses?: string;
+  passivePerception?: number;
+  languages?: string;
+  challengeRating?: string;
+  traits?: StatBlockNamedText[];
+  actions?: StatBlockNamedText[];
+  legendaryActions?: StatBlockNamedText[];
+  reactions?: StatBlockNamedText[];
+}
+
+export interface KeyFigureCard {
+  _id: string;
+  name: string;
+  slug: string;
+  role?: string;
+  status?: "alive" | "dead" | "unknown" | "missing";
+  threatLevel?: "friendly" | "neutral" | "cautious" | "dangerous" | "deadly";
+  portrait?: SanityImage;
+  hasStatBlock?: boolean;
+}
+
+export interface KeyFigure extends KeyFigureCard {
+  alsoKnownAs?: string;
+  description?: PortableTextBlock[];
+  statBlock?: StatBlock;
+  faction?: { name: string; slug: string };
+  world?: WorldRef;
+  unit?: WorldUnitRef;
+}
+
+export interface NotablePlaceCard {
+  _id: string;
+  name: string;
+  slug: string;
+  placeType?: string;
+  dangerLevel?: "safe" | "low-risk" | "dangerous" | "deadly";
+}
+
+export interface NotablePlace extends NotablePlaceCard {
+  description?: PortableTextBlock[];
+  images?: SanityImage[];
+  keyFigures?: KeyFigureCard[];
+  items?: { _id: string; name: string; slug: string }[];
+  world?: WorldRef;
+  unit?: WorldUnitRef;
+}
+
+export interface ItemMechanics {
+  itemTypeDetail?: string;
+  attunement?: string;
+  text?: string;
+}
+
+export interface MagicItemCard {
+  _id: string;
+  name: string;
+  slug: string;
+  rarity?: "common" | "uncommon" | "rare" | "very-rare" | "legendary" | "artifact";
+  itemArt?: SanityImage;
+}
+
+export interface MagicItem extends MagicItemCard {
+  itemType?: string;
+  lore?: PortableTextBlock[];
+  hasMechanics?: boolean;
+  mechanics?: ItemMechanics;
+  currentHolder?: { _id: string; name: string; slug: string };
+  foundAt?: { _id: string; name: string; slug: string };
+  world?: WorldRef;
+  unit?: WorldUnitRef;
+}
+
+export interface FactionCard {
+  _id: string;
+  name: string;
+  slug: string;
+  factionType?: string;
+  banner?: SanityImage;
+}
+
+export interface Faction extends FactionCard {
+  description?: PortableTextBlock[];
+  members?: KeyFigureCard[];
+  world?: WorldRef;
+  unit?: WorldUnitRef;
+}
+
+/** Unit homepage "recent entries" preview item — see UNIT_RECENT_ENTRIES_QUERY. */
+export interface RecentUnitEntry {
+  _type: "keyFigure" | "notablePlace" | "magicItem" | "faction";
+  _id: string;
+  name: string;
+  slug: string;
+  role?: string;
+  placeType?: string;
+  rarity?: string;
+  factionType?: string;
 }
 
 export interface Resource {

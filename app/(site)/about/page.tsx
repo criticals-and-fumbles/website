@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   ORGANISATIONS_QUERY,
@@ -5,6 +6,7 @@ import {
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import type { Organisation, Philosophy, SiteSettings } from "@/sanity/lib/types";
+import { buildMetadata } from "@/lib/metadata";
 import { Timeline } from "@/components/about/Timeline";
 import { PillarsTier, BehavioursTier } from "@/components/about/PhilosophyTier";
 import { DivisionCard } from "@/components/about/DivisionCard";
@@ -12,6 +14,14 @@ import { Footer } from "@/components/layout/Footer";
 import { LinkButton } from "@/components/ui/Button";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "About Us | Criticals and Fumbles Singapore",
+  description:
+    "Learn about Singapore's tabletop RPG community — our history, values, " +
+    "and how to get involved in D&D and TTRPG games near you.",
+  path: "/about",
+});
 
 export default async function AboutPage() {
   const [settings, philosophy, organisations] = await Promise.all([

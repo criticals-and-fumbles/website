@@ -42,9 +42,19 @@ export default defineType({
               title: "Platform",
               type: "string",
               options: {
-                list: ["Twitter", "Instagram", "YouTube", "Twitch", "TikTok"].map(
-                  (p) => ({ title: p, value: p }),
-                ),
+                // "Facebook" added 2026-08-11 (Phase 1.4) — additive only,
+                // per the schema-safety rules for this session: existing
+                // values untouched, nothing renamed/removed. Discord isn't
+                // added here — it already has its own dedicated
+                // discordUrl/discordServerName fields on this document.
+                list: [
+                  "Twitter",
+                  "Instagram",
+                  "YouTube",
+                  "Twitch",
+                  "TikTok",
+                  "Facebook",
+                ].map((p) => ({ title: p, value: p })),
               },
             }),
             defineField({ name: "url", title: "URL", type: "url" }),

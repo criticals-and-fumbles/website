@@ -7,11 +7,116 @@ to Cloudflare as a Worker via `@opennextjs/cloudflare`, with Sanity Studio
 hosted separately. No newsletter/email/payment integrations yet — those are
 a later phase.
 
+**Site purpose — read this before making priority calls.** cnf.sg is a
+recruitment funnel, not a commerce or content platform. Flow: Google search
+→ site (events/homepage) → Discord enquiry. Wiki/Team/long-form content
+exist for member retention *after* joining, not acquisition. Every
+high-visibility CTA should point to Discord (the live URL lives in
+`siteSettings.discordUrl`, fetched via Sanity — never hardcode the Discord
+invite string in a component) unless there's a specific reason otherwise.
+No e-commerce or payment features planned short-term.
+
 **Live URLs:**
 - Site (production): https://cnf-sg.criticalsandfumbles.workers.dev
 - Studio: https://cnf-website.sanity.studio
 
 ## Release History
+
+**Branch/tag status, corrected 2026-08-11 (late).** A prompt this session
+referred to "v0.1.2 tag details" as already recorded/merged — verified via
+`git tag -l` and `git log main`, and that's not accurate: **no `v0.1.2`
+tag exists** (only `v0.1-pre-mvr` and `v0.1.1` are real tags), and
+**neither `feat/wiki-unit-architecture` nor `feat/seo-and-discord-funnel`
+has been merged to `main`** — `main`'s tip is still `f457840` (the
+pre-Phase-1.3 CLAUDE.md accuracy fix). The `unitLabel` patches and
+`statBlock.alignment` field described below are real and committed, but
+only on those two still-open, unmerged, stacked branches. Don't treat the
+"v0.1.2"/"v0.1.3" labels in this doc as git tags — they're informal
+version labels for this doc's own bookkeeping, not `git tag` output.
+
+**v0.1.4 — 2026-08-11 (branch `feat/hero-eyebrow`, not yet merged; stacked
+on `feat/seo-and-discord-funnel`, itself stacked on
+`feat/wiki-unit-architecture`).** Small isolated addition: an eyebrow line
+above the "Criticals & Fumbles" title in `components/home/Hero.tsx` — a
+16px outline d20 icon (`var(--color-emerald)`) + "Singapore's Tabletop RPG
+Community" (Space Mono, uppercase, letter-spaced,
+`var(--color-text-muted)`). Wrapped together with the `<h1>` in its own
+`gap-2` flex column (tighter than the hero's outer `gap-6` rhythm) so the
+eyebrow sits close to the title specifically, not spaced like the other
+hero elements. Nothing else in Hero.tsx touched. Uses only theme-aware
+semantic classes (`text-emerald`/`text-text-muted`), so dark/light
+correctness follows from the existing CSS variable system by construction
+— confirmed the markup renders correctly via dev server output, but no
+actual screenshot was taken (no browser/screenshot tool available this
+session).
+
+**v0.1.3 — 2026-08-11 (branch `feat/seo-and-discord-funnel`, not yet
+merged).** Phase 1.4: SEO + Discord funnel. See "SEO & Discord funnel"
+section below for the full breakdown. Highlights:
+
+- `lib/metadata.ts`'s `buildMetadata()` helper — every dynamic page now
+  exports `generateMetadata` using it (events, articles, team, wiki world/
+  lore/session detail); static pages (home, events index, about) export a
+  plain `metadata` const with it instead
+- Dynamic Open Graph images via `next/og`'s `ImageResponse` — a branded
+  site-wide fallback (`/og-default`) and a per-event generated image
+  (`opengraph-image.tsx`, prefers the event's real splash/cover photo when
+  set). **No static `/public/og-default.png` exists** — deviated from the
+  literal spec since there was no image-generation tool available; used
+  the spec's own sanctioned ImageResponse fallback approach instead
+- Schema.org structured data: `EventStructuredData`, `ArticleStructuredData`,
+  site-wide `OrganizationStructuredData` (in the root layout, `sameAs`
+  populated live from `siteSettings.socialLinks` + `discordUrl`)
+- `app/sitemap.ts` + `app/robots.ts`
+- `siteSettings.socialLinks` platform enum gained `"Facebook"` (additive
+  — existing `Twitter/Instagram/YouTube/Twitch/TikTok` values untouched);
+  Facebook URL seeded via a dry-run-first patch script. **Discord is
+  deliberately not added to `socialLinks`** — it already has its own
+  `discordUrl`/`discordServerName` fields, which predate this session and
+  were reused instead of duplicating
+  - Facebook: `https://www.facebook.com/criticalsandfumbles/`
+  - Instagram was already seeded (`https://www.instagram.com/criticalsandfumbles/`)
+- Footer's contact-email link removed from the rendered page —
+  **`siteSettings.contactEmail`'s schema field and stored value are
+  untouched**, display-only change (see Lessons learned re: schema safety)
+- Discord CTAs added: homepage Hero (secondary button next to "Explore the
+  Archive"), events index page (CTA band above the footer), event detail
+  pages ("Questions? Ask us on Discord" — beside Register if it has a URL,
+  in its place if not). Footer already had a prominent Discord button from
+  an earlier session — left as-is, it already satisfied this requirement
+- Facebook/Instagram/Discord icons added to desktop nav and the mobile
+  drawer (`components/icons/SocialIcons.tsx`, shared — not duplicated
+  between `Nav.tsx` and `Hero.tsx`)
+- **Part B (share buttons) explicitly skipped this session** — the spec
+  itself deprioritized it ("build last or skip if time-constrained"; the
+  session prioritized Parts A/C/D/E/F, all of which shipped)
+- Worker bundle: jumped from ~1.10 MB to **~2.08 MB gzipped** — `next/og`'s
+  `ImageResponse` (WASM-based image rendering) is the dominant cause. Still
+  under the 3 MiB free-tier limit but headroom is now ~0.9 MB, not ~1.9 MB.
+  Flagged to and confirmed by the user before proceeding — watch this if
+  adding more bundle weight in future sessions
+
+**v0.1.2 — 2026-08-11 (branch `feat/wiki-unit-architecture`, not yet merged).**
+Phase 1.3: wiki unit architecture + stat blocks. Purely additive — see
+"Wiki unit architecture" section below for the full breakdown. Highlights:
+
+- New `worldUnit` document type (world-agnostic; each `world` has a
+  `unitLabel` field for what it calls its subdivisions — Territory/
+  District/Sector/Fragment)
+- 4 new entry-type schemas scoped to a unit: `keyFigure` (with an optional
+  D&D 5e stat block), `notablePlace`, `magicItem` (with optional
+  mechanical stats), `faction`
+- `loreEntry` and `sessionLog` both gained an optional `unit` reference
+  (existing world-level `/wiki/[world]/lore` and `/sessions` pages are
+  unaffected — they don't filter on it)
+- New nested route tree: `/wiki/[world]/[unit]` and 5 index+detail page
+  pairs underneath it (lore, figures, places, items, factions), plus
+  unit-scoped lore/sessions
+- `dmNotes` (private Portable Text) on all 4 new entry types — never
+  selected in any public GROQ query, verified by grep before shipping
+- Worker bundle: ~1.10 MB gzipped as of v0.1.2 — **stale, see Known Risks
+  → Bundle size** for the current figure (this grew substantially in the
+  very next release, v0.1.3)
 
 **v0.1.1 — 2026-08-11.**
 
@@ -69,9 +174,10 @@ work; tagged at commit `42d6cdc`. What's actually in it:
   so undated-but-published content doesn't get stranded out of a `[0...3]`
   slice
 - ISR: `revalidate = 300` (5 min) on every page — unchanged since scaffold
-- Worker bundle: ~1.09 MB gzipped as of v0.1.1 (well under the 3 MiB
-  free-tier limit; was 0.86 MB at the original scaffold baseline, grew with
-  the Hero RSS feed panel)
+- Worker bundle: ~1.09 MB gzipped as of v0.1.1 (was 0.86 MB at the
+  original scaffold baseline, grew with the Hero RSS feed panel) — **this
+  figure is stale**, see Known Risks → Bundle size for the current,
+  substantially higher number
 - Base font size 18px, custom body-text scale — tuned for 4K displays
   (done, not outstanding)
 
@@ -79,6 +185,43 @@ Known TODOs (not started):
 - Visual Editing — mentioned in a consolidation request but not yet scoped
   anywhere in this repo's history; needs a real spec before starting
 - Newsletter integration (Phase 2) — static "coming soon" UI only right now
+
+## Known Risks
+
+### Bundle size — ACTIVE RISK (as of Phase 1.4 session)
+
+**Current: ~2.08 MB gzip / 3 MiB free-tier limit (71% used). Headroom
+remaining: ~0.87 MB.** This is the authoritative current figure — bundle
+size numbers quoted inside Release History entries below are point-in-time
+snapshots from when each release shipped, not live state; this section is
+what to check before adding anything.
+
+**Cause:** `next/og`'s `ImageResponse` (used in `app/og-default/route.tsx`
+and `app/(site)/events/[slug]/opengraph-image.tsx`) bundles a WASM-based
+image renderer (Satori + a PNG encoder) for dynamic OG image generation.
+This nearly doubled the bundle in one session (1.10 MB → 2.08 MB gzip) —
+the single largest contributor to date, larger than the entire wiki
+architecture session that preceded it.
+
+**Decision made:** keep dynamic OG images, proceed as-is. Trade-off
+accepted knowingly, not by default — flagged to and confirmed by the user
+before shipping (see Release History v0.1.3).
+
+**Implications for future sessions:**
+- Before adding any new dependency, check bundle size impact with
+  `npm run build:cloudflare` (then `npx wrangler versions upload
+  --preview-alias <name>` to get the real gzip figure) BEFORE and AFTER
+- Remaining headroom (~0.87 MB) is materially less than it was — do not
+  assume the 3 MB budget is generous
+- If bundle approaches 2.5 MB gzip, STOP and flag to the user before
+  proceeding — do not just note it and continue
+- Known future features that may compete for this remaining budget:
+  Visual Editing (Phase 1.2, not yet built), newsletter integration
+  (Phase 2), any additional image/media processing libraries
+- If budget becomes tight, the first candidate to reduce is `next/og` —
+  options: static default OG image only (no per-event dynamic
+  generation), or move dynamic image generation to a separate lightweight
+  edge function outside the main Worker bundle
 
 ## Stack
 
@@ -307,22 +450,28 @@ you need it somewhere new, or extract one if it starts drifting.
 
 ## The four worlds
 
-| Name | Slug | Colour accent |
-|---|---|---|
-| Titan's Gate | `titans-gate` | `#8B2FC9` |
-| Temasek Tales | `temasek-tales` | `#C4692A` |
-| SingaporeZ | `singaporez` | `#2C5F8A` |
-| Shattered Tales | `shattered-tales` | `#6B3FA0` |
+| Name | Slug | Colour accent | `unitLabel` |
+|---|---|---|---|
+| Titan's Gate | `titans-gate` | `#8B2FC9` | Territory |
+| Temasek Tales | `temasek-tales` | `#C4692A` | District |
+| SingaporeZ | `singaporez` | `#2C5F8A` | Sector |
+| Shattered Tales | `shattered-tales` | `#6B3FA0` | Fragment |
+
+All four confirmed live via `sanity/migrations/patch-unit-labels.ts`
+(2026-08-11) — `initialValue` in the schema only applies to new documents
+created in Studio, it never backfills existing ones, so all 4 world
+documents had `unitLabel` genuinely unset until this ran.
 
 ## Sanity schema summary
 
 All schemas live in `sanity/schemas/`, registered in `sanity/schemas/index.ts`.
 Two singletons (`siteSettings`, `philosophy`) pinned in the Studio structure
-(`sanity.config.ts`) so editors can't create duplicates. Ten document types:
-`world`, `teamMember`, `article`, `regularEvent`, `majorEvent`, `loreEntry`,
-`sessionLog`, `organisation`, `resource`, `galleryPhoto`. One reusable object:
-`calloutBlock` (used inside `article.body`, `loreEntry.body`,
-`sessionLog.fullRecap`).
+(`sanity.config.ts`) so editors can't create duplicates. Fifteen document
+types: `world`, `worldUnit`, `teamMember`, `article`, `regularEvent`,
+`majorEvent`, `loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`,
+`magicItem`, `faction`, `organisation`, `resource`, `galleryPhoto`. One
+reusable object: `calloutBlock` (used inside `article.body`,
+`loreEntry.body`, `sessionLog.fullRecap`).
 
 **To add a new schema:** create the file in `sanity/schemas/`, import and add
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ
@@ -377,8 +526,186 @@ them — added as the obvious missing piece.
 
 ## TODO / Follow-ups
 
-(none outstanding — Phase 1.3's homepage activity feed shipped as the Hero
-"Latest Updates" panel; see HeroRightPanel and Release History above)
+- CSV export per world unit (future phase, not scoped yet)
+- Fight Club 5e XML compendium export per world unit (future phase) — the
+  `keyFigure.statBlock` field names already mirror the XML element names
+  1:1 for this; see "Wiki unit architecture" below
+- Part B (share buttons) from Phase 1.4 — explicitly deprioritized/skipped
+  this session (see Release History v0.1.3); build `ShareButtons` and add
+  to events/articles/wiki-lore detail pages when there's time
+- Fix the `opengraph-image.tsx` precedence caveat noted in "SEO & Discord
+  funnel" above, if the per-event *generated* fallback image (vs. the
+  generic site fallback) turns out to matter in practice
+- **Manual, non-code steps for the site owner** (not something Claude Code
+  can do):
+  - Submit `/sitemap.xml` to Google Search Console
+  - Create a free Google Business Profile for "Criticals and Fumbles"
+  - Test share previews at https://www.opengraph.xyz/ and Facebook's
+    Sharing Debugger once this branch is live
+  - Send a test link to yourself on WhatsApp to verify its preview
+- (the homepage "Latest Updates" activity feed, previously tracked here as
+  a TODO, shipped as the Hero panel — see HeroRightPanel and Release
+  History above)
+
+## Wiki unit architecture (Phase 1.3)
+
+Each world is subdivided into DM-owned zones — the `worldUnit` document
+type. Deliberately world-agnostic in the schema (never call anything
+"location" in code) — each `world` document has a `unitLabel` string field
+for what that world *calls* its subdivisions in the UI (Territory/
+District/Sector/Fragment are the four current values — free text,
+editor-renamable in Studio at any time; see "The four worlds" table above
+for current values). `worldUnit` has `developmentStatus`
+(draft/in-progress/established/canonical) driving the badge and
+draft-greyed-out treatment on `WorldUnitCard`.
+
+**`unitLabel` is pluralized for the "Explore ___" heading** on the world
+page (`app/(site)/wiki/[world]/page.tsx`) via a small local `pluralize()`
+helper (consonant+y → "-ies", e.g. "Territory" → "Territories", "City" →
+"Cities"; otherwise appends "s"). Bug fixed 2026-08-12: this used to be a
+naive `{unitLabel}s` template producing "Territorys" — found when an
+editor tested renaming Titan's Gate's `unitLabel` to "Kingdom" and back.
+Not a full pluralization library — covers realistic label values, not
+every irregular English plural.
+
+**Four entry-type schemas, each with an optional `unit` reference** (plus
+`world`): `keyFigure` (NPCs — status/threatLevel/faction, optional D&D
+stat block), `notablePlace` (dangerLevel, associated keyFigures/items),
+`magicItem` (rarity, optional mechanical stats, currentHolder/foundAt
+refs), `faction` (members are keyFigure refs). All four also have a
+`dmNotes` Portable Text field — **private, never selected in any public
+GROQ query** (verified by grepping `queries.ts` for `dmNotes` before
+shipping — it only appears in comments explaining the exclusion).
+
+`loreEntry` and `sessionLog` (pre-existing types) both gained an optional
+`unit` reference field, added specifically to make
+`/wiki/[world]/[unit]/lore` and `/sessions` genuinely filterable — the
+existing world-level `/wiki/[world]/lore` and `/sessions` pages/queries
+are untouched and unaffected (they don't filter on `unit` at all, so
+entries with or without a unit set still show up there exactly as before).
+
+### Stat blocks (XML-export-ready, export not built)
+
+`keyFigure.hasStatBlock` (boolean) gates a `keyFigure.statBlock` object
+whose field names are a deliberate 1:1 mirror of the Fight Club 5e XML
+`<monster>` element (`ac`, `hp`, `speed`, `str`/`dex`/`con`/`int`/`wis`/
+`cha` under `abilities`, `cr` → `challengeRating`, etc.) so a future export
+script can map straight across with no field renaming. **No export
+tooling exists yet — only the schema and the `StatBlockCard` display.**
+`statBlock.alignment` (added 2026-08-11, after the initial gap was flagged
+and caught) matches the Fight Club XML `<alignment>` element — distinct
+from any narrative alignment a keyFigure might have elsewhere; this one is
+specifically for the export-mapped stat block. `magicItem.hasMechanics`
+gates a simpler `magicItem.mechanics` object (type/attunement/effect
+text), displayed via `ItemMechanicsCard` — not XML-mapped, just a
+consistent display pattern.
+
+Both stat display cards (`components/wiki/StatBlockCard.tsx`,
+`ItemMechanicsCard.tsx`) render on a **fixed dark background
+(`#1a1a1a`, not a theme token — always dark regardless of site theme)**,
+using the same fixed `on-forest`/`on-forest-muted` text tokens as the
+Hero/PhilosophyStrip panels (see Design system above), since the card's
+background doesn't flip with the theme.
+
+### URL structure
+
+```
+/wiki/[world]/[unit]                         Unit homepage
+/wiki/[world]/[unit]/lore(/[slug])           Unit-scoped lore
+/wiki/[world]/[unit]/figures(/[slug])        Key Figures (NPCs)
+/wiki/[world]/[unit]/places(/[slug])         Notable Places
+/wiki/[world]/[unit]/items(/[slug])          Magic Items
+/wiki/[world]/[unit]/factions(/[slug])       Factions
+/wiki/[world]/[unit]/sessions(/[slug])       Unit-scoped session logs
+```
+
+`WorldUnitNav` (new, mirrors `WorldNav`'s tab pattern) drives the sub-nav
+on all of these. Unit-scoped lore/sessions use their own card components
+(`UnitLoreCard`, `UnitSessionCard`) rather than the existing `LoreCard`/
+`SessionCard` — those hardcode the two-segment `/wiki/[world]/lore/...`
+href shape, and modifying them to support both URL shapes would have
+touched a component used by the pre-existing world-level pages, which
+this session was scoped to leave alone.
+
+`mapImageUrl` (large/high-res maps hosted externally on R2, as an
+alternative to the Sanity `mapImage` field for images under 500KB) renders
+via a plain `<img>`, not `next/image` — its domain isn't and shouldn't be
+added to `next.config.ts`'s `remotePatterns` just for this.
+
+## SEO & Discord funnel (Phase 1.4)
+
+**`lib/metadata.ts`** — `buildMetadata({ title, description, path, image?,
+type? })` returns a `Metadata` object (title with `| Criticals and
+Fumbles` suffix unless already present, Open Graph, Twitter card,
+canonical). Every dynamic detail page (`events/[slug]`, `articles/[slug]`,
+`team/[slug]`, `wiki/[world]`, `wiki/[world]/lore/[slug]`,
+`wiki/[world]/sessions/[slug]`) exports `generateMetadata` using it;
+static pages (`/`, `/events`, `/about`) export a plain `metadata` const
+with it. Falls back to `/og-default` (see below) when no `image` is
+passed. Also exports `plainTextFromBlocks()` — first-span plain text from
+a Portable Text body, used as a description fallback when no dedicated
+excerpt/summary/tagline field is set.
+
+**Dynamic OG images** — `next/og`'s `ImageResponse`, no static image file:
+- `app/og-default/route.tsx` → `/og-default` — branded site-wide fallback
+  (three-colour title treatment, dark background), used by `buildMetadata`
+  whenever no `image` is passed
+- `app/(site)/events/[slug]/opengraph-image.tsx` — per-event image;
+  prefers the event's real `splashImage`/`coverImage` if set, else
+  generates a branded fallback with the event's title. **Caveat:** since
+  `generateMetadata` on the same route always explicitly sets
+  `openGraph.images` (via `buildMetadata`), that explicit value takes
+  precedence over this file-convention image for the actual `og:image`
+  meta tag — the route still exists and is directly fetchable, but isn't
+  automatically wired into the tag. Real photos still show correctly
+  either way (both paths end up finding the same image); only the
+  per-event *generated* fallback (vs. the generic site fallback) doesn't
+  get used when an event has no photo. Not fixed this session — noting it
+  rather than leaving it silently wrong.
+- No explicit `runtime = "edge"` on either — Edge Runtime is deprecated in
+  this Next.js version; both work fine on the default runtime
+- These are the largest single contributor to this session's bundle growth
+  (see Release History) — reuse rather than duplicate if adding more image
+  generation elsewhere
+
+**Structured data** (`components/seo/`) — plain `<script
+type="application/ld+json">` components, no library:
+- `EventStructuredData` — schema.org `Event`, rendered once per event
+  detail page
+- `ArticleStructuredData` — schema.org `Article`, rendered once per
+  article detail page
+- `OrganizationStructuredData` — schema.org `Organization`, rendered once
+  in the root layout `<head>`; `sameAs` is built live from
+  `siteSettings.socialLinks` + `discordUrl`, not hardcoded
+
+**Sitemap & robots** — `app/sitemap.ts`, `app/robots.ts` (both at the app
+root, not under `(site)/`, since neither needs the Nav/Footer layout).
+Sitemap pulls minimal `{slug, _updatedAt}` projections via 3 dedicated
+queries (`SITEMAP_ARTICLES_QUERY`, `SITEMAP_EVENTS_QUERY`,
+`SITEMAP_WORLDS_QUERY` in `sanity/lib/queries.ts`) rather than reusing the
+card queries, which fetch images/refs the sitemap doesn't need. `robots.ts`
+disallows `/api/` (pre-emptive — no API routes exist yet) but *not*
+`/studio` (there is no `/studio` route on this site — Studio is hosted
+entirely separately, see Cloudflare deployment above).
+
+**Discord CTA locations** — homepage Hero (secondary button), events index
+page (CTA band above footer), event detail pages (near/in place of the
+Register button), footer (pre-existing prominent button, left as-is). All
+source the URL from `siteSettings.discordUrl` fetched server-side and
+passed down as props — never a hardcoded string.
+
+**Social links pattern** — `siteSettings.socialLinks` (existing field,
+platform enum: Twitter/Instagram/YouTube/Twitch/TikTok/Facebook) feeds the
+nav/drawer icons (`components/layout/Nav.tsx`) and `sameAs` in structured
+data. Icons themselves are `components/icons/SocialIcons.tsx` (Facebook,
+Instagram, Discord — shared by `Nav.tsx` and `Hero.tsx`, not duplicated).
+Discord is **not** in `socialLinks` — it has its own dedicated
+`discordUrl`/`discordServerName` fields on `siteSettings`.
+
+**Email removed from footer display only** — `Footer.tsx` no longer
+renders `siteSettings.contactEmail`. The schema field and the document's
+stored value are both untouched; this was a component-only change,
+verified by re-fetching the live document afterward (see Lessons learned).
 
 ## HeroRightPanel
 
@@ -395,10 +722,31 @@ half. Two independent sections:
 - **"Latest Updates" feed** — a flat, pre-merged, pre-sorted
   `RssFeedItem[]` (merging + sorting happens in `app/(site)/page.tsx`, not
   inside the component) spanning `article`, `majorEvent`, `regularEvent`,
-  `loreEntry`, `sessionLog`, `teamMember`, newest `date` first, capped at 5.
+  `loreEntry`, `sessionLog`, `teamMember`, `worldUnit`, `keyFigure`,
+  `notablePlace`, `magicItem`, `faction`, newest `date` first, capped at 5.
   Items past index 2 are hidden below the `md` breakpoint (3 items on
   mobile, 5 from tablet up) via a per-item `hidden md:flex` class, not a
   separate query/prop.
+
+  **Bug fixed 2026-08-12:** the 5 Phase 1.3 wiki types (`worldUnit` +
+  the 4 unit-scoped entry types) were never added to `HOME_RSS_FEED_QUERY`
+  when Phase 1.3 shipped — that query predates them, from the earlier
+  Phase 1.1 session. Editing/creating a `worldUnit` (or any entry type)
+  silently never appeared in "Latest Updates". Fixed by adding a subquery
+  + `typeConfig`/`itemHref` case for each. If a 6th wiki content type is
+  ever added, remember to wire it into **all** of: the `HOME_RSS_FEED_QUERY`
+  subquery, `RssFeedItem`'s `_type` union and `RssFeedData` in
+  `sanity/lib/types.ts`, the merge array in `app/(site)/page.tsx`, and
+  `typeConfig`/`itemHref` in `HeroRightPanel.tsx` — missing any one of
+  these fails silently (item just doesn't show, or throws if `typeConfig`
+  lookup is missing since `RssItem` doesn't guard against an unknown
+  `_type`).
+
+  `worldUnit` items show the world's actual `unitLabel` (fetched per-item
+  as `"unitLabel": world->unitLabel`) as their badge text, not a hardcoded
+  "Territory" — labels are per-world and editor-renamable (see Wiki unit
+  architecture below), so a static label would be wrong for any world
+  that doesn't use "Territory".
 
 Sourced from `HOME_PINNED_EVENT_QUERY` and `HOME_RSS_FEED_QUERY` in
 `sanity/lib/queries.ts`; typed as `PinnedEvent` / `RssFeedItem` /
@@ -479,13 +827,31 @@ See `.env.local.example`. Required: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
 client), `NEXT_PUBLIC_SITE_URL` (filled in after the first Cloudflare Pages
 deploy), `NEXT_PUBLIC_SITE_NAME`.
 
-**`SANITY_API_WRITE_TOKEN`** — not currently in `.env.local` or
-`.env.local.example` despite being referenced in a 2026-08-11 session (as
-"the CNFSG-seed token, Editor role, for migration scripts") — that session
-ended up not needing a write token (see Lessons learned above), so it was
-never actually added. If a future migration script needs write access: add
-it to `.env.local` (never commit it), keep it server/script-only, and
-document the actual token/role here once it exists.
+**`SANITY_API_WRITE_TOKEN`** — added to `.env.local` on 2026-08-11 (Editor
+role) for `sanity/migrations/patch-unit-labels.ts`. Not in
+`.env.local.example` since it's not required for normal dev/build — only
+for running a write-access migration script. Server/script-only, never
+client-side; never commit the actual value.
+
+## Migration scripts
+
+`sanity/migrations/` — one-off data-patch scripts, run manually via
+`npx tsx sanity/migrations/<name>.ts`. Not a generic runner/framework —
+each script is purpose-built for its one patch, following a dry-run-first
+pattern: defaults to logging proposed changes only, real writes require
+`DRY_RUN=false`. Requires `SANITY_API_WRITE_TOKEN` in `.env.local` (see
+Environment variables below). Always read the dry-run output before
+re-running with `DRY_RUN=false`.
+
+- `patch-unit-labels.ts` (2026-08-11) — set `unitLabel` on all 4 `world`
+  documents (Territory/District/Sector/Fragment), since the schema's
+  `initialValue` never backfills pre-existing documents. Already run; kept
+  as a record and a template for the next one-off patch.
+- `patch-social-links.ts` (2026-08-11) — appends a Facebook entry to
+  `siteSettings.socialLinks` (uses `.append()`, not `.set()` — existing
+  entries, including a stray empty one, are preserved untouched). Skips
+  with a message if a Facebook entry already exists, so it's safe to
+  re-run. Already run.
 
 ## Seed script
 

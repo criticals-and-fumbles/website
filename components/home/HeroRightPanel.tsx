@@ -25,6 +25,11 @@ const typeConfig: Record<
   loreEntry: { icon: "📖", label: "Lore", colour: "#8B2FC9" },
   sessionLog: { icon: "📜", label: "Campaign", colour: "var(--color-amber)" },
   teamMember: { icon: "⚔️", label: "Member", colour: "var(--color-emerald)" },
+  worldUnit: { icon: "🗺️", label: "Territory", colour: "var(--color-emerald)" },
+  keyFigure: { icon: "🧙", label: "NPC", colour: "var(--color-magenta)" },
+  notablePlace: { icon: "🏰", label: "Place", colour: "var(--color-amber)" },
+  magicItem: { icon: "💎", label: "Item", colour: "#8B2FC9" },
+  faction: { icon: "🛡️", label: "Faction", colour: "var(--color-emerald)" },
 };
 
 function itemHref(item: RssFeedItem): string {
@@ -41,6 +46,16 @@ function itemHref(item: RssFeedItem): string {
       return `/wiki/${item.worldSlug}/sessions/${item.slug}`;
     case "teamMember":
       return `/team/${item.slug}`;
+    case "worldUnit":
+      return `/wiki/${item.worldSlug}/${item.slug}`;
+    case "keyFigure":
+      return `/wiki/${item.worldSlug}/${item.unitSlug}/figures/${item.slug}`;
+    case "notablePlace":
+      return `/wiki/${item.worldSlug}/${item.unitSlug}/places/${item.slug}`;
+    case "magicItem":
+      return `/wiki/${item.worldSlug}/${item.unitSlug}/items/${item.slug}`;
+    case "faction":
+      return `/wiki/${item.worldSlug}/${item.unitSlug}/factions/${item.slug}`;
   }
 }
 
@@ -91,6 +106,10 @@ function PinnedEventCard({ event }: { event: PinnedEvent }) {
 
 function RssItem({ item, hideOnMobile }: { item: RssFeedItem; hideOnMobile: boolean }) {
   const config = typeConfig[item._type];
+  // worldUnit's display label varies per world ("Territory"/"District"/
+  // etc., or whatever an editor renames it to) — use the live value from
+  // the item's world rather than the static config label.
+  const label = item._type === "worldUnit" ? (item.unitLabel ?? config.label) : config.label;
   return (
     <Link
       href={itemHref(item)}
@@ -103,7 +122,7 @@ function RssItem({ item, hideOnMobile }: { item: RssFeedItem; hideOnMobile: bool
         style={{ color: config.colour }}
       >
         <span aria-hidden="true">{config.icon}</span>
-        {config.label} · {timeAgo(item.date)}
+        {label} · {timeAgo(item.date)}
       </span>
       <span className="line-clamp-1 text-text">{item.title}</span>
     </Link>

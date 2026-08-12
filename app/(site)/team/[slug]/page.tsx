@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   ARTICLES_BY_MEMBER_QUERY,
@@ -8,6 +9,7 @@ import {
 import { urlForImage } from "@/sanity/lib/image";
 import type { ArticleCard, TeamMember } from "@/sanity/lib/types";
 import { TEAM_MEMBER_ROLES } from "@/sanity/schemas/constants";
+import { buildMetadata } from "@/lib/metadata";
 import { Badge } from "@/components/ui/Badge";
 import { StatBar } from "@/components/team/StatBar";
 import { ArticleGrid } from "@/components/content/ArticleGrid";
@@ -18,6 +20,25 @@ const ROLE_LABELS: Record<string, string> = Object.fromEntries(
 );
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/team/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const member = await client.fetch<TeamMember | null>(TEAM_MEMBER_BY_SLUG_QUERY, {
+    slug,
+  });
+  if (!member) return {};
+
+  return buildMetadata({
+    title: member.realName ? `${member.handle} (${member.realName})` : member.handle,
+    description:
+      member.backstory ??
+      `${member.handle} is part of Criticals and Fumbles, Singapore's tabletop RPG community.`,
+    path: `/team/${slug}`,
+    image: urlForImage(member.avatar)?.width(1200).height(630).url(),
+  });
+}
 
 export default async function TeamMemberPage({
   params,
