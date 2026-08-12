@@ -49,6 +49,15 @@ export const SITE_SETTINGS_QUERY = groq`*[_type == "siteSettings"][0]`;
 
 export const PHILOSOPHY_QUERY = groq`*[_type == "philosophy"][0]`;
 
+export const CODE_OF_CONDUCT_QUERY = groq`
+  *[_type == "codeOfConduct"][0] {
+    introTagline,
+    tableExpectations,
+    safetyComfort,
+    diceRules
+  }
+`;
+
 /* ---------------------------------------------------------------------- */
 /* Homepage                                                               */
 /* ---------------------------------------------------------------------- */

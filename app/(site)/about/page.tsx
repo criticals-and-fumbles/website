@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
+  CODE_OF_CONDUCT_QUERY,
   ORGANISATIONS_QUERY,
   PHILOSOPHY_QUERY,
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
-import type { Organisation, Philosophy, SiteSettings } from "@/sanity/lib/types";
+import type {
+  CodeOfConduct as CodeOfConductData,
+  Organisation,
+  Philosophy,
+  SiteSettings,
+} from "@/sanity/lib/types";
 import { buildMetadata } from "@/lib/metadata";
 import { Timeline } from "@/components/about/Timeline";
 import { PillarsTier, BehavioursTier } from "@/components/about/PhilosophyTier";
+import { CodeOfConduct } from "@/components/about/CodeOfConduct";
 import { DivisionCard } from "@/components/about/DivisionCard";
 import { Footer } from "@/components/layout/Footer";
 import { LinkButton } from "@/components/ui/Button";
@@ -24,9 +31,10 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function AboutPage() {
-  const [settings, philosophy, organisations] = await Promise.all([
+  const [settings, philosophy, codeOfConduct, organisations] = await Promise.all([
     client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
     client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
+    client.fetch<CodeOfConductData | null>(CODE_OF_CONDUCT_QUERY),
     client.fetch<Organisation[]>(ORGANISATIONS_QUERY),
   ]);
 
@@ -107,6 +115,12 @@ export default async function AboutPage() {
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {codeOfConduct && (
+        <section id="code-of-conduct" className="px-4 py-16 md:px-8">
+          <CodeOfConduct data={codeOfConduct} />
         </section>
       )}
 

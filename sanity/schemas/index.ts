@@ -3,6 +3,7 @@ import { type SchemaTypeDefinition } from "sanity";
 import calloutBlock from "./objects/calloutBlock";
 import siteSettings from "./siteSettings";
 import philosophy from "./philosophy";
+import codeOfConduct from "./codeOfConduct";
 import world from "./world";
 import worldUnit from "./worldUnit";
 import teamMember from "./teamMember";
@@ -24,6 +25,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     // Singletons
     siteSettings,
     philosophy,
+    codeOfConduct,
     // Documents
     world,
     worldUnit,
