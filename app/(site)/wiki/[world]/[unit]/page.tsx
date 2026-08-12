@@ -149,6 +149,8 @@ export default async function WorldUnitPage({
 
           {unit._createdAt && unit._updatedAt && (
             <WikiEntryMetaPanel
+              title={unit.name}
+              image={unit.coverImage}
               typeLabel={unit.world?.unitLabel ?? "Territory"}
               counts={
                 unit.counts

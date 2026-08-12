@@ -107,6 +107,8 @@ export default async function NotablePlacePage({
 
           {place._createdAt && place._updatedAt && (
             <WikiEntryMetaPanel
+              title={place.name}
+              image={place.images?.[0]}
               typeLabel="Notable Place"
               statusChip={
                 place.dangerLevel

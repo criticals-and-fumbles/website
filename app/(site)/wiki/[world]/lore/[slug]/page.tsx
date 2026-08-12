@@ -101,6 +101,8 @@ export default async function LoreEntryPage({
 
           {entry._createdAt && entry._updatedAt && (
             <WikiEntryMetaPanel
+              title={entry.title}
+              image={entry.coverImage}
               typeLabel="Lore Entry"
               createdAt={entry._createdAt}
               updatedAt={entry._updatedAt}
