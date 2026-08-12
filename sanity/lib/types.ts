@@ -194,7 +194,6 @@ export interface World {
   _createdAt?: string;
   _updatedAt?: string;
   lastEditedBy?: TeamMemberRef;
-  siblingWorlds?: { _id: string; name: string; slug: string }[];
 }
 
 export interface WorldUnitRef {

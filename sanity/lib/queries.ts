@@ -315,10 +315,7 @@ export const WORLD_BY_SLUG_QUERY = groq`
     ...,
     "slug": slug.current,
     "dms": dms[]->{ ${teamMemberRefFields} },
-    ${wikiLastEditedBy},
-    "siblingWorlds": *[_type == "world" && _id != ^._id] | order(name asc) [0...4] {
-      _id, name, "slug": slug.current
-    }
+    ${wikiLastEditedBy}
   }
 `;
 
