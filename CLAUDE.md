@@ -22,6 +22,45 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.7 — 2026-08-12 (branch `feat/world-page-infobox`, merged to
+`main`).** Follow-up to v0.1.6 below, same day. User pointed the infobox
+at `/wiki/titans-gate` (the World homepage) expecting to see it there too
+and found nothing — correctly flagged as a scope gap, not a bug: v0.1.5/
+v0.1.6 only wired the panel into the 9 detail/hub pages, never the World
+homepage, even though it's a single-entity "article" page in exactly the
+same shape (title, tagline, DM, description) as `worldUnit`. Confirmed
+via AskUserQuestion that "all wiki articles" means every single-subject
+page, not the 9 listing/index pages (`/wiki`, `/wiki/[world]/lore`,
+etc.) — those stay plain card grids, an infobox needs one subject.
+
+- New additive `lastEditedBy` field on the `world` schema (Step 0: no
+  existing candidate — `world.dms` is a list of DMs, not a single
+  "last edited" signal — so this mirrors the 6 schemas from v0.1.5
+  rather than reusing `dms`).
+- `WORLD_BY_SLUG_QUERY` gains `lastEditedBy` (its original `siblingWorlds`
+  sub-query was replaced the same day — see v0.1.8 below).
+- `/wiki/[world]/page.tsx` hero split into title/tagline/DM only; new
+  top section pairs the description with the infobox, same layout fix
+  as the worldUnit page in v0.1.6 (infobox beside the intro, not below
+  the nav/sections).
+- Panel shows `world.status` (active/hiatus/concluded) as its native
+  status chip and `world.dms[0]` (first name only) as "Maintained by" —
+  the full DM list stays in the hero band as before.
+- Bundle: 2138.07 → 2138.22 KiB gzip, no new dependencies.
+
+**v0.1.8 — 2026-08-12 (branch `feat/world-infobox-units`, merged to
+`main`).** Same-day follow-up to v0.1.7. Direct feedback: linking to
+sibling *worlds* from inside a single world's own infobox was less
+useful than linking to that world's own units (Territories/Districts/
+etc.) — matches how the `worldUnit` infobox's siblings already work
+(same scope, not one level up). The World page's "siblings" list now
+reuses the `units` array the page already fetches via `WORLD_UNITS_QUERY`
+for the "Explore ___" grid below it (capped to 4), heading pluralized
+via the same `pluralize()` helper used there. The `siblingWorlds` GROQ
+sub-query and matching `World` type field from v0.1.7 were removed as
+dead code rather than left unused. Bundle: 2138.22 → 2138.18 KiB gzip
+(net negative — removed more than was added).
+
 **v0.1.6 — 2026-08-12 (branch `fix/wiki-infobox-panel`, merged to
 `main`).** Follow-up to v0.1.5 below, same day. The meta panel shipped
 deliberately borderless/low-key per an earlier instruction ("keep the
