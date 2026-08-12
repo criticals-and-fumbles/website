@@ -22,6 +22,25 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.9 — 2026-08-12 (branch `feat/og-images-r2`, merged to `main`).**
+Resolved the Known Risks → Bundle size item that had been open since
+Phase 1.4. Full architecture in "OG image generation (v0.1.9)" below —
+summary: moved `next/og`'s WASM-based image rendering out of the main
+site's Worker into a new standalone Worker (`workers/og-generator/`)
+that pre-generates images on a Sanity webhook and stores them in a new
+`cnf-website-og-images` R2 bucket; the main site now just reads them
+back via an `OG_IMAGES_BUCKET` binding instead of rendering on-the-fly.
+Bundle: 2138 → 1355 KiB gzip. Hit and fixed two real bugs along the way
+(both documented in full in the architecture section): `@vercel/og`
+hanging indefinitely outside Next.js's runtime (switched to `satori` +
+`@resvg/resvg-wasm` directly), and the Sanity webhook firing on every
+draft autosave instead of just publishes (fixed with a
+`!(_id in path("drafts.**"))` filter). Prompted by the user's plan to
+purchase `criticalsandfumbles.com` — a custom domain would unlock
+serving R2 objects directly from Cloudflare's edge (skipping the Worker
+entirely for image requests), but that part is deferred until the domain
+is live; everything shipped this session works on `*.workers.dev` as-is.
+
 **v0.1.7 — 2026-08-12 (branch `feat/world-page-infobox`, merged to
 `main`).** Follow-up to v0.1.6 below, same day. User pointed the infobox
 at `/wiki/titans-gate` (the World homepage) expecting to see it there too
@@ -321,40 +340,39 @@ Known TODOs (not started):
 
 ## Known Risks
 
-### Bundle size — ACTIVE RISK (as of Phase 1.4 session)
+### Bundle size — RESOLVED (as of v0.1.9, 2026-08-12)
 
-**Current: ~2.08 MB gzip / 3 MiB free-tier limit (71% used). Headroom
-remaining: ~0.87 MB.** This is the authoritative current figure — bundle
+**Current: ~1.36 MB gzip / 3 MiB free-tier limit (45% used). Headroom
+restored to ~1.7 MB.** This is the authoritative current figure — bundle
 size numbers quoted inside Release History entries below are point-in-time
 snapshots from when each release shipped, not live state; this section is
 what to check before adding anything.
 
-**Cause:** `next/og`'s `ImageResponse` (used in `app/og-default/route.tsx`
-and `app/(site)/events/[slug]/opengraph-image.tsx`) bundles a WASM-based
-image renderer (Satori + a PNG encoder) for dynamic OG image generation.
-This nearly doubled the bundle in one session (1.10 MB → 2.08 MB gzip) —
-the single largest contributor to date, larger than the entire wiki
-architecture session that preceded it.
+**Formerly an active risk (Phase 1.4 → v0.1.8):** `next/og`'s
+`ImageResponse` (used in `app/og-default/route.tsx` and
+`app/(site)/events/[slug]/opengraph-image.tsx`) bundled a WASM-based image
+renderer (Satori + a PNG encoder) directly into the main site's Worker,
+regenerating images on every request. This nearly doubled the bundle in
+the Phase 1.4 session (1.10 MB → 2.08 MB gzip) and stayed the dominant
+contributor through v0.1.8.
 
-**Decision made:** keep dynamic OG images, proceed as-is. Trade-off
-accepted knowingly, not by default — flagged to and confirmed by the user
-before shipping (see Release History v0.1.3).
+**Fixed in v0.1.9** by moving image generation out of the main Worker
+entirely — see "OG image generation (v0.1.9)" below for the full
+architecture. Bundle dropped 2138 → 1355 KiB gzip. `next/og` is no longer
+imported anywhere in the main app.
 
 **Implications for future sessions:**
-- Before adding any new dependency, check bundle size impact with
+- Before adding any new dependency, still check bundle size impact with
   `npm run build:cloudflare` (then `npx wrangler versions upload
-  --preview-alias <name>` to get the real gzip figure) BEFORE and AFTER
-- Remaining headroom (~0.87 MB) is materially less than it was — do not
-  assume the 3 MB budget is generous
-- If bundle approaches 2.5 MB gzip, STOP and flag to the user before
-  proceeding — do not just note it and continue
-- Known future features that may compete for this remaining budget:
-  Visual Editing (Phase 1.2, not yet built), newsletter integration
-  (Phase 2), any additional image/media processing libraries
-- If budget becomes tight, the first candidate to reduce is `next/og` —
-  options: static default OG image only (no per-event dynamic
-  generation), or move dynamic image generation to a separate lightweight
-  edge function outside the main Worker bundle
+  --preview-alias <name>` to get the real gzip figure) BEFORE and AFTER —
+  the discipline stays even though the immediate pressure is gone
+- Headroom is materially better now (~1.7 MB vs. the ~0.87 MB low point),
+  but don't treat that as license to stop checking
+- If a future feature needs WASM-based rendering/processing again (image,
+  PDF, video, etc.), the `workers/og-generator` pattern — a standalone
+  Worker with its own bundle budget, writing results to R2, read back by
+  the main site via an R2 binding — is the template to reuse rather than
+  re-adding heavy compute to the main Worker
 
 ## Stack
 
@@ -839,6 +857,72 @@ Discord is **not** in `socialLinks` — it has its own dedicated
 renders `siteSettings.contactEmail`. The schema field and the document's
 stored value are both untouched; this was a component-only change,
 verified by re-fetching the live document afterward (see Lessons learned).
+
+## OG image generation (v0.1.9)
+
+Dynamic OG image rendering moved out of the main site's Worker entirely
+— see Known Risks → Bundle size above for why. Two-part architecture:
+
+**`workers/og-generator/`** — a standalone Cloudflare Worker, own
+`package.json`/`wrangler.toml`/deploy (`cd workers/og-generator && npm
+run deploy`), own 3 MiB bundle budget completely separate from the main
+site. Live at `https://cnf-og-generator.criticalsandfumbles.workers.dev`.
+Renders the same branded images the old `next/og` routes did (JSX ported
+1:1 into `src/templates.tsx`), using `satori` + `@resvg/resvg-wasm`
+directly rather than `@vercel/og`/`next/og` — those auto-load their
+WASM/font assets via `fetch(new URL(path, import.meta.url))`, which only
+resolves inside Next.js/Vercel's runtime and **hangs indefinitely** (not
+an error — a silent hang until Cloudflare's runtime kills the request)
+in a raw Workers environment. Fixed by using satori's `"satori/standalone"`
+entry point + `@resvg/resvg-wasm`'s `initWasm()`, both of which take an
+explicit `WebAssembly.Module` — imported directly via Workers' native
+`.wasm` module support, no fetch/URL resolution involved. The embedded
+font (`assets/noto-sans-regular.ttf`) is Noto Sans Regular, OFL-licensed,
+copied from `@vercel/og`'s own vendored copy (satori has no built-in font
+— it can't render any text without one).
+
+Two endpoints, both POST, both require an `x-og-webhook-secret` header
+matching the `WEBHOOK_SECRET` secret (`wrangler secret put
+WEBHOOK_SECRET` — not Sanity's built-in HMAC-signature webhook option,
+which is a different, unused verification path):
+- `/generate/default` — regenerates the branded site-wide fallback,
+  written to `og-default.png` in R2. Not webhook-triggered (nothing to
+  trigger it on — it doesn't depend on any document); run manually if the
+  branding ever changes.
+- `/generate/event` — takes `{ slug, title, photoUrl? }`, writes
+  `events/{slug}.png`. Triggered by a Sanity webhook on `majorEvent`
+  create/update, **filtered to exclude drafts**
+  (`_type == "majorEvent" && !(_id in path("drafts.**"))`) — an earlier,
+  unfiltered version of this filter fired on every Studio autosave
+  keystroke while editing a draft, not just on publish (24 webhook calls
+  from one edit session, confirmed via `wrangler tail` before the filter
+  was fixed). `photoUrl` (if the event has a real splash/cover image) is
+  fetched and inlined as a base64 data URI before rendering — satori has
+  no network access of its own, `<img src>` must already be a data URI.
+
+Both write to the **`cnf-website-og-images`** R2 bucket (separate from
+`cnf-website-cache`, which is ISR-cache-only with different lifecycle
+needs).
+
+**Main site side** — `app/og-default/route.tsx` and
+`app/(site)/events/[slug]/opengraph-image.tsx` no longer import `next/og`
+at all. Both read the pre-generated PNG back from R2 via a new
+`OG_IMAGES_BUCKET` binding (`wrangler.toml` + `cloudflare-env.d.ts`,
+which extends `@opennextjs/cloudflare`'s ambient `CloudflareEnv`
+interface — see `getCloudflareContext({ async: true })` usage in both
+routes). The event route still proxies a real event photo directly when
+one's set (unchanged); only the generated-fallback path moved. If R2
+doesn't have an object yet (webhook hasn't fired, or `/generate/default`
+was never run), these routes 404 rather than falling back to generating
+on-the-fly — there's no on-the-fly path left at all by design.
+
+**Repo structure note:** `workers/` is excluded from the root
+`tsconfig.json` and `eslint.config.mjs` — it's a fully separate npm
+project with its own `node_modules`/toolchain, not part of the Next.js
+app's type-check or lint scope. `@cloudflare/workers-types` was added as
+a devDependency to the **main** project (not `workers/og-generator`,
+which has its own) purely so `cloudflare-env.d.ts` can reference
+`R2Bucket`.
 
 ## HeroRightPanel
 
