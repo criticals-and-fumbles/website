@@ -87,65 +87,12 @@ export default async function WorldUnitPage({
               DM: {unit.dmOwner.handle}
             </p>
           )}
-          {unit.overview && (
-            <div className="mt-6 max-w-2xl">
-              <Renderer value={unit.overview} />
-            </div>
-          )}
         </div>
       </section>
 
-      {(mapUrl || unit.mapImageUrl) && (
-        <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
-          <h2 className="mb-4 font-display text-2xl text-text">Map</h2>
-          {mapUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={mapUrl} alt={`${unit.name} map`} className="w-full rounded-lg" />
-          ) : (
-            // Large/high-res maps hosted externally on R2 — rendered as a
-            // plain <img>, not next/image, since the domain isn't (and
-            // shouldn't be) whitelisted in next.config.ts remotePatterns.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={unit.mapImageUrl}
-              alt={`${unit.name} map`}
-              className="w-full rounded-lg"
-            />
-          )}
-        </div>
-      )}
-
-      <div className="mx-auto max-w-6xl px-4 md:px-8">
-        <WorldUnitNav worldSlug={worldSlug} unitSlug={unitSlug} />
-      </div>
-
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_240px] lg:items-start">
-          <div>
-            {recentEntries.length > 0 && (
-              <>
-                <h2 className="mb-6 font-display text-3xl text-text">Recent Entries</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {recentEntries.map((entry) => {
-                    const meta = RECENT_ENTRY_META[entry._type](entry);
-                    return (
-                      <Link
-                        key={`${entry._type}-${entry._id}`}
-                        href={`/wiki/${worldSlug}/${unitSlug}/${RECENT_ENTRY_HREF[entry._type]}/${entry.slug}`}
-                        className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-emerald"
-                      >
-                        <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
-                          {entry._type}
-                        </span>
-                        <span className="font-display text-xl text-text">{entry.name}</span>
-                        {meta && <span className="text-xs text-text-muted">{meta}</span>}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px] lg:items-start">
+          <div>{unit.overview && <Renderer value={unit.overview} />}</div>
 
           {unit._createdAt && unit._updatedAt && (
             <WikiEntryMetaPanel
@@ -177,6 +124,54 @@ export default async function WorldUnitPage({
           )}
         </div>
       </div>
+
+      {(mapUrl || unit.mapImageUrl) && (
+        <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+          <h2 className="mb-4 font-display text-2xl text-text">Map</h2>
+          {mapUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={mapUrl} alt={`${unit.name} map`} className="w-full rounded-lg" />
+          ) : (
+            // Large/high-res maps hosted externally on R2 — rendered as a
+            // plain <img>, not next/image, since the domain isn't (and
+            // shouldn't be) whitelisted in next.config.ts remotePatterns.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={unit.mapImageUrl}
+              alt={`${unit.name} map`}
+              className="w-full rounded-lg"
+            />
+          )}
+        </div>
+      )}
+
+      <div className="mx-auto max-w-6xl px-4 md:px-8">
+        <WorldUnitNav worldSlug={worldSlug} unitSlug={unitSlug} />
+      </div>
+
+      {recentEntries.length > 0 && (
+        <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
+          <h2 className="mb-6 font-display text-3xl text-text">Recent Entries</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {recentEntries.map((entry) => {
+              const meta = RECENT_ENTRY_META[entry._type](entry);
+              return (
+                <Link
+                  key={`${entry._type}-${entry._id}`}
+                  href={`/wiki/${worldSlug}/${unitSlug}/${RECENT_ENTRY_HREF[entry._type]}/${entry.slug}`}
+                  className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-emerald"
+                >
+                  <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+                    {entry._type}
+                  </span>
+                  <span className="font-display text-xl text-text">{entry.name}</span>
+                  {meta && <span className="text-xs text-text-muted">{meta}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <Footer pageFooterCTA={unit.pageFooterCTA} />
     </>
