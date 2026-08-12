@@ -22,8 +22,42 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
-**v0.1.5 — 2026-08-12 (branch `feat/wiki-entry-meta-panel`, not yet
-merged).** Phase 1.5: wiki entry meta panel. Purely additive schema
+**v0.1.6 — 2026-08-12 (branch `fix/wiki-infobox-panel`, merged to
+`main`).** Follow-up to v0.1.5 below, same day. The meta panel shipped
+deliberately borderless/low-key per an earlier instruction ("keep the
+right panel smaller and no big headers") — in practice that made it
+unreadable/invisible on real content, especially the worldUnit hub page
+where "Recent Entries" is currently empty (reported as "no right pane"
+even though the server HTML was confirmed correct via curl — a genuine
+visibility bug, not a missing-data one). User then asked for the wiki
+pages to be more "reminiscent of Wikipedia or Fandom," scoped via
+AskUserQuestion to just the infobox panel (not a full site reskin).
+Changes:
+
+- `WikiEntryMetaPanel` rebuilt as a proper infobox: bordered card
+  (`border border-border bg-surface rounded-md`), a title bar showing the
+  entry's own name, an image slot (whichever image field the type has —
+  `portrait`/`coverImage`/`itemArt`/`banner`, all already selected by the
+  existing GROQ queries, no query changes needed), and `<dl>`-style
+  labeled key/value rows instead of freeform paragraphs. New required
+  `title` prop, new optional `image` prop on all 9 call sites.
+- Separately, the worldUnit hub page (`/wiki/[world]/[unit]`) had a
+  second, structural problem: the panel was only wired into the page's
+  *lower* "Recent Entries" section, far below the hero/map/nav — on a
+  unit with no entries yet that put the panel completely disconnected
+  from the title, effectively below the fold. Restructured: hero section
+  now shows title/badge/DM only; a new top section right below it pairs
+  the overview text with the panel in the two-column grid (matching
+  where a real Wikipedia/Fandom infobox sits — beside the intro, not
+  buried under later sections); "Recent Entries" reverts to a plain
+  full-width section. The other 8 call sites didn't have this problem —
+  their `<article>`/`<aside>` were already paired in one grid from
+  v0.1.5.
+- Bundle: 2138.05 → 2138.07 KiB gzip, no change of note, no new
+  dependencies.
+
+**v0.1.5 — 2026-08-12 (branch `feat/wiki-entry-meta-panel`, merged to
+`main`).** Phase 1.5: wiki entry meta panel. Purely additive schema
 change plus one shared component wired into 9 detail/hub pages. Highlights:
 
 - New `lastEditedBy` field (`reference → teamMember`, optional) added to
