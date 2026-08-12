@@ -107,6 +107,8 @@ export default async function KeyFigurePage({
 
           {figure._createdAt && figure._updatedAt && (
             <WikiEntryMetaPanel
+              title={figure.name}
+              image={figure.portrait}
               typeLabel="Key Figure"
               statusChip={
                 figure.threatLevel

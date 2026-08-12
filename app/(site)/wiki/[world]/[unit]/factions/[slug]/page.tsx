@@ -72,6 +72,8 @@ export default async function FactionPage({
 
           {faction._createdAt && faction._updatedAt && (
             <WikiEntryMetaPanel
+              title={faction.name}
+              image={faction.banner}
               typeLabel="Faction"
               createdAt={faction._createdAt}
               updatedAt={faction._updatedAt}

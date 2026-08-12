@@ -85,6 +85,8 @@ export default async function MagicItemPage({
 
           {item._createdAt && item._updatedAt && (
             <WikiEntryMetaPanel
+              title={item.name}
+              image={item.itemArt}
               typeLabel="Magic Item"
               statusChip={
                 item.rarity

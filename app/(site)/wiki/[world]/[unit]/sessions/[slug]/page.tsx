@@ -97,6 +97,7 @@ export default async function UnitSessionLogPage({
 
           {session._createdAt && session._updatedAt && (
             <WikiEntryMetaPanel
+              title={session.title}
               typeLabel="Session Log"
               ownerHandle={session.dm?.handle}
               createdAt={session._createdAt}
