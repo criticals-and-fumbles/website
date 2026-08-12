@@ -4,8 +4,10 @@ import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, UNIT_RECENT_ENTRIES_QUERY } from "@/sanity/lib/queries";
 import type { RecentUnitEntry, WorldUnit } from "@/sanity/lib/types";
 import { urlForImage } from "@/sanity/lib/image";
+import { wikiSiblingHref } from "@/lib/wikiLinks";
 import { Badge } from "@/components/ui/Badge";
 import { WorldUnitNav } from "@/components/wiki/WorldUnitNav";
+import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 
@@ -117,29 +119,62 @@ export default async function WorldUnitPage({
         <WorldUnitNav worldSlug={worldSlug} unitSlug={unitSlug} />
       </div>
 
-      {recentEntries.length > 0 && (
-        <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-          <h2 className="mb-6 font-display text-3xl text-text">Recent Entries</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {recentEntries.map((entry) => {
-              const meta = RECENT_ENTRY_META[entry._type](entry);
-              return (
-                <Link
-                  key={`${entry._type}-${entry._id}`}
-                  href={`/wiki/${worldSlug}/${unitSlug}/${RECENT_ENTRY_HREF[entry._type]}/${entry.slug}`}
-                  className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-emerald"
-                >
-                  <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
-                    {entry._type}
-                  </span>
-                  <span className="font-display text-xl text-text">{entry.name}</span>
-                  {meta && <span className="text-xs text-text-muted">{meta}</span>}
-                </Link>
-              );
-            })}
+      <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_240px] lg:items-start">
+          <div>
+            {recentEntries.length > 0 && (
+              <>
+                <h2 className="mb-6 font-display text-3xl text-text">Recent Entries</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {recentEntries.map((entry) => {
+                    const meta = RECENT_ENTRY_META[entry._type](entry);
+                    return (
+                      <Link
+                        key={`${entry._type}-${entry._id}`}
+                        href={`/wiki/${worldSlug}/${unitSlug}/${RECENT_ENTRY_HREF[entry._type]}/${entry.slug}`}
+                        className="flex flex-col gap-1 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-emerald"
+                      >
+                        <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+                          {entry._type}
+                        </span>
+                        <span className="font-display text-xl text-text">{entry.name}</span>
+                        {meta && <span className="text-xs text-text-muted">{meta}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
+
+          {unit._createdAt && unit._updatedAt && (
+            <WikiEntryMetaPanel
+              typeLabel={unit.world?.unitLabel ?? "Territory"}
+              counts={
+                unit.counts
+                  ? [
+                      { label: "Key Figures", value: unit.counts.keyFigures },
+                      { label: "Notable Places", value: unit.counts.notablePlaces },
+                      { label: "Magic Items", value: unit.counts.magicItems },
+                      { label: "Factions", value: unit.counts.factions },
+                      { label: "Lore Entries", value: unit.counts.loreEntries },
+                      { label: "Session Logs", value: unit.counts.sessionLogs },
+                    ].filter((c) => c.value > 0)
+                  : undefined
+              }
+              ownerHandle={unit.dmOwner?.handle}
+              createdAt={unit._createdAt}
+              updatedAt={unit._updatedAt}
+              lastEditedByHandle={unit.lastEditedBy?.handle}
+              siblingsHeading="In this world"
+              siblings={(unit.siblingEntries ?? []).map((s) => ({
+                title: s.title,
+                href: wikiSiblingHref(s),
+              }))}
+            />
+          )}
         </div>
-      )}
+      </div>
 
       <Footer pageFooterCTA={unit.pageFooterCTA} />
     </>

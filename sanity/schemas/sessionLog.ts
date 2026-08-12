@@ -113,6 +113,13 @@ export default defineType({
       to: [{ type: "regularEvent" }],
       description: "Optional — link back to the recurring campaign schedule",
     }),
+    defineField({
+      name: "lastEditedBy",
+      title: "Last Edited By",
+      type: "reference",
+      to: [{ type: "teamMember" }],
+      description: "Manually set by the editor when they save — not sourced from Sanity's history.",
+    }),
   ],
   preview: {
     select: { title: "title", subtitle: "sessionNumber" },

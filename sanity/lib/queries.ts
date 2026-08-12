@@ -13,6 +13,34 @@ const articleCardFields = groq`
 
 const teamMemberRefFields = groq`_id, handle, "slug": slug.current, avatar`;
 
+/**
+ * Wiki entry meta panel (Phase 1.5) — "In this unit"/"In this world" list.
+ * Named "siblingEntries" (not "relatedEntries") specifically to avoid
+ * colliding with loreEntry's pre-existing, manually-curated
+ * "relatedEntries" reference array field — this is a separate,
+ * auto-computed-by-shared-unit/world query, not that field.
+ * Falls back to world-level siblings when the current doc has no unit set
+ * (matches the panel's own "In this world" fallback framing).
+ */
+const wikiSiblingEntries = groq`
+  "siblingEntries": *[
+    _type in ["loreEntry", "sessionLog", "keyFigure", "notablePlace", "magicItem", "faction"]
+    && _id != ^._id
+    && (
+      (defined(^.unit._ref) && unit._ref == ^.unit._ref) ||
+      (!defined(^.unit._ref) && world._ref == ^.world._ref)
+    )
+  ] | order(_updatedAt desc) [0...4] {
+    _type,
+    "title": coalesce(title, name),
+    "slug": slug.current,
+    "worldSlug": world->slug.current,
+    "unitSlug": unit->slug.current
+  }
+`;
+
+const wikiLastEditedBy = groq`"lastEditedBy": lastEditedBy->{ handle }`;
+
 /* ---------------------------------------------------------------------- */
 /* Singletons                                                             */
 /* ---------------------------------------------------------------------- */
@@ -320,7 +348,8 @@ export const LORE_ENTRY_BY_SLUG_QUERY = groq`
     "slug": slug.current,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
-    "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} }
+    "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} },
+    ${wikiSiblingEntries}
   }
 `;
 
@@ -339,7 +368,9 @@ export const SESSION_LOG_BY_SLUG_QUERY = groq`
     "slug": slug.current,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "dm": dm->{ ${teamMemberRefFields} },
-    "players": players[]->{ ${teamMemberRefFields} }
+    "players": players[]->{ ${teamMemberRefFields} },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
 `;
 
@@ -362,8 +393,23 @@ export const WORLD_UNIT_QUERY = groq`
     && slug.current == $unitSlug][0] {
     _id, name, overview, coverImage, mapImage, mapImageUrl,
     developmentStatus, colourAccent, pageFooterCTA,
+    _createdAt, _updatedAt,
     "dmOwner": dmOwner->{ handle, "slug": slug.current, avatar },
-    "world": world->{ name, "slug": slug.current, unitLabel }
+    "world": world->{ name, "slug": slug.current, unitLabel },
+    ${wikiLastEditedBy},
+    "counts": {
+      "keyFigures": count(*[_type == "keyFigure" && unit._ref == ^._id]),
+      "notablePlaces": count(*[_type == "notablePlace" && unit._ref == ^._id]),
+      "magicItems": count(*[_type == "magicItem" && unit._ref == ^._id]),
+      "factions": count(*[_type == "faction" && unit._ref == ^._id]),
+      "loreEntries": count(*[_type == "loreEntry" && unit._ref == ^._id]),
+      "sessionLogs": count(*[_type == "sessionLog" && unit._ref == ^._id])
+    },
+    "siblingEntries": *[
+      _type == "worldUnit" && _id != ^._id && world._ref == ^.world._ref
+    ] | order(_updatedAt desc) [0...4] {
+      _type, "title": name, "slug": slug.current, "worldSlug": world->slug.current
+    }
   }
 `;
 
@@ -386,7 +432,8 @@ export const WORLD_UNIT_LORE_ENTRY_QUERY = groq`
     "slug": slug.current,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
-    "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} }
+    "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} },
+    ${wikiSiblingEntries}
   }
 `;
 
@@ -396,7 +443,9 @@ export const WORLD_UNIT_SESSION_QUERY = groq`
     "slug": slug.current,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "dm": dm->{ ${teamMemberRefFields} },
-    "players": players[]->{ ${teamMemberRefFields} }
+    "players": players[]->{ ${teamMemberRefFields} },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
 `;
 
@@ -410,9 +459,12 @@ export const KEY_FIGURE_QUERY = groq`
   *[_type == "keyFigure" && slug.current == $slug][0] {
     _id, name, alsoKnownAs, role, status, threatLevel,
     description, portrait, hasStatBlock, statBlock,
+    _createdAt, _updatedAt,
     "faction": faction->{ name, "slug": slug.current },
     "world": world->{ name, "slug": slug.current },
-    "unit": unit->{ name, "slug": slug.current }
+    "unit": unit->{ name, "slug": slug.current },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
   // dmNotes intentionally excluded — never queried publicly
 `;
@@ -426,10 +478,13 @@ export const UNIT_NOTABLE_PLACES_QUERY = groq`
 export const NOTABLE_PLACE_QUERY = groq`
   *[_type == "notablePlace" && slug.current == $slug][0] {
     _id, name, placeType, dangerLevel, description, images,
+    _createdAt, _updatedAt,
     "keyFigures": keyFigures[]->{ _id, name, "slug": slug.current, role, portrait },
     "items": items[]->{ _id, name, "slug": slug.current },
     "world": world->{ name, "slug": slug.current },
-    "unit": unit->{ name, "slug": slug.current }
+    "unit": unit->{ name, "slug": slug.current },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
   // dmNotes intentionally excluded — never queried publicly
 `;
@@ -444,10 +499,13 @@ export const MAGIC_ITEM_QUERY = groq`
   *[_type == "magicItem" && slug.current == $slug][0] {
     _id, name, itemType, rarity, lore, itemArt,
     hasMechanics, mechanics,
+    _createdAt, _updatedAt,
     "currentHolder": currentHolder->{ _id, name, "slug": slug.current },
     "foundAt": foundAt->{ _id, name, "slug": slug.current },
     "world": world->{ name, "slug": slug.current },
-    "unit": unit->{ name, "slug": slug.current }
+    "unit": unit->{ name, "slug": slug.current },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
   // dmNotes intentionally excluded — never queried publicly
 `;
@@ -461,9 +519,12 @@ export const UNIT_FACTIONS_QUERY = groq`
 export const FACTION_QUERY = groq`
   *[_type == "faction" && slug.current == $slug][0] {
     _id, name, factionType, description, banner,
+    _createdAt, _updatedAt,
     "members": members[]->{ _id, name, "slug": slug.current, role, portrait },
     "world": world->{ name, "slug": slug.current },
-    "unit": unit->{ name, "slug": slug.current }
+    "unit": unit->{ name, "slug": slug.current },
+    ${wikiLastEditedBy},
+    ${wikiSiblingEntries}
   }
   // dmNotes intentionally excluded — never queried publicly
 `;
