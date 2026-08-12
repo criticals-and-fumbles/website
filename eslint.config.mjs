@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "dist/**",
     ".sanity/**",
     ".open-next/**",
+    // Standalone Worker project, own package.json/tsconfig/lint scope.
+    "workers/**",
   ]),
 ]);
 

@@ -10,3 +10,7 @@ binding = "ASSETS"
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "cnf-website-cache"
+
+[[r2_buckets]]
+binding = "OG_IMAGES_BUCKET"
+bucket_name = "cnf-website-og-images"
