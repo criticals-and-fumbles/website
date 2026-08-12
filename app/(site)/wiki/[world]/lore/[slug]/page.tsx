@@ -87,8 +87,7 @@ export default async function LoreEntryPage({
               </aside>
             )}
 
-            <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 font-ui text-xs text-text-muted">
-              {entry.lastEditedBy && <span>Last edited by {entry.lastEditedBy.handle}</span>}
+            <div className="mt-10 flex flex-wrap items-center justify-end gap-4 border-t border-border pt-6 font-ui text-xs text-text-muted">
               <a
                 href={`https://github.com/criticals-and-fumbles/website/issues/new?title=${issueTitle}`}
                 target="_blank"

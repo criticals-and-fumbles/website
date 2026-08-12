@@ -73,11 +73,12 @@ change plus one shared component wired into 9 detail/hub pages. Highlights:
   URL per `_type` — reused by every call site rather than duplicated.
 - First-name-only display (`firstName()` helper in the component, splits
   on whitespace) applied everywhere this feature shows a person's name,
-  per explicit instruction — never a full name or email. Note: this does
-  **not** retroactively change the pre-existing "Last edited by {full
-  handle}" line already on the loreEntry detail pages (predates this
-  feature, out of scope, left as-is — so loreEntry pages currently show
-  the same editor's name twice, once full and once first-name-only).
+  per explicit instruction — never a full name or email. The pre-existing
+  "Last edited by {full handle}" line on both loreEntry detail pages
+  (world- and unit-scoped) was removed as a follow-up once shipped — it
+  duplicated the panel's own "Last updated by {first name}" row using the
+  same field. `justify-between` → `justify-end` on that footer row since
+  it's back down to a single element ("Suggest an edit").
 - Bundle size: 2134.59 → 2137.87 KiB gzip (+3.3 KiB) — negligible, no new
   npm dependencies added, well within the Known Risks budget below.
 
