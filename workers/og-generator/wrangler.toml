@@ -1,0 +1,16 @@
+name = "cnf-og-generator"
+main = "src/index.ts"
+compatibility_date = "2026-05-03"
+compatibility_flags = ["nodejs_compat"]
+
+[[r2_buckets]]
+binding = "OG_IMAGES_BUCKET"
+bucket_name = "cnf-website-og-images"
+
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+# WEBHOOK_SECRET is set via `wrangler secret put WEBHOOK_SECRET` — never
+# committed as a plaintext [vars] entry.
