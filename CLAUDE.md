@@ -17,7 +17,11 @@ invite string in a component) unless there's a specific reason otherwise.
 No e-commerce or payment features planned short-term.
 
 **Live URLs:**
-- Site (production): https://cnf-sg.criticalsandfumbles.workers.dev
+- Site (production, canonical since 2026-08-14): https://www.criticalsandfumbles.com
+  (apex `criticalsandfumbles.com` and the original
+  `https://cnf-sg.criticalsandfumbles.workers.dev` both still resolve to the
+  same Worker — no redirect enforced between any of the three, canonical
+  choice is app-level via `NEXT_PUBLIC_SITE_URL` only)
 - Studio: https://cnf-website.sanity.studio
 
 ## Release History
@@ -100,17 +104,30 @@ expansion.
   gzip baseline" for this check — that figure is stale (the peak before
   v0.1.9's OG-image fix); current baseline per Known Risks below is
   ~1.36 MB gzip.
-- **Flagged, not written into this doc as fact:** the brief also asked
-  this entry to note a canonical domain of `https://www.criticalsandfumbles.com/`
-  and that the `cnf-sg` Worker has `criticalsandfumbles.com` bound.
-  Checked `.env.local` (`NEXT_PUBLIC_SITE_URL` is still the `*.workers.dev`
-  URL) and `wrangler.toml` (no `routes`/custom-domain block at all) —
-  neither supports that claim as this repo currently stands.
-  `[UNVERIFIED — confirm before acting]`: if a custom domain was purchased
-  and bound to the Worker outside of this repo's `wrangler.toml` (e.g. via
-  the Cloudflare dashboard), that wouldn't show up in a file-level check —
-  worth confirming directly in the Cloudflare dashboard before treating
-  `criticalsandfumbles.com` as live/canonical anywhere in code or docs.
+- **Custom domain confirmed live, `NEXT_PUBLIC_SITE_URL` updated.** A
+  file-level check (`.env.local`, `wrangler.toml`) initially found no
+  evidence of `criticalsandfumbles.com` being bound — correctly so,
+  since Cloudflare's **Custom Domains** feature is configured entirely
+  in the dashboard and never appears in `wrangler.toml`'s `routes` block
+  (a separate mechanism). Verified directly via the Workers Domains API
+  instead: both `criticalsandfumbles.com` and `www.criticalsandfumbles.com`
+  are bound to the `cnf-sg` Worker (production environment), enabled,
+  with active SSL certs — both resolve live with `200`, no redirect
+  between apex/www (Cloudflare doesn't enforce either as canonical; that's
+  an app-level choice). `cnf.sg` is **not** a registered zone on this
+  account and doesn't resolve at all — not "deprecated," just never live.
+  `NEXT_PUBLIC_SITE_URL` in `.env.local` was still the old `*.workers.dev`
+  URL despite the domain being bound at the infra level — updated to
+  `https://www.criticalsandfumbles.com` (www chosen since it's what the
+  brief's original ideation intended; apex works identically if that
+  changes). Verified via dev server that `robots.txt`, `sitemap.xml`, and
+  the homepage's canonical `<link>` all now emit the new domain — nothing
+  else in the codebase hardcoded the old `workers.dev` URL, it all flows
+  from this one env var. **`.env.local` is gitignored, local-only** — the
+  matching `NEXT_PUBLIC_SITE_URL` value in Cloudflare's Workers Builds
+  dashboard settings (Settings → Environment Variables, see Cloudflare
+  deployment below) also needs updating for the production auto-deploy to
+  pick this up; that's a dashboard-only step, not doable from this repo.
 
 **v0.1.11 — 2026-08-12 (branch `feat/unit-infobox-browse-links`, merged
 to `main`).** Small follow-up to the wiki infobox work: added a "Browse"
@@ -1226,8 +1243,10 @@ enum fields) before assuming the query itself is broken.
 See `.env.local.example`. Required: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
 `NEXT_PUBLIC_SANITY_DATASET`, `NEXT_PUBLIC_SANITY_API_VERSION`,
 `SANITY_API_READ_TOKEN` (Viewer role, server-only — never expose to the
-client), `NEXT_PUBLIC_SITE_URL` (filled in after the first Cloudflare Pages
-deploy), `NEXT_PUBLIC_SITE_NAME`.
+client), `NEXT_PUBLIC_SITE_URL` (`https://www.criticalsandfumbles.com` as
+of 2026-08-14 — see Release History v0.1.12; must match whatever's set in
+Cloudflare's Workers Builds dashboard env vars for production, see
+Cloudflare deployment below), `NEXT_PUBLIC_SITE_NAME`.
 
 **`SANITY_API_WRITE_TOKEN`** — added to `.env.local` on 2026-08-11 (Editor
 role) for `sanity/migrations/patch-unit-labels.ts`. Not in
