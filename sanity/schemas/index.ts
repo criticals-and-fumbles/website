@@ -6,6 +6,7 @@ import philosophy from "./philosophy";
 import codeOfConduct from "./codeOfConduct";
 import world from "./world";
 import worldUnit from "./worldUnit";
+import division from "./division";
 import teamMember from "./teamMember";
 import article from "./article";
 import regularEvent from "./regularEvent";
@@ -29,6 +30,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     // Documents
     world,
     worldUnit,
+    division,
     teamMember,
     article,
     regularEvent,

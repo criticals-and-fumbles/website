@@ -128,6 +128,13 @@ export default defineType({
       of: [{ type: "reference", to: [{ type: "world" }] }],
     }),
     defineField({
+      name: "division",
+      title: "Division",
+      type: "reference",
+      to: [{ type: "division" }],
+      description: "Which C&F division this member primarily belongs to",
+    }),
+    defineField({
       name: "socialLinks",
       title: "Social Links",
       type: "array",

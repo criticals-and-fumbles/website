@@ -197,13 +197,32 @@ export const HOME_RSS_FEED_QUERY = groq`{
   }
 }`;
 
-export const HOME_UPCOMING_EVENTS_QUERY = groq`
-  *[_type == "majorEvent" && status != "cancelled" && status != "completed"]
-    | order(coalesce(startDate, _createdAt) asc)[0...3] {
+/**
+ * Homepage "Upcoming Events" — merges majorEvent + regularEvent (scope
+ * change, see CLAUDE.md Release History; originally majorEvent-only).
+ * Each half is capped at [0...5] server-side and carries its own
+ * "sortDate" projection (majorEvent: startDate; regularEvent has no
+ * "next occurrence" field, only startedDate — the campaign's start, not
+ * a future date, but it's the only schedule-relevant field the schema
+ * has); the two are merged and sorted together client-side in
+ * app/(site)/page.tsx, then sliced to 3 — same merge-in-JS pattern this
+ * project already uses for HOME_RSS_FEED_QUERY, since GROQ can't cleanly
+ * cross-type-sort in one query.
+ */
+export const HOME_UPCOMING_EVENTS_QUERY = groq`{
+  "major": *[_type == "majorEvent" && status != "cancelled" && status != "completed"]
+    | order(coalesce(startDate, _createdAt) asc)[0...5] {
     _id, title, "slug": slug.current, eventType, eventDate, startDate,
-    location, status, coverImage
+    location, status, coverImage, registrationUrl,
+    "sortDate": coalesce(startDate, _createdAt)
+  },
+  "regular": *[_type == "regularEvent" && status != "Ended"]
+    | order(coalesce(startedDate, _createdAt) asc)[0...5] {
+    _id, title, "slug": slug.current, campaignName, schedule, status,
+    coverImage,
+    "sortDate": coalesce(startedDate, _createdAt)
   }
-`;
+}`;
 
 export const HOME_WORLDS_QUERY = groq`
   *[_type == "world"] | order(name asc) {
@@ -275,6 +294,15 @@ export const MAJOR_EVENT_BY_SLUG_QUERY = groq`
   }
 `;
 
+export const REGULAR_EVENT_BY_SLUG_QUERY = groq`
+  *[_type == "regularEvent" && slug.current == $slug][0] {
+    ...,
+    "slug": slug.current,
+    "dm": dm->{ ${teamMemberRefFields} },
+    "world": world->{ _id, name, "slug": slug.current, colourAccent }
+  }
+`;
+
 /* ---------------------------------------------------------------------- */
 /* Team                                                                    */
 /* ---------------------------------------------------------------------- */
@@ -284,7 +312,8 @@ export const TEAM_MEMBERS_QUERY = groq`
     _id, handle, "slug": slug.current, realName, roles, tier,
     dndClass, race, alignment, stats, backstory, signatureMove,
     avatar, socialLinks,
-    "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
+    "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent },
+    "division": division->{ name, "slug": slug.current, colourAccent }
   }
 `;
 
@@ -619,5 +648,12 @@ export const GALLERY_EVENTS_QUERY = groq`
 export const ORGANISATIONS_QUERY = groq`
   *[_type == "organisation" && active == true] | order(name asc) {
     _id, name, "slug": slug.current, orgType, description, website, yearsPeriod, logo
+  }
+`;
+
+export const DIVISIONS_QUERY = groq`
+  *[_type == "division"] | order(order asc) {
+    _id, name, "slug": slug.current, logo, blurb, colourAccent, order,
+    "memberCount": count(*[_type == "teamMember" && active == true && division._ref == ^._id])
   }
 `;

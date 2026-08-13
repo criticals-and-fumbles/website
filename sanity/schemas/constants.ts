@@ -52,6 +52,7 @@ export const SESSION_TONES = [
 ];
 
 export const TEAM_MEMBER_ROLES = [
+  // Existing — unchanged, do not alter
   { title: "Dungeon Keeper", value: "dungeon-keeper" },
   { title: "World Builder", value: "world-builder" },
   { title: "Lore Master", value: "lore-master" },
@@ -61,4 +62,13 @@ export const TEAM_MEMBER_ROLES = [
   { title: "Chronicler", value: "chronicler" },
   { title: "Artisan", value: "artisan" },
   { title: "Architect", value: "architect" },
+  // New — additive only
+  { title: "Narrator", value: "narrator" },
+  { title: "Storyteller", value: "storyteller" },
+  { title: "Loremaster", value: "loremaster" },
+  { title: "Apprentice", value: "apprentice" },
+  { title: "Curator", value: "curator" },
+  { title: "Maestro", value: "maestro" },
+  { title: "Crafter", value: "crafter" },
+  { title: "Smith", value: "smith" },
 ];

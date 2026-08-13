@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
   CODE_OF_CONDUCT_QUERY,
+  DIVISIONS_QUERY,
   ORGANISATIONS_QUERY,
   PHILOSOPHY_QUERY,
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import type {
   CodeOfConduct as CodeOfConductData,
+  Division,
   Organisation,
   Philosophy,
   SiteSettings,
@@ -31,11 +33,12 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function AboutPage() {
-  const [settings, philosophy, codeOfConduct, organisations] = await Promise.all([
+  const [settings, philosophy, codeOfConduct, organisations, divisions] = await Promise.all([
     client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
     client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
     client.fetch<CodeOfConductData | null>(CODE_OF_CONDUCT_QUERY),
     client.fetch<Organisation[]>(ORGANISATIONS_QUERY),
+    client.fetch<Division[]>(DIVISIONS_QUERY),
   ]);
 
   return (
@@ -148,21 +151,9 @@ export default async function AboutPage() {
             Divisions
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <DivisionCard
-              icon="⚔️"
-              name="DM & Story Group"
-              description="World-building & RPG Sessions"
-            />
-            <DivisionCard
-              icon="🛠️"
-              name="Project Wing"
-              description="Product Development"
-            />
-            <DivisionCard
-              icon="🎨"
-              name="Art House"
-              description="Podcasts & Miniature Painting"
-            />
+            {divisions.map((division) => (
+              <DivisionCard key={division._id} division={division} />
+            ))}
           </div>
         </div>
       </section>

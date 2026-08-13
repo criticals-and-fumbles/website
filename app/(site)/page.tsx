@@ -13,7 +13,8 @@ import {
 import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type {
   ArticleCard,
-  MajorEventCardData,
+  HomeUpcomingEvent,
+  HomeUpcomingEventsResult,
   PinnedEvent,
   Philosophy,
   RssFeedData,
@@ -40,16 +41,23 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [latestArticles, pinnedEvent, rssFeedRaw, upcomingEvents, worlds, philosophy, siteSettings] =
+  const [latestArticles, pinnedEvent, rssFeedRaw, upcomingEventsRaw, worlds, philosophy, siteSettings] =
     await Promise.all([
       client.fetch<ArticleCard[]>(HOME_LATEST_ARTICLES_QUERY),
       client.fetch<PinnedEvent | null>(HOME_PINNED_EVENT_QUERY),
       client.fetch<RssFeedData>(HOME_RSS_FEED_QUERY),
-      client.fetch<MajorEventCardData[]>(HOME_UPCOMING_EVENTS_QUERY),
+      client.fetch<HomeUpcomingEventsResult>(HOME_UPCOMING_EVENTS_QUERY),
       client.fetch<World[]>(HOME_WORLDS_QUERY),
       client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
       client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
     ]);
+
+  const upcomingEvents: HomeUpcomingEvent[] = [
+    ...upcomingEventsRaw.major.map((e) => ({ ...e, _type: "majorEvent" as const })),
+    ...upcomingEventsRaw.regular.map((e) => ({ ...e, _type: "regularEvent" as const })),
+  ]
+    .sort((a, b) => new Date(a.sortDate).getTime() - new Date(b.sortDate).getTime())
+    .slice(0, 3);
 
   const allUpdates = [
     ...rssFeedRaw.articles,

@@ -20,6 +20,12 @@ export interface WorldRef {
   colourAccent?: string;
 }
 
+export interface DivisionRef {
+  name: string;
+  slug: string;
+  colourAccent?: string;
+}
+
 export interface ArticleCard {
   _id: string;
   title: string;
@@ -150,6 +156,45 @@ export interface RegularEvent {
   status?: string;
   dm?: TeamMemberRef;
   world?: WorldRef;
+  /** Detail-page-only fields — undefined on the card-query shape above. */
+  eventType?: string;
+  frequency?: string;
+  location?: string;
+  description?: PortableTextBlock[];
+  startedDate?: string;
+  sessionCount?: number;
+  coverImage?: SanityImage;
+  pageFooterCTA?: PortableTextBlock[];
+}
+
+/**
+ * Homepage "Upcoming Events" strip item — flattened union of majorEvent/
+ * regularEvent fields tagged by `_type`, plus a computed `sortDate` used
+ * only for the client-side merge in app/(site)/page.tsx. See
+ * HOME_UPCOMING_EVENTS_QUERY.
+ */
+export interface HomeUpcomingEvent {
+  _type: "majorEvent" | "regularEvent";
+  _id: string;
+  title: string;
+  slug: string;
+  sortDate: string;
+  status?: string;
+  coverImage?: SanityImage;
+  /** majorEvent only */
+  eventDate?: string;
+  location?: string;
+  registrationUrl?: string;
+  /** regularEvent only */
+  campaignName?: string;
+  schedule?: string;
+}
+
+export interface HomeUpcomingEventsResult {
+  major: (MajorEventCardData & { sortDate: string })[];
+  regular: (Pick<RegularEvent, "_id" | "title" | "slug" | "campaignName" | "schedule" | "status" | "coverImage"> & {
+    sortDate: string;
+  })[];
 }
 
 export interface TeamMember {
@@ -173,6 +218,19 @@ export interface TeamMember {
   avatar?: SanityImage;
   socialLinks?: { platform: string; url: string }[];
   worlds?: WorldRef[];
+  division?: DivisionRef;
+}
+
+/** See sanity/schemas/division.ts. */
+export interface Division {
+  _id: string;
+  name: string;
+  slug: string;
+  logo?: SanityImage;
+  blurb?: string;
+  colourAccent?: string;
+  order?: number;
+  memberCount?: number;
 }
 
 export interface World {

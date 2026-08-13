@@ -7,10 +7,16 @@ import {
   GALLERY_PHOTOS_QUERY,
   MAJOR_EVENT_BY_SLUG_QUERY,
   MAJOR_EVENTS_UPCOMING_QUERY,
+  REGULAR_EVENT_BY_SLUG_QUERY,
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import { urlForImage } from "@/sanity/lib/image";
-import type { MajorEvent, MajorEventCardData, SiteSettings } from "@/sanity/lib/types";
+import type {
+  MajorEvent,
+  MajorEventCardData,
+  RegularEvent,
+  SiteSettings,
+} from "@/sanity/lib/types";
 import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
@@ -28,21 +34,40 @@ export async function generateMetadata({
   const event = await client.fetch<MajorEvent | null>(MAJOR_EVENT_BY_SLUG_QUERY, {
     slug,
   });
-  if (!event) return {};
 
-  const descriptionText = plainTextFromBlocks(event.description);
+  if (event) {
+    const descriptionText = plainTextFromBlocks(event.description);
+
+    return buildMetadata({
+      title: event.title,
+      description:
+        event.tagline ??
+        descriptionText ??
+        `Join Criticals and Fumbles for ${event.title} in Singapore.`,
+      path: `/events/${slug}`,
+      image: urlForImage(event.splashImage ?? event.coverImage)
+        ?.width(1200)
+        .height(630)
+        .url(),
+      type: "event",
+    });
+  }
+
+  const regularEvent = await client.fetch<RegularEvent | null>(
+    REGULAR_EVENT_BY_SLUG_QUERY,
+    { slug },
+  );
+  if (!regularEvent) return {};
+
+  const regularDescriptionText = plainTextFromBlocks(regularEvent.description);
 
   return buildMetadata({
-    title: event.title,
+    title: regularEvent.campaignName ?? regularEvent.title,
     description:
-      event.tagline ??
-      descriptionText ??
-      `Join Criticals and Fumbles for ${event.title} in Singapore.`,
+      regularDescriptionText ??
+      `Join Criticals and Fumbles for ${regularEvent.campaignName ?? regularEvent.title} in Singapore.`,
     path: `/events/${slug}`,
-    image: urlForImage(event.splashImage ?? event.coverImage)
-      ?.width(1200)
-      .height(630)
-      .url(),
+    image: urlForImage(regularEvent.coverImage)?.width(1200).height(630).url(),
     type: "event",
   });
 }
@@ -56,7 +81,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-export default async function MajorEventPage({
+export default async function EventDetailPage({
   params,
 }: PageProps<"/events/[slug]">) {
   const { slug } = await params;
@@ -64,8 +89,19 @@ export default async function MajorEventPage({
     slug,
   });
 
-  if (!event) notFound();
+  if (event) return <MajorEventDetail event={event} />;
 
+  const regularEvent = await client.fetch<RegularEvent | null>(
+    REGULAR_EVENT_BY_SLUG_QUERY,
+    { slug },
+  );
+
+  if (!regularEvent) notFound();
+
+  return <RegularEventDetail event={regularEvent} />;
+}
+
+async function MajorEventDetail({ event }: { event: MajorEvent }) {
   const [photos, related, siteSettings] = await Promise.all([
     client.fetch<{ _id: string }[]>(GALLERY_PHOTOS_QUERY, {
       eventId: event._id,
@@ -222,6 +258,113 @@ export default async function MajorEventPage({
                 </Link>
               ))}
             </aside>
+          )}
+        </div>
+      </div>
+
+      <Footer pageFooterCTA={event.pageFooterCTA} />
+    </>
+  );
+}
+
+/**
+ * regularEvent detail render — deliberately simpler than MajorEventDetail:
+ * no registration/countdown/gallery/related-events sections, since
+ * regularEvent has no registrationUrl (recurring sessions route to
+ * Discord, not external registration — see CLAUDE.md), no gallery
+ * linkage, and only one regularEvent document exists at all right now so
+ * "related" wouldn't be meaningful yet.
+ */
+async function RegularEventDetail({ event }: { event: RegularEvent }) {
+  const siteSettings = await client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY);
+  const imageUrl = urlForImage(event.coverImage)
+    ?.width(1600)
+    .height(700)
+    .auto("format")
+    .url();
+
+  return (
+    <>
+      <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
+        {imageUrl && (
+          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-lg">
+            <Image
+              src={imageUrl}
+              alt={event.campaignName ?? event.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        )}
+
+        <div className="mt-8">
+          <Badge variant="emerald">{event.status ?? "Regular Session"}</Badge>
+          <h1 className="mt-3 font-display text-5xl text-text">
+            {event.campaignName ?? event.title}
+          </h1>
+
+          <dl className="mt-8 grid grid-cols-2 gap-4 border-y border-border py-6 font-ui text-xs sm:grid-cols-4">
+            {event.schedule && (
+              <div>
+                <dt className="text-text-muted">Schedule</dt>
+                <dd className="mt-1 text-text">{event.schedule}</dd>
+              </div>
+            )}
+            {event.location && (
+              <div>
+                <dt className="text-text-muted">Location</dt>
+                <dd className="mt-1 text-text">{event.location}</dd>
+              </div>
+            )}
+            {event.system && (
+              <div>
+                <dt className="text-text-muted">System</dt>
+                <dd className="mt-1 text-text">{event.system}</dd>
+              </div>
+            )}
+            {event.playerCount && (
+              <div>
+                <dt className="text-text-muted">Players</dt>
+                <dd className="mt-1 text-text">{event.playerCount}</dd>
+              </div>
+            )}
+          </dl>
+
+          {event.description && <Renderer value={event.description} />}
+
+          {event.dm && (
+            <div className="mt-10">
+              <h2 className="font-display text-2xl text-text">Dungeon Master</h2>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  href={`/team/${event.dm.slug}`}
+                  className="rounded-full border border-border px-4 py-2 font-ui text-xs text-text hover:border-emerald hover:text-emerald"
+                >
+                  {event.dm.handle}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {event.world && (
+            <div className="mt-10">
+              <h2 className="font-display text-2xl text-text">World</h2>
+              <Link
+                href={`/wiki/${event.world.slug}`}
+                className="mt-3 inline-block rounded-full border border-border px-4 py-2 font-ui text-xs text-text hover:border-emerald hover:text-emerald"
+              >
+                {event.world.name}
+              </Link>
+            </div>
+          )}
+
+          {siteSettings?.discordUrl && (
+            <div className="mt-10">
+              <LinkButton href={siteSettings.discordUrl} external variant="primary">
+                Questions? Ask us on Discord →
+              </LinkButton>
+            </div>
           )}
         </div>
       </div>

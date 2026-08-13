@@ -22,6 +22,96 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
+**v0.1.12 — 2026-08-14 (branch `feat/events-fixes-divisions-roles`, not yet
+merged).** Events bugfixes + new `division` schema + additive roles
+expansion.
+
+- **Events fixes:**
+  - Homepage "Upcoming Events" scope change: was `majorEvent`-only by
+    deliberate original design (see v0.1.1's `HOME_UPCOMING_EVENTS_QUERY`);
+    now merges `majorEvent` + `regularEvent`, capped at 3 combined, sorted
+    by a per-type `sortDate` (`startDate` for majorEvent, `startedDate` for
+    regularEvent — the only schedule-relevant field regularEvent has; no
+    "next occurrence" field exists). Merge+sort happens client-side in
+    `app/(site)/page.tsx`, same pattern as the Hero RSS feed. New
+    `HomeUpcomingEvent`/`HomeUpcomingEventsResult` types.
+    `EventStrip.tsx` shows an amber status badge for majorEvent, a plain
+    "Regular Session" emerald badge for regularEvent.
+  - Regular event cards were completely unclickable on `/events`
+    (`EventCard.tsx` was a bare `<div>`, no `<Link>`/`<a>` at all — not a
+    missing-slug issue, the one existing `regularEvent` document has a
+    valid slug). Fixed by wrapping content in a `<Link>`.
+  - Deeper bug found investigating the above: `/events/[slug]/page.tsx`
+    only ever queried `majorEvent` (`MAJOR_EVENT_BY_SLUG_QUERY`) — even
+    after fixing the `<Link>`, a regularEvent slug would 404. Fixed with a
+    type-aware fetch: try `majorEvent` first, fall back to
+    `REGULAR_EVENT_BY_SLUG_QUERY`; split into two render components
+    (`MajorEventDetail`, `RegularEventDetail`) in the same file, since the
+    two schemas' field shapes genuinely diverge (`regularEvent.schedule` is
+    a plain string; `majorEvent.schedule` is Portable Text — same field
+    name, incompatible types, can't share one render path for that field).
+    `RegularEventDetail` is deliberately simpler — no
+    registration/countdown/gallery/related-events sections, since
+    regularEvent has none of those concepts.
+  - Register/View Details button added to event cards on both the homepage
+    strip and `/events` (`MajorEventCard`, `EventCard`, `EventStrip`) —
+    `registrationUrl` set → external "Register" button; unset → internal
+    "View Details" link. `regularEvent` has no `registrationUrl` field at
+    all, so its cards always show "View Details". Cards were restructured
+    (outer `<div>` + inner content `<Link>` + sibling button `<LinkButton>`)
+    to avoid nesting an `<a>` inside another `<a>`, which the previous
+    whole-card-is-a-`<Link>` pattern would have produced once a real button
+    was added.
+- **New `division` schema** (`sanity/schemas/division.ts`) — additive,
+  purely new document type: `name`, `slug`, `logo`, `blurb`,
+  `colourAccent`, `order`. Seeded with the 3 real C&F divisions (DM &
+  Story Group / Project Wing / Art House) via
+  `sanity/migrations/seed-divisions.ts` (dry-run-first, idempotent —
+  skips by `name` match). `About` page's `DivisionCard` was previously
+  **hardcoded** (icon emoji + name + description passed as props from
+  `app/(site)/about/page.tsx`) — now fetches via `DIVISIONS_QUERY` and
+  renders the real `logo`/`blurb`/a live member count
+  (`count(*[_type == "teamMember" && division._ref == ^._id])`). No logo
+  images uploaded yet — `DivisionCard` falls back to a 🎲 emoji when
+  `logo` is unset.
+- **`teamMember.division`** — new optional reference field (→ `division`),
+  purely additive, no other `teamMember` field touched. `TEAM_MEMBERS_QUERY`
+  now resolves it; `CharacterCard.tsx` shows a division badge (using
+  `division.colourAccent` if set, same inline-`style` pattern as
+  `WorldCard.tsx`'s accent colour — not routed through the shared `Badge`
+  component, which doesn't take a colour override) only when the field is
+  set — no empty/placeholder badge otherwise.
+- **`teamMember.roles` — 8 new options added, all 9 existing untouched:**
+  Narrator, Storyteller, Loremaster, Apprentice, Curator, Maestro, Crafter,
+  Smith. Pure additive change to the shared `TEAM_MEMBER_ROLES` array in
+  `sanity/schemas/constants.ts` — **not two separate edits.** The request
+  assumed a schema options list *and* a separate `roleDisplay` map in
+  `CharacterCard.tsx` needed updating; in this codebase `CharacterCard`'s
+  `ROLE_LABELS` is derived directly from `TEAM_MEMBER_ROLES`
+  (`Object.fromEntries(TEAM_MEMBER_ROLES.map(...))`), so extending the one
+  array updates both the Studio options and the display label
+  automatically. No migration script — verified via a live Vision-style
+  query (all 10 team members' `roles` arrays) before and after the schema
+  change; both runs returned byte-identical data, confirming the additive
+  change touched zero documents.
+- Studio schema deployed (`npx sanity deploy`).
+- Bundle: 1355.89 → 1358.40 KiB gzip (+2.51 KiB) — negligible, no new
+  dependencies. **Note:** the session's original brief cited a "~2.08 MB
+  gzip baseline" for this check — that figure is stale (the peak before
+  v0.1.9's OG-image fix); current baseline per Known Risks below is
+  ~1.36 MB gzip.
+- **Flagged, not written into this doc as fact:** the brief also asked
+  this entry to note a canonical domain of `https://www.criticalsandfumbles.com/`
+  and that the `cnf-sg` Worker has `criticalsandfumbles.com` bound.
+  Checked `.env.local` (`NEXT_PUBLIC_SITE_URL` is still the `*.workers.dev`
+  URL) and `wrangler.toml` (no `routes`/custom-domain block at all) —
+  neither supports that claim as this repo currently stands.
+  `[UNVERIFIED — confirm before acting]`: if a custom domain was purchased
+  and bound to the Worker outside of this repo's `wrangler.toml` (e.g. via
+  the Cloudflare dashboard), that wouldn't show up in a file-level check —
+  worth confirming directly in the Cloudflare dashboard before treating
+  `criticalsandfumbles.com` as live/canonical anywhere in code or docs.
+
 **v0.1.11 — 2026-08-12 (branch `feat/unit-infobox-browse-links`, merged
 to `main`).** Small follow-up to the wiki infobox work: added a "Browse"
 section to the worldUnit hub page's infobox (Lore / Key Figures /
@@ -673,8 +763,8 @@ Three singletons (`siteSettings`, `philosophy`, `codeOfConduct`) pinned in
 the Studio structure (`sanity.config.ts`'s `SINGLETON_TYPES` set + a fixed-ID
 list item each) so editors can't create duplicates — this is the only
 singleton mechanism used in this project; none of the three schemas
-themselves set `__experimental_actions`. Fifteen document types: `world`,
-`worldUnit`, `teamMember`, `article`, `regularEvent`, `majorEvent`,
+themselves set `__experimental_actions`. Sixteen document types: `world`,
+`worldUnit`, `division`, `teamMember`, `article`, `regularEvent`, `majorEvent`,
 `loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`, `magicItem`,
 `faction`, `organisation`, `resource`, `galleryPhoto`. One reusable object:
 `calloutBlock` (used inside `article.body`, `loreEntry.body`,
@@ -708,9 +798,12 @@ arrays, easy to change):
 - `teamMember.roles` — **renamed from `role`** (2026-08-10): was a single free-text
   string, now a multi-select array of an enum list (Dungeon Keeper, World
   Builder, Lore Master, Lore Keeper, Sage, Journeyman, Chronicler, Artisan,
-  Architect — see `TEAM_MEMBER_ROLES` in `sanity/schemas/constants.ts`). Any
-  GROQ query or component that still references singular `role` on a
-  `teamMember` document is stale — use `roles` (array) instead.
+  Architect, plus 8 more added 2026-08-14: Narrator, Storyteller, Loremaster,
+  Apprentice, Curator, Maestro, Crafter, Smith — see `TEAM_MEMBER_ROLES` in
+  `sanity/schemas/constants.ts`, single source of truth for both the Studio
+  options list and `CharacterCard.tsx`'s display labels). Any GROQ query or
+  component that still references singular `role` on a `teamMember`
+  document is stale — use `roles` (array) instead.
   `teamMember.tier` values were also renamed the same session: `Leadership` →
   `Horsemen`, `RegularPlayer` → `UnclesLeague`, `Alumni` → `CriticalFumblers`,
   `DMCouncil` unchanged. `/team` now renders four sections: Horsemen, DM

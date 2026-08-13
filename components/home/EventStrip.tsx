@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { MajorEventCardData } from "@/sanity/lib/types";
+import type { HomeUpcomingEvent } from "@/sanity/lib/types";
 import { urlForImage } from "@/sanity/lib/image";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
@@ -12,7 +12,7 @@ const STATUS_LABELS: Record<string, string> = {
   full: "Full",
 };
 
-export function EventStrip({ events }: { events: MajorEventCardData[] }) {
+export function EventStrip({ events }: { events: HomeUpcomingEvent[] }) {
   return (
     <section className="bg-surface px-4 py-16 md:px-8">
       <div className="mx-auto max-w-7xl">
@@ -33,32 +33,67 @@ export function EventStrip({ events }: { events: MajorEventCardData[] }) {
                 .height(300)
                 .auto("format")
                 .url();
+              const detailHref = `/events/${event.slug}`;
+              const isMajor = event._type === "majorEvent";
+              const ctaHref = isMajor && event.registrationUrl ? event.registrationUrl : detailHref;
+              const ctaLabel = isMajor && event.registrationUrl ? "Register" : "View Details";
+              const ctaExternal = isMajor && Boolean(event.registrationUrl);
+
               return (
-                <Link
+                <div
                   key={event._id}
-                  href={`/events/${event.slug}`}
                   className="flex flex-col overflow-hidden rounded-lg border border-border bg-bg transition-colors hover:border-emerald"
                 >
-                  {imageUrl && (
-                    <div className="relative aspect-[5/3] w-full overflow-hidden bg-bg-forest">
-                      <Image src={imageUrl} alt={event.title} fill className="object-cover" />
+                  <Link href={detailHref} className="flex flex-1 flex-col">
+                    {imageUrl && (
+                      <div className="relative aspect-[5/3] w-full overflow-hidden bg-bg-forest">
+                        <Image src={imageUrl} alt={event.title} fill className="object-cover" />
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col gap-2 p-4 pb-0">
+                      {isMajor ? (
+                        <>
+                          {event.eventDate && (
+                            <span className="font-ui text-xs text-text-muted">
+                              {event.eventDate}
+                            </span>
+                          )}
+                          <h3 className="font-display text-xl text-text">{event.title}</h3>
+                          {event.location && (
+                            <p className="text-sm text-text-muted">{event.location}</p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="font-display text-xl text-text">
+                            {event.campaignName ?? event.title}
+                          </h3>
+                          {event.schedule && (
+                            <p className="text-sm text-text-muted">{event.schedule}</p>
+                          )}
+                        </>
+                      )}
+                      <Badge
+                        variant={isMajor ? "amber" : "emerald"}
+                        className="mt-auto self-start"
+                      >
+                        {isMajor
+                          ? (STATUS_LABELS[event.status ?? ""] ?? event.status)
+                          : "Regular Session"}
+                      </Badge>
                     </div>
-                  )}
-                  <div className="flex flex-1 flex-col gap-2 p-4">
-                    {event.eventDate && (
-                      <span className="font-ui text-xs text-text-muted">
-                        {event.eventDate}
-                      </span>
-                    )}
-                    <h3 className="font-display text-xl text-text">{event.title}</h3>
-                    {event.location && (
-                      <p className="text-sm text-text-muted">{event.location}</p>
-                    )}
-                    <Badge variant="amber" className="mt-auto self-start">
-                      {STATUS_LABELS[event.status] ?? event.status}
-                    </Badge>
+                  </Link>
+                  <div className="p-4 pt-3">
+                    <LinkButton
+                      href={ctaHref}
+                      external={ctaExternal}
+                      variant="primary"
+                      className="w-full"
+                    >
+                      {ctaLabel}
+                    </LinkButton>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>

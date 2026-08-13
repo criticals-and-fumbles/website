@@ -54,6 +54,18 @@ export function CharacterCard({
         )}
       </div>
 
+      {member.division &&
+        (member.division.colourAccent ? (
+          <span
+            className="inline-flex items-center rounded-full border px-2.5 py-0.5 font-ui text-sm"
+            style={{ color: member.division.colourAccent, borderColor: member.division.colourAccent }}
+          >
+            {member.division.name}
+          </span>
+        ) : (
+          <Badge variant="surface">{member.division.name}</Badge>
+        ))}
+
       {member.roles && member.roles.length > 0 && (
         <div className="flex flex-wrap justify-center gap-1">
           {member.roles.map((role) => (
