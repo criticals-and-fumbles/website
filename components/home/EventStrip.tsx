@@ -35,9 +35,9 @@ export function EventStrip({ events }: { events: HomeUpcomingEvent[] }) {
                 .url();
               const detailHref = `/events/${event.slug}`;
               const isMajor = event._type === "majorEvent";
-              const ctaHref = isMajor && event.registrationUrl ? event.registrationUrl : detailHref;
-              const ctaLabel = isMajor && event.registrationUrl ? "Register" : "View Details";
-              const ctaExternal = isMajor && Boolean(event.registrationUrl);
+              const ctaHref = event.registrationUrl ?? detailHref;
+              const ctaLabel = event.registrationUrl ? "Register" : "View Details";
+              const ctaExternal = Boolean(event.registrationUrl);
 
               return (
                 <div

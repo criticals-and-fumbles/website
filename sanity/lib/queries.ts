@@ -219,7 +219,7 @@ export const HOME_UPCOMING_EVENTS_QUERY = groq`{
   "regular": *[_type == "regularEvent" && status != "Ended"]
     | order(coalesce(startedDate, _createdAt) asc)[0...5] {
     _id, title, "slug": slug.current, campaignName, schedule, status,
-    coverImage,
+    coverImage, registrationUrl,
     "sortDate": coalesce(startedDate, _createdAt)
   }
 }`;
@@ -280,7 +280,7 @@ export const MAJOR_EVENTS_PAST_QUERY = groq`
 export const REGULAR_EVENTS_QUERY = groq`
   *[_type == "regularEvent"] | order(title asc) {
     _id, title, "slug": slug.current, campaignName, schedule, system,
-    playerCount, status,
+    playerCount, status, registrationUrl,
     "dm": dm->{ ${teamMemberRefFields} },
     "world": world->{ _id, name, "slug": slug.current, colourAccent }
   }

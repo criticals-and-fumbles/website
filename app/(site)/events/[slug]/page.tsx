@@ -269,11 +269,11 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
 
 /**
  * regularEvent detail render — deliberately simpler than MajorEventDetail:
- * no registration/countdown/gallery/related-events sections, since
- * regularEvent has no registrationUrl (recurring sessions route to
- * Discord, not external registration — see CLAUDE.md), no gallery
- * linkage, and only one regularEvent document exists at all right now so
- * "related" wouldn't be meaningful yet.
+ * no countdown/gallery/related-events sections, since regularEvent has
+ * none of those concepts and only one regularEvent document exists at all
+ * right now so "related" wouldn't be meaningful yet. Does show a Register
+ * button when registrationUrl is set (added 2026-08-14), same
+ * Register-or-nothing-plus-Discord pattern as MajorEventDetail.
  */
 async function RegularEventDetail({ event }: { event: RegularEvent }) {
   const siteSettings = await client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY);
@@ -359,12 +359,30 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
             </div>
           )}
 
-          {siteSettings?.discordUrl && (
-            <div className="mt-10">
-              <LinkButton href={siteSettings.discordUrl} external variant="primary">
-                Questions? Ask us on Discord →
+          {event.registrationUrl ? (
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <LinkButton href={event.registrationUrl} external variant="primary">
+                Register →
               </LinkButton>
+              {siteSettings?.discordUrl && (
+                <a
+                  href={siteSettings.discordUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-ui text-sm text-emerald hover:underline"
+                >
+                  Questions? Ask us on Discord →
+                </a>
+              )}
             </div>
+          ) : (
+            siteSettings?.discordUrl && (
+              <div className="mt-10">
+                <LinkButton href={siteSettings.discordUrl} external variant="primary">
+                  Questions? Ask us on Discord →
+                </LinkButton>
+              </div>
+            )
           )}
         </div>
       </div>

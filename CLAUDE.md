@@ -26,8 +26,25 @@ No e-commerce or payment features planned short-term.
 
 ## Release History
 
-**v0.1.12 — 2026-08-14 (branch `feat/events-fixes-divisions-roles`, not yet
-merged).** Events bugfixes + new `division` schema + additive roles
+**v0.1.13 — 2026-08-14 (branch `feat/regular-event-registration-url`).**
+`regularEvent` gains an optional `registrationUrl` field (`url`, additive
+— `majorEvent` already had this), so recurring sessions can now link to
+external registration too, not just Discord. Button logic across all
+three surfaces (`EventCard.tsx`/`/events`, `EventStrip.tsx`/homepage,
+`RegularEventDetail` in `app/(site)/events/[slug]/page.tsx`) now checks
+`registrationUrl` presence directly rather than gating on event `_type` —
+previously `EventStrip`'s CTA logic only ever showed "Register" for
+`majorEvent` even though the underlying button/link plumbing was already
+type-agnostic. Falls back to "View Details" (internal link) when unset,
+same as `majorEvent`. Verified live: temporarily patched the one existing
+`regularEvent` document's `registrationUrl` via a scratch script, confirmed
+the Register button + correct external href render on all three surfaces,
+then unset it and confirmed the View Details fallback returns — script
+deleted after, not committed. Bundle: 1358.40 → 1358.38 KiB gzip (flat, no
+new dependencies). Schema deployed via `npx sanity deploy`.
+
+**v0.1.12 — 2026-08-14 (branch `feat/events-fixes-divisions-roles`, merged
+to `main`).** Events bugfixes + new `division` schema + additive roles
 expansion.
 
 - **Events fixes:**

@@ -156,6 +156,7 @@ export interface RegularEvent {
   status?: string;
   dm?: TeamMemberRef;
   world?: WorldRef;
+  registrationUrl?: string;
   /** Detail-page-only fields — undefined on the card-query shape above. */
   eventType?: string;
   frequency?: string;
@@ -181,10 +182,10 @@ export interface HomeUpcomingEvent {
   sortDate: string;
   status?: string;
   coverImage?: SanityImage;
+  registrationUrl?: string;
   /** majorEvent only */
   eventDate?: string;
   location?: string;
-  registrationUrl?: string;
   /** regularEvent only */
   campaignName?: string;
   schedule?: string;
@@ -192,7 +193,7 @@ export interface HomeUpcomingEvent {
 
 export interface HomeUpcomingEventsResult {
   major: (MajorEventCardData & { sortDate: string })[];
-  regular: (Pick<RegularEvent, "_id" | "title" | "slug" | "campaignName" | "schedule" | "status" | "coverImage"> & {
+  regular: (Pick<RegularEvent, "_id" | "title" | "slug" | "campaignName" | "schedule" | "status" | "coverImage" | "registrationUrl"> & {
     sortDate: string;
   })[];
 }

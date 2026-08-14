@@ -102,6 +102,12 @@ export default defineType({
       initialValue: 0,
     }),
     defineField({
+      name: "registrationUrl",
+      title: "Registration URL",
+      type: "url",
+      description: "Optional — if set, shows a Register button instead of View Details",
+    }),
+    defineField({
       name: "coverImage",
       title: "Cover Image",
       type: "image",

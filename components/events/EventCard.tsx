@@ -5,6 +5,8 @@ import { LinkButton } from "@/components/ui/Button";
 
 export function EventCard({ event }: { event: RegularEvent }) {
   const detailHref = `/events/${event.slug}`;
+  const ctaHref = event.registrationUrl ?? detailHref;
+  const ctaLabel = event.registrationUrl ? "Register" : "View Details";
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-emerald">
@@ -48,8 +50,13 @@ export function EventCard({ event }: { event: RegularEvent }) {
           )}
         </dl>
       </Link>
-      <LinkButton href={detailHref} variant="primary" className="mt-2 w-full">
-        View Details
+      <LinkButton
+        href={ctaHref}
+        external={Boolean(event.registrationUrl)}
+        variant="primary"
+        className="mt-2 w-full"
+      >
+        {ctaLabel}
       </LinkButton>
     </div>
   );
