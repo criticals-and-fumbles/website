@@ -58,7 +58,32 @@ just missing content. When content that should exist doesn't appear,
 check enum-based filters (and, as above, page-level string comparisons on
 enum fields) before assuming the query itself is broken.
 
-## Process note — Schema Safety Protocol formalized (2026-08-15)
+**Env vars with a trailing slash silently double up on any path
+concatenation — and ISR cache means a fix doesn't appear to work
+immediately even when it's deployed correctly (closed known-risk #1,
+2026-08-18).** The Cloudflare Workers Builds dashboard's
+`NEXT_PUBLIC_SITE_URL` had a trailing slash (`.../criticalsandfumbles.com/`)
+while every usage site did `${SITE_URL}/path` assuming none — producing
+`https://www.criticalsandfumbles.com//sitemap.xml` and similar in
+`robots.txt`, `sitemap.xml`, and the Organization structured data's
+`logo` field. Fixed by defensively stripping a trailing slash
+(`.replace(/\/$/, "")`) at each of the 4 usage sites
+(`lib/metadata.ts`, `app/sitemap.ts`, `app/robots.ts`,
+`OrganizationStructuredData.tsx`) rather than trusting the dashboard
+value to be exactly right — also replaced the stale `"https://cnf.sg"`
+fallback default, which isn't even a registered domain. **Verification
+gotcha hit while confirming the fix:** the fix deployed successfully
+(confirmed via `wrangler deployments list`), but production kept
+serving the old double-slash output for several minutes afterward —
+`x-nextjs-cache: HIT` response headers revealed the R2-backed ISR cache
+(`revalidate = 300`) was still serving pre-fix HTML, unrelated to which
+Worker version was live. A new deploy does not invalidate previously
+cached page output in R2; only checked again once the cache's own
+`s-maxage` window had naturally elapsed. Don't declare a fix "live" from
+deployment status alone on this project — re-check the actual response
+after allowing for the ISR window, or the "verify after" step of the
+Schema Safety Protocol (and this same discipline for non-schema fixes)
+will report a false positive.
 
 The root `CLAUDE.md`'s Schema Safety Protocol (verify-before-touching,
 additive-by-default, stop-and-ask-on-ambiguity, migrate-don't-assume,
