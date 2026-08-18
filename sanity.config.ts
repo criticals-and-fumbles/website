@@ -2,6 +2,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
 import { schema } from "./sanity/schemas";
+import { structure } from "./sanity/structure";
 import { StudioLogo } from "./components/studio/StudioLogo";
 
 const SINGLETON_TYPES = new Set([
@@ -48,43 +49,7 @@ export default defineConfig({
         : prevActions,
   },
   plugins: [
-    structureTool({
-      structure: (S) =>
-        S.list()
-          .title("Content")
-          .items([
-            S.listItem()
-              .title("Site Settings")
-              .id("siteSettings")
-              .child(
-                S.document().schemaType("siteSettings").documentId("siteSettings"),
-              ),
-            S.listItem()
-              .title("Philosophy")
-              .id("philosophy")
-              .child(
-                S.document().schemaType("philosophy").documentId("philosophy"),
-              ),
-            S.listItem()
-              .title("Code of Conduct")
-              .id("codeOfConduct")
-              .child(
-                S.document()
-                  .schemaType("codeOfConduct")
-                  .documentId("codeOfConduct"),
-              ),
-            S.listItem()
-              .title("AI Charter")
-              .id("aiCharter")
-              .child(
-                S.document().schemaType("aiCharter").documentId("aiCharter"),
-              ),
-            S.divider(),
-            ...S.documentTypeListItems().filter(
-              (item) => !SINGLETON_TYPES.has(item.getId() ?? ""),
-            ),
-          ]),
-    }),
+    structureTool({ structure }),
     visionTool({ defaultApiVersion: apiVersion }),
   ],
 });

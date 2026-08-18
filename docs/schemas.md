@@ -12,7 +12,8 @@ change described or implied here.
 All schemas live in `sanity/schemas/`, registered in `sanity/schemas/index.ts`.
 Four singletons (`siteSettings`, `philosophy`, `codeOfConduct`, `aiCharter`)
 pinned in the Studio structure (`sanity.config.ts`'s `SINGLETON_TYPES` set +
-a fixed-ID list item each) so editors can't create duplicates — this is the
+a fixed-ID list item each in `sanity/structure.ts`, see "Studio desk
+structure" below) so editors can't create duplicates — this is the
 only singleton mechanism used in this project; **none of the four schemas
 themselves set `__experimental_actions`** (a request for `aiCharter`
 initially proposed this again — same deviation CLAUDE.md's release history
@@ -29,6 +30,43 @@ reusable object: `calloutBlock` (used inside `article.body`,
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ
 queries, add them to `sanity/lib/queries.ts` and the TS shape to
 `sanity/lib/types.ts`.
+
+## Studio desk structure (2026-08-19)
+
+`sanity/structure.ts` (new file — the desk structure previously lived
+inline in `sanity.config.ts`'s `structureTool({ structure: ... })` call)
+organises Studio's sidebar into folders — **pure navigation/grouping,
+zero schema impact**, no field/type/data changes of any kind:
+
+```
+Main
+├── Events    (majorEvent, regularEvent)
+├── Team      (teamMember, division)
+├── Wiki      (world, worldUnit, loreEntry, sessionLog, keyFigure,
+│              notablePlace, magicItem, faction)
+└── Settings  (the 4 singletons, direct-to-document child pattern)
+Campaigns     (empty placeholder — see below)
+──────────────
+Articles, Resources, Organisations, Gallery Photos (top-level)
+```
+
+`article`, `resource`, `organisation`, and `galleryPhoto` stay top-level
+rather than nested under `Main` — `Main`'s three folders (Events/Team/Wiki)
+are all multi-document content areas that grow together; these four are
+flatter, more occasional content types with no natural grouping among
+themselves. `organisation` in particular wasn't mentioned in the session
+brief that requested this reorg at all — caught by cross-checking the
+brief's plan against `sanity/schemas/index.ts`'s actual registered type
+list before implementing, per the Schema Safety Protocol's
+verify-before-touching habit (even though this session doesn't touch
+schema, the "verify the plan matches actual repo state" discipline still
+applied and caught a real gap).
+
+**`Campaigns` is an intentional empty placeholder**, not a known-risk —
+a future session will add a new subsite's worth of schemas here once they
+exist. Not tracked as a `known-risk` issue: it's documented future work
+with no current gap or broken state, not a currently-open risk/gap (see
+the two-tier risk-tracking criteria in `docs/lessons-learned.md`).
 
 **`galleryPhoto` stores a real Sanity `image` asset** (field name `image`,
 type `"image"`, with hotspot + an `alt` subfield) — not a string URL, and

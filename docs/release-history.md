@@ -7,6 +7,18 @@ needed).
 
 ## Release History
 
+**v0.1.15 — 2026-08-19 (branch `chore/studio-structure-reorganization`).**
+Studio desk structure reorganised into folders (Main > Events/Team/Wiki/
+Settings, plus a Campaigns placeholder for a future subsite) — pure
+Studio navigation change, **no schema files touched** (confirmed via
+`git diff main --stat`: only `sanity.config.ts` + new `sanity/structure.ts`).
+Full breakdown in `docs/schemas.md` § Studio desk structure. One gap
+caught before implementing: `organisation` existed but wasn't mentioned
+anywhere in the session's structure plan — placed top-level alongside
+`article`/`resource`/`galleryPhoto` after confirming with the user.
+`Campaigns` folder is an intentional empty placeholder, not tracked as a
+known-risk (documented future work, not a currently-open gap).
+
 **v0.1.14 — 2026-08-18 (branch `feat/ai-charter-and-about-tabs`).** New
 `aiCharter` singleton schema + About page restructured from one long
 scroll into 5 tabs (About / Philosophy / Divisions / Code of Conduct /
