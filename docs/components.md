@@ -38,6 +38,63 @@ footer on that route.
 homepage ("All Articles →"), article cards, and author bylines all link to
 them — added as the obvious missing piece.
 
+## About page tabs (2026-08-18)
+
+The About page (`app/(site)/about/page.tsx`) was restructured from one long
+scroll into 5 tabs — About, Philosophy, Divisions, Code of Conduct, AI
+Charter — once it grew past a comfortable single-scroll length. The hero
+title/tagline/short-description block and the closing Discord CTA band stay
+outside the tab container (page-level, not tab content); everything else
+moved into one of the 5 tabs.
+
+- **`components/about/AboutTabs.tsx`** — the tab-switcher, a Client
+  Component. Receives `sections: AboutTabSection[]` (`{ id, label,
+  content: ReactNode }`) from the Server Component page, which does all
+  data fetching and content composition — `AboutTabs` itself never
+  fetches anything.
+- **Render approach: all 5 tabs' content renders into the initial HTML**,
+  visibility toggled via a CSS `hidden` class — not conditional mounting.
+  Deliberate choice: keeps every tab's content (including AI Charter and
+  Code of Conduct, both worth indexing) crawlable by bots that don't
+  execute JS, at the cost of a larger initial HTML payload than
+  lazy-mounting would produce. Bundle/page-weight impact was checked and
+  is negligible (+1.49 KiB gzip on the Worker bundle; page HTML size
+  wasn't separately budgeted since ISR-cached HTML isn't part of the
+  Worker bundle check).
+- **Tab state is hash-based** (`/about#philosophy`, `/about#ai-charter`,
+  etc.), read/written via `window.location.hash` directly — not `?tab=`
+  search params, and not routed through Next.js navigation at all (tab
+  switches are pure client-side state + `history.replaceState`, no
+  server round-trip). Chosen because the one pre-existing internal link
+  (`components/home/PhilosophyStrip.tsx` → `/about#philosophy`) already
+  used this convention and needed no change to keep working — confirmed
+  it still deep-links to the correct tab after the redesign.
+- **`components/about/AboutIntro.tsx`** — the "About" tab: Vision,
+  Mission, History timeline, **Activities** (folded in here — the
+  pre-existing `#activities` section wasn't in the original 5-tab spec at
+  all; confirmed with the user where it should go), and Organisations.
+- **`components/about/DivisionsGrid.tsx`** — thin wrapper around the
+  existing `DivisionCard` grid, extracted so the "Divisions" tab's content
+  is its own component like every other tab.
+- **Philosophy tab** — reuses the existing `PillarsTier`/`BehavioursTier`
+  components as before; the tier-grouping JSX (headings, tagline) lives
+  inline in `page.tsx` rather than a new wrapper component, since
+  `PhilosophyTier.tsx` already existed and covered the actual rendering.
+  **"Feelings" → "Feelings & Behaviours" is a display-label change only**
+  — the heading text in `page.tsx` changed, but `philosophy.behaviours`
+  (the Sanity field name) and the `BehavioursTier` component/prop names
+  are all untouched. Do not let a future session assume the field itself
+  was renamed.
+- **`components/about/AiCharter.tsx`** — the "AI Charter" tab's display
+  component. Deliberately calm/plain styling (no heavy borders, no
+  warning/alert treatment) per explicit direction — this is a values
+  statement, not a Terms of Service page. Only the closing statement gets
+  a distinct bordered treatment (matching `CodeOfConduct.tsx`'s
+  `safetyComfort` callout pattern), since it's the one section meant to
+  land differently (the tagline callback).
+- See `docs/schemas.md` for the new `aiCharter` singleton schema and
+  `docs/release-history.md` v0.1.14 for the full session breakdown.
+
 ## HeroRightPanel
 
 `components/home/HeroRightPanel.tsx` — renders the homepage Hero's right

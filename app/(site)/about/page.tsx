@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
+  AI_CHARTER_QUERY,
   CODE_OF_CONDUCT_QUERY,
   DIVISIONS_QUERY,
   ORGANISATIONS_QUERY,
@@ -8,6 +9,7 @@ import {
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import type {
+  AiCharter as AiCharterData,
   CodeOfConduct as CodeOfConductData,
   Division,
   Organisation,
@@ -15,10 +17,12 @@ import type {
   SiteSettings,
 } from "@/sanity/lib/types";
 import { buildMetadata } from "@/lib/metadata";
-import { Timeline } from "@/components/about/Timeline";
+import { AboutTabs, type AboutTabSection } from "@/components/about/AboutTabs";
+import { AboutIntro } from "@/components/about/AboutIntro";
 import { PillarsTier, BehavioursTier } from "@/components/about/PhilosophyTier";
+import { DivisionsGrid } from "@/components/about/DivisionsGrid";
 import { CodeOfConduct } from "@/components/about/CodeOfConduct";
-import { DivisionCard } from "@/components/about/DivisionCard";
+import { AiCharter } from "@/components/about/AiCharter";
 import { Footer } from "@/components/layout/Footer";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -33,13 +37,91 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function AboutPage() {
-  const [settings, philosophy, codeOfConduct, organisations, divisions] = await Promise.all([
-    client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
-    client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
-    client.fetch<CodeOfConductData | null>(CODE_OF_CONDUCT_QUERY),
-    client.fetch<Organisation[]>(ORGANISATIONS_QUERY),
-    client.fetch<Division[]>(DIVISIONS_QUERY),
-  ]);
+  const [settings, philosophy, codeOfConduct, organisations, divisions, aiCharter] =
+    await Promise.all([
+      client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
+      client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
+      client.fetch<CodeOfConductData | null>(CODE_OF_CONDUCT_QUERY),
+      client.fetch<Organisation[]>(ORGANISATIONS_QUERY),
+      client.fetch<Division[]>(DIVISIONS_QUERY),
+      client.fetch<AiCharterData | null>(AI_CHARTER_QUERY),
+    ]);
+
+  const sections: AboutTabSection[] = [
+    {
+      id: "about",
+      label: "About",
+      content: (
+        <AboutIntro
+          visionStatement={settings?.visionStatement}
+          missionStatement={settings?.missionStatement}
+          historyTimeline={settings?.historyTimeline}
+          activities={settings?.activities}
+          organisations={organisations}
+        />
+      ),
+    },
+    {
+      id: "philosophy",
+      label: "Philosophy",
+      content: philosophy && (
+        <div className="mx-auto max-w-6xl">
+          <h2 className="mb-2 text-center font-display text-4xl text-text">
+            Philosophy
+          </h2>
+          {philosophy.tagline && (
+            <p className="mx-auto mb-12 max-w-xl text-center text-text-muted">
+              {philosophy.tagline}
+            </p>
+          )}
+
+          {philosophy.pillars && philosophy.pillars.length > 0 && (
+            <div className="mb-14">
+              <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-emerald">
+                Tier I — Values
+              </h3>
+              <PillarsTier pillars={philosophy.pillars} />
+            </div>
+          )}
+
+          {philosophy.behaviours && philosophy.behaviours.length > 0 && (
+            <div className="mb-14">
+              <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-amber">
+                {/* Display label only — underlying Sanity field/schema key
+                    stays "behaviours", do not rename it to match this text. */}
+                Tier II — Feelings & Behaviours
+              </h3>
+              <BehavioursTier items={philosophy.behaviours} tier={2} />
+            </div>
+          )}
+
+          {philosophy.outcomes && philosophy.outcomes.length > 0 && (
+            <div>
+              <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-magenta">
+                Tier III — Outcomes
+              </h3>
+              <BehavioursTier items={philosophy.outcomes} tier={3} />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "divisions",
+      label: "Divisions",
+      content: <DivisionsGrid divisions={divisions} />,
+    },
+    {
+      id: "code-of-conduct",
+      label: "Code of Conduct",
+      content: codeOfConduct && <CodeOfConduct data={codeOfConduct} />,
+    },
+    {
+      id: "ai-charter",
+      label: "AI Charter",
+      content: aiCharter && <AiCharter data={aiCharter} />,
+    },
+  ];
 
   return (
     <>
@@ -51,135 +133,7 @@ export default async function AboutPage() {
         </p>
       </section>
 
-      {(settings?.visionStatement || settings?.missionStatement) && (
-        <section id="vision-mission" className="px-4 py-16 md:px-8">
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-2">
-            {settings.visionStatement && (
-              <div>
-                <h2 className="font-display text-3xl text-emerald">Vision</h2>
-                <p className="mt-3 text-text-muted">{settings.visionStatement}</p>
-              </div>
-            )}
-            {settings.missionStatement && (
-              <div>
-                <h2 className="font-display text-3xl text-amber">Mission</h2>
-                <p className="mt-3 text-text-muted">{settings.missionStatement}</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {settings?.historyTimeline && settings.historyTimeline.length > 0 && (
-        <section id="history" className="bg-surface px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="mb-10 font-display text-4xl text-text">History</h2>
-            <Timeline entries={settings.historyTimeline} />
-          </div>
-        </section>
-      )}
-
-      {philosophy && (
-        <section id="philosophy" className="px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="mb-2 text-center font-display text-4xl text-text">
-              Philosophy
-            </h2>
-            {philosophy.tagline && (
-              <p className="mx-auto mb-12 max-w-xl text-center text-text-muted">
-                {philosophy.tagline}
-              </p>
-            )}
-
-            {philosophy.pillars && philosophy.pillars.length > 0 && (
-              <div className="mb-14">
-                <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-emerald">
-                  Tier I — Values
-                </h3>
-                <PillarsTier pillars={philosophy.pillars} />
-              </div>
-            )}
-
-            {philosophy.behaviours && philosophy.behaviours.length > 0 && (
-              <div className="mb-14">
-                <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-amber">
-                  Tier II — Feelings
-                </h3>
-                <BehavioursTier items={philosophy.behaviours} tier={2} />
-              </div>
-            )}
-
-            {philosophy.outcomes && philosophy.outcomes.length > 0 && (
-              <div>
-                <h3 className="mb-6 font-ui text-sm uppercase tracking-wider text-magenta">
-                  Tier III — Outcomes
-                </h3>
-                <BehavioursTier items={philosophy.outcomes} tier={3} />
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {codeOfConduct && (
-        <section id="code-of-conduct" className="px-4 py-16 md:px-8">
-          <CodeOfConduct data={codeOfConduct} />
-        </section>
-      )}
-
-      {settings?.activities && settings.activities.length > 0 && (
-        <section id="activities" className="bg-surface px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="mb-8 font-display text-4xl text-text">Activities</h2>
-            <div className="flex flex-wrap justify-center gap-3">
-              {settings.activities.map((activity) => (
-                <span
-                  key={activity}
-                  className="rounded-full border border-border px-4 py-2 font-ui text-xs text-text"
-                >
-                  {activity}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section id="divisions" className="px-4 py-16 md:px-8">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="mb-10 text-center font-display text-4xl text-text">
-            Divisions
-          </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {divisions.map((division) => (
-              <DivisionCard key={division._id} division={division} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {organisations.length > 0 && (
-        <section id="organisations" className="bg-surface px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="mb-10 text-center font-display text-4xl text-text">
-              Organisations &amp; Partners
-            </h2>
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-              {organisations.map((org) => (
-                <div
-                  key={org._id}
-                  className="flex flex-col items-center gap-2 rounded-lg border border-border p-4 text-center"
-                >
-                  <span className="font-ui text-sm text-text">{org.name}</span>
-                  {org.orgType && (
-                    <span className="text-xs text-text-muted">{org.orgType}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <AboutTabs sections={sections} />
 
       {settings?.discordUrl && (
         <section className="bg-bg-forest px-4 py-16 text-center md:px-8">

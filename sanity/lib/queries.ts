@@ -58,6 +58,14 @@ export const CODE_OF_CONDUCT_QUERY = groq`
   }
 `;
 
+export const AI_CHARTER_QUERY = groq`
+  *[_type == "aiCharter"][0] {
+    intro,
+    principles,
+    closingStatement
+  }
+`;
+
 /* ---------------------------------------------------------------------- */
 /* Homepage                                                               */
 /* ---------------------------------------------------------------------- */

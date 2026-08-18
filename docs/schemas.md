@@ -10,16 +10,20 @@ change described or implied here.
 ## Sanity schema summary
 
 All schemas live in `sanity/schemas/`, registered in `sanity/schemas/index.ts`.
-Three singletons (`siteSettings`, `philosophy`, `codeOfConduct`) pinned in
-the Studio structure (`sanity.config.ts`'s `SINGLETON_TYPES` set + a fixed-ID
-list item each) so editors can't create duplicates — this is the only
-singleton mechanism used in this project; none of the three schemas
-themselves set `__experimental_actions`. Sixteen document types: `world`,
-`worldUnit`, `division`, `teamMember`, `article`, `regularEvent`, `majorEvent`,
-`loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`, `magicItem`,
-`faction`, `organisation`, `resource`, `galleryPhoto`. One reusable object:
-`calloutBlock` (used inside `article.body`, `loreEntry.body`,
-`sessionLog.fullRecap`).
+Four singletons (`siteSettings`, `philosophy`, `codeOfConduct`, `aiCharter`)
+pinned in the Studio structure (`sanity.config.ts`'s `SINGLETON_TYPES` set +
+a fixed-ID list item each) so editors can't create duplicates — this is the
+only singleton mechanism used in this project; **none of the four schemas
+themselves set `__experimental_actions`** (a request for `aiCharter`
+initially proposed this again — same deviation CLAUDE.md's release history
+already caught once for `codeOfConduct` — caught before writing the schema
+and built to match the real pattern instead, see
+`docs/release-history.md` v0.1.14). Sixteen non-singleton document types:
+`world`, `worldUnit`, `division`, `teamMember`, `article`, `regularEvent`,
+`majorEvent`, `loreEntry`, `sessionLog`, `keyFigure`, `notablePlace`,
+`magicItem`, `faction`, `organisation`, `resource`, `galleryPhoto`. One
+reusable object: `calloutBlock` (used inside `article.body`,
+`loreEntry.body`, `sessionLog.fullRecap`).
 
 **To add a new schema:** create the file in `sanity/schemas/`, import and add
 it to the `types` array in `sanity/schemas/index.ts`. If it needs GROQ

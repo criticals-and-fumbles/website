@@ -4,6 +4,7 @@ import calloutBlock from "./objects/calloutBlock";
 import siteSettings from "./siteSettings";
 import philosophy from "./philosophy";
 import codeOfConduct from "./codeOfConduct";
+import aiCharter from "./aiCharter";
 import world from "./world";
 import worldUnit from "./worldUnit";
 import division from "./division";
@@ -27,6 +28,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     siteSettings,
     philosophy,
     codeOfConduct,
+    aiCharter,
     // Documents
     world,
     worldUnit,

@@ -604,3 +604,16 @@ export interface CodeOfConduct {
   safetyComfort?: SafetyComfort;
   diceRules?: NumberedRule[];
 }
+
+export interface AiCharterPrinciple {
+  number?: number;
+  title?: string;
+  body?: PortableTextBlock[];
+  pullQuote?: string;
+}
+
+export interface AiCharter {
+  intro?: PortableTextBlock[];
+  principles?: AiCharterPrinciple[];
+  closingStatement?: PortableTextBlock[];
+}

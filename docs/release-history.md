@@ -7,6 +7,58 @@ needed).
 
 ## Release History
 
+**v0.1.14 — 2026-08-18 (branch `feat/ai-charter-and-about-tabs`).** New
+`aiCharter` singleton schema + About page restructured from one long
+scroll into 5 tabs (About / Philosophy / Divisions / Code of Conduct /
+AI Charter). Full component/architecture breakdown in `docs/components.md`
+§ About page tabs — highlights:
+
+- **Schema deviation caught before writing it, again:** the request's
+  literal `aiCharter` schema spec included `__experimental_actions:
+  ['update', 'publish']` for singleton enforcement — the same deviation
+  CLAUDE.md's release history already caught once before for
+  `codeOfConduct` (v0.1.10): this project's actual singleton mechanism is
+  `SINGLETON_TYPES` (a `Set` in `sanity.config.ts`) + a pinned fixed-ID
+  Studio structure item, and none of the existing singletons set
+  `__experimental_actions` on the schema itself. Built `aiCharter` to
+  match the real pattern instead — added to `SINGLETON_TYPES` and given a
+  pinned `S.listItem()` in the Studio structure, no
+  `__experimental_actions` field.
+- `aiCharter` fields: `intro` (Portable Text), `principles` (array of 7
+  inline objects — `number`/`title`/`body`[Portable Text]/`pullQuote`),
+  `closingStatement` (Portable Text). Content sourced verbatim as
+  provided by the user, not generated — seeded via
+  `sanity/migrations/seed-ai-charter.ts` (dry-run-first, same pattern as
+  `seed-code-of-conduct.ts`), confirmed live before being wired into the
+  page.
+- **Content gap in the tab spec, caught before implementing:** the
+  original 5-tab plan didn't account for the pre-existing `#activities`
+  section (`siteSettings.activities` pills) — every other existing About
+  page section mapped cleanly to one of the 5 tabs, this one didn't.
+  Confirmed with the user: folded into the "About" tab alongside
+  Vision/Mission/History/Organisations.
+- **Tab render approach:** all 5 tabs' content renders into the initial
+  server-rendered HTML (data fetched server-side in the async page
+  component, same as before), visibility toggled client-side via a CSS
+  `hidden` class rather than conditional mounting — keeps AI Charter and
+  Code of Conduct content (both worth indexing) crawlable by bots that
+  don't execute JS.
+- **Tab state is hash-based** (`/about#philosophy`, `/about#ai-charter`),
+  not `?tab=` search params — matches the one pre-existing internal link
+  (`PhilosophyStrip.tsx` → `/about#philosophy`) with no changes needed
+  there, and avoids a Next.js navigation round-trip on every tab switch.
+- "Feelings" → "Feelings & Behaviours" is a **display label change only**
+  in `page.tsx` — the underlying `philosophy.behaviours` Sanity field and
+  `BehavioursTier` component/prop names are untouched.
+- New components: `components/about/AboutTabs.tsx` (tab switcher),
+  `components/about/AiCharter.tsx` (display), `components/about/
+  AboutIntro.tsx` and `components/about/DivisionsGrid.tsx` (existing
+  inline JSX extracted into their own components so every tab has one,
+  matching the pattern of the pre-existing `PhilosophyTier`/
+  `CodeOfConduct` components).
+- Bundle: 1358.30 → 1359.79 KiB gzip (+1.49 KiB) — negligible, no new
+  dependencies.
+
 **v0.1.13 — 2026-08-14 (branch `feat/regular-event-registration-url`).**
 `regularEvent` gains an optional `registrationUrl` field (`url`, additive
 — `majorEvent` already had this), so recurring sessions can now link to
