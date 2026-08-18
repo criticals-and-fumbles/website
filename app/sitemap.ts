@@ -6,7 +6,7 @@ import {
   SITEMAP_WORLDS_QUERY,
 } from "@/sanity/lib/queries";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cnf.sg";
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "");
 
 interface SlugRow {
   slug: string;
