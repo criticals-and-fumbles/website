@@ -69,3 +69,21 @@ every time. Item 4 of that protocol (the enum-rename migration steps) is
 the same content as the "Enum rename rule" lesson above, embedded verbatim
 in root since it's the one piece of this protocol that was already written
 down prior to this session.
+
+## Two-tier risk tracking
+
+This file is the permanent record of CLOSED incidents and the rules they
+produced. For CURRENTLY OPEN, unresolved risks, check GitHub Issues
+labelled `known-risk` — run `gh issue list --label known-risk --state
+open`. When an issue is resolved, its lesson should be added here as a new
+entry and the issue closed.
+
+## Process note — workflow & ownership (known-risk issues)
+
+Claude Code maintains known-risk issue hygiene autonomously — creating
+issues when new risks are found, closing them with a clear summary comment
+when resolved, and always adding a permanent lessons-learned entry before
+closing. The user reviews periodically via `gh issue list --label
+known-risk` rather than approving each action. Closing comments must be
+self-contained and clear, since they are the audit trail the user will
+actually read.

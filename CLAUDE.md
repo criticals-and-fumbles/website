@@ -86,6 +86,18 @@ migration step.
    role options" still touches the same field that caused the original
    incident).
 
+## Risk check & ownership
+
+Before starting any session that touches an existing schema, run `gh issue
+list --label known-risk --state open` and review results relevant to the
+schema/area you're about to touch. Claude Code owns known-risk issue
+hygiene autonomously — create issues for new risks found (don't just
+mention them and move on), close issues you resolve (with a clear summary
+comment and a corresponding `docs/lessons-learned.md` entry, added before
+closing), and leave issues open with a progress comment if only partially
+resolved. The user reviews periodically, not per-action — write closing
+comments that stand alone as a clear audit trail.
+
 ## Bundle size budget
 
 **Current verified baseline: ~1.36 MB gzip / 3 MiB free-tier limit (45%
