@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { PortableTextBlock } from "sanity";
 
 const SITE_NAME = "Criticals and Fumbles";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cnf.sg";
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "");
 // Dynamically generated (app/og-default/route.tsx via ImageResponse) —
 // not a static /public file, no image-generation tool available to
 // produce one directly.
