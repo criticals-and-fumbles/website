@@ -96,14 +96,24 @@ not investigated further. If content publishes ever appear to trigger a
 build, that's why; revisit if it also misbehaves.
 
 Deploy manually with `npm run deploy` (currently just
-`opennextjs-cloudflare deploy` — **verified in `package.json`: the npm
-script does NOT chain a build step itself** [UNVERIFIED — confirm before
-acting: whether the `opennextjs-cloudflare deploy` CLI command builds
-internally before deploying, or requires a prior `build:cloudflare` step,
-has not been re-tested this session]. The safe, verified-working pattern
-used throughout this project is to always run `npm run build:cloudflare`
-immediately before any deploy/preview-upload command, regardless). This
-promotes straight to production traffic.
+`opennextjs-cloudflare deploy`). **CONFIRMED 2026-08-20, the hard way:
+`opennextjs-cloudflare deploy` does NOT build — its own `--help` says
+"Deploy a **built** OpenNext app," and it will happily redeploy a stale
+`.open-next` directory with zero warning that nothing actually changed.**
+A session ran `npm run deploy` four times across ~15 minutes of real
+Nav/Footer/route changes, and every one reported success — but
+`.open-next`'s mtime was from a full day earlier, so all four deploys
+re-shipped the exact same stale bundle. The tell, in hindsight: the
+upload step said "No updated asset files to upload" every time (should
+have been the immediate signal something was wrong) until the actual
+rebuild, at which point it correctly said "Found 1 new or modified
+static asset to upload... + /BUILD_ID". The pages *looked* like they'd
+updated once (a Sanity content change made an unrelated, already-
+deployed component render new data) which masked the problem for a
+while. **Always run `npm run build:cloudflare` immediately before
+`npm run deploy`, no exceptions, even for "just deploying what's already
+there" — there is no such thing as safely skipping the build step.**
+This promotes straight to production traffic.
 
 **Preview a branch without touching production:** build (`npm run
 build:cloudflare`), then `npx wrangler versions upload --preview-alias
