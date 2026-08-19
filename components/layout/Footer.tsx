@@ -73,7 +73,7 @@ export async function Footer({
               {" · "}
               <span className="text-amber">Collaboration</span>
               {" · "}
-              <span className="text-magenta">Sincerity</span>
+              <span className="text-magenta">Care</span>
             </p>
           </div>
 
