@@ -95,6 +95,33 @@ the same content as the "Enum rename rule" lesson above, embedded verbatim
 in root since it's the one piece of this protocol that was already written
 down prior to this session.
 
+**Sanity's CDN (`apicdn.sanity.io`) caches per query string per edge
+node independently — don't rely on it for content that needs to be
+immediately consistent after a write, closed 2026-08-20.**
+`sanity/lib/client.ts`'s public `client` used `useCdn: true`. Real
+incident: `app/(site)/layout.tsx` and `components/layout/Footer.tsx`
+both call `client.fetch(SITE_SETTINGS_QUERY)` with the byte-identical
+query string, in the *same build*, and got different `socialLinks`
+arrays back — one had a just-added entry, the other didn't. This
+wasn't page-level caching (ISR/R2) or Next's fetch memoization; it
+reproduced identically across three separate from-scratch rebuilds
+(`rm -rf .next .open-next` each time), which rules out any local
+build-artifact cache. Confirmed by querying `api.sanity.io` directly
+(always returned the current document) versus `apicdn.sanity.io`
+(inconsistent, same query, same moment) — the CDN's edge nodes don't
+all converge on a write at the same time, and different requests
+within one build can land on different nodes with different
+propagation states. **Fix:** `useCdn: false` on the public client.
+`api.sanity.io` needs no token for this public-read dataset, so this
+was a straight swap — the tradeoff is marginally higher per-request
+latency, worth it over silently-inconsistent content on a low-traffic
+site. The campaigns subsite (separate repo, same Sanity project) never
+used the CDN client for exactly this reason, and was unaffected.
+**If a future session reintroduces `useCdn: true` for performance,
+re-verify this exact failure mode is actually gone** (e.g. Sanity may
+have changed CDN propagation guarantees) before trusting it again —
+don't just assume it was fixed once and stays fixed.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
