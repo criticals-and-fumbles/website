@@ -51,7 +51,7 @@ export default async function EventsPage() {
             Upcoming Events
           </h2>
           {upcomingMajor.length > 0 && (
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="mb-8 flex flex-col gap-6">
               {upcomingMajor.map((event) => (
                 <MajorEventCard key={event._id} event={event} />
               ))}
