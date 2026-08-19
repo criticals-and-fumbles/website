@@ -21,6 +21,9 @@ import faction from "./faction";
 import organisation from "./organisation";
 import resource from "./resource";
 import galleryPhoto from "./galleryPhoto";
+import genreTheme from "./genreTheme";
+import campaign from "./campaign";
+import dossier from "./dossier";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -46,6 +49,11 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     organisation,
     resource,
     galleryPhoto,
+    // Campaigns subsite (campaigns.criticalsandfumbles.com) — same
+    // project/dataset, separate Worker/repo; see that repo's CLAUDE.md.
+    genreTheme,
+    campaign,
+    dossier,
     // Reusable objects
     calloutBlock,
   ],
