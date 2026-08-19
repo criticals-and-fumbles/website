@@ -54,6 +54,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const instagramUrl = siteSettings?.socialLinks?.find(
     (l) => l.platform === "Instagram",
   )?.url;
+  const whatsappUrl = siteSettings?.socialLinks?.find(
+    (l) => l.platform === "WhatsApp",
+  )?.url;
 
   return (
     <html
@@ -72,6 +75,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             facebookUrl={facebookUrl}
             instagramUrl={instagramUrl}
             discordUrl={siteSettings?.discordUrl}
+            whatsappUrl={whatsappUrl}
           />
           {/* Each page renders its own <Footer> at the end of its JSX (see
               components/layout/Footer.tsx) so it can pass that page's

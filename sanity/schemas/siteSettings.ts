@@ -54,6 +54,13 @@ export default defineType({
                   "Twitch",
                   "TikTok",
                   "Facebook",
+                  // "WhatsApp" added 2026-08-19 — additive, same pattern as
+                  // Facebook's 2026-08-11 addition above. WhatsApp still
+                  // goes through the generic socialLinks array (unlike
+                  // Discord's dedicated discordUrl field) since it's just
+                  // one more community-invite link, not something with
+                  // its own site-wide CTA treatment yet.
+                  "WhatsApp",
                 ].map((p) => ({ title: p, value: p })),
               },
             }),
