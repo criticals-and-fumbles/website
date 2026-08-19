@@ -6,6 +6,10 @@
 declare global {
   interface CloudflareEnv {
     OG_IMAGES_BUCKET: R2Bucket;
+    /** Secret — set via `wrangler secret put REVALIDATE_SECRET`, checked
+     * by app/api/revalidate/route.ts. Not in wrangler.toml (secrets never
+     * are); declared here purely for the TypeScript type. */
+    REVALIDATE_SECRET: string;
   }
 }
 
