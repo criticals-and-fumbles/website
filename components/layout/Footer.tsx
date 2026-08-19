@@ -8,6 +8,7 @@ import { Renderer } from "@/components/portable-text/Renderer";
 const QUICK_NAV = [
   { label: "About", href: "/about" },
   { label: "Events", href: "/events" },
+  { label: "Campaigns", href: "https://campaigns.criticalsandfumbles.com", external: true },
   { label: "Wiki", href: "/wiki" },
   { label: "Team", href: "/team" },
   { label: "Resources", href: "/resources" },
@@ -83,12 +84,21 @@ export async function Footer({
             <ul className="mt-4 space-y-2">
               {QUICK_NAV.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-text transition-colors hover:text-emerald"
-                  >
-                    {link.label}
-                  </Link>
+                  {link.external ? (
+                    <a
+                      href={link.href}
+                      className="text-sm text-text transition-colors hover:text-emerald"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      className="text-sm text-text transition-colors hover:text-emerald"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
               {settings?.footerNavLinks?.map((link) => (
