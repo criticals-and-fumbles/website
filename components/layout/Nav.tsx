@@ -9,6 +9,11 @@ import { FacebookIcon, InstagramIcon, DiscordIcon, WhatsAppIcon } from "@/compon
 const NAV_LINKS = [
   { label: "About", href: "/about" },
   { label: "Events", href: "/events" },
+  // Separate Worker/subsite (campaigns.criticalsandfumbles.com), not a
+  // route in this app — external:true so it renders a plain <a> instead
+  // of next/link (no client-side prefetch/routing across domains). See
+  // that repo's CLAUDE.md for why it's a separate app at all.
+  { label: "Campaigns", href: "https://campaigns.criticalsandfumbles.com", external: true },
   { label: "Wiki", href: "/wiki" },
   { label: "Team", href: "/team" },
   { label: "Resources", href: "/resources" },
@@ -113,15 +118,25 @@ export function Nav({
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="font-ui text-base text-text-muted transition-colors hover:text-emerald"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) =>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                className="font-ui text-base text-text-muted transition-colors hover:text-emerald"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="font-ui text-base text-text-muted transition-colors hover:text-emerald"
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
         </div>
 
         <div className="hidden items-center gap-6 md:flex">
@@ -184,16 +199,27 @@ export function Nav({
             </button>
 
             <div className="mt-12 flex flex-col items-end gap-6">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setDrawerOpen(false)}
-                  className="text-right font-display text-3xl text-text transition-colors hover:text-emerald"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) =>
+                link.external ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className="text-right font-display text-3xl text-text transition-colors hover:text-emerald"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className="text-right font-display text-3xl text-text transition-colors hover:text-emerald"
+                  >
+                    {link.label}
+                  </Link>
+                ),
+              )}
             </div>
 
             <SocialLinks
