@@ -101,8 +101,9 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title("Campaigns")
             .items([
-              // Empty placeholder — new subsite schemas will be added
-              // here once they exist (see docs/release-history.md).
+              S.documentTypeListItem("campaign").title("Campaigns"),
+              S.documentTypeListItem("dossier").title("Dossiers"),
+              S.documentTypeListItem("genreTheme").title("Genre Themes"),
             ]),
         ),
       S.divider(),
