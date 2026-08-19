@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
-import { FacebookIcon, InstagramIcon, DiscordIcon } from "@/components/icons/SocialIcons";
+import { FacebookIcon, InstagramIcon, DiscordIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
 
 const NAV_LINKS = [
   { label: "About", href: "/about" },
@@ -18,18 +18,21 @@ const SOCIAL_ICONS = {
   facebook: FacebookIcon,
   instagram: InstagramIcon,
   discord: DiscordIcon,
+  whatsapp: WhatsAppIcon,
 } as const;
 
 function SocialLinks({
   facebookUrl,
   instagramUrl,
   discordUrl,
+  whatsappUrl,
   className = "",
   iconSize = "h-[18px] w-[18px]",
 }: {
   facebookUrl?: string;
   instagramUrl?: string;
   discordUrl?: string;
+  whatsappUrl?: string;
   className?: string;
   iconSize?: string;
 }) {
@@ -37,6 +40,7 @@ function SocialLinks({
     { platform: "facebook" as const, url: facebookUrl, label: "Facebook" },
     { platform: "instagram" as const, url: instagramUrl, label: "Instagram" },
     { platform: "discord" as const, url: discordUrl, label: "Discord" },
+    { platform: "whatsapp" as const, url: whatsappUrl, label: "WhatsApp Community" },
   ].filter((l) => l.url);
 
   if (links.length === 0) return null;
@@ -66,10 +70,12 @@ export function Nav({
   facebookUrl,
   instagramUrl,
   discordUrl,
+  whatsappUrl,
 }: {
   facebookUrl?: string;
   instagramUrl?: string;
   discordUrl?: string;
+  whatsappUrl?: string;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -123,6 +129,7 @@ export function Nav({
             facebookUrl={facebookUrl}
             instagramUrl={instagramUrl}
             discordUrl={discordUrl}
+            whatsappUrl={whatsappUrl}
           />
           <ThemeToggle />
         </div>
@@ -193,6 +200,7 @@ export function Nav({
               facebookUrl={facebookUrl}
               instagramUrl={instagramUrl}
               discordUrl={discordUrl}
+              whatsappUrl={whatsappUrl}
               className="mt-8 justify-end"
             />
 
