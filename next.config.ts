@@ -18,14 +18,18 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        // Anchored exact match — unanchored "criticalsandfumbles.com" also
+        // matches "www.criticalsandfumbles.com" as a substring, which
+        // caused every page on the canonical host to 308-redirect to
+        // itself in production. Do not remove the anchors.
         source: "/:path*",
-        has: [{ type: "host", value: "criticalsandfumbles.com" }],
+        has: [{ type: "host", value: "^criticalsandfumbles\\.com$" }],
         destination: "https://www.criticalsandfumbles.com/:path*",
         permanent: true,
       },
       {
         source: "/:path*",
-        has: [{ type: "host", value: "cnf-sg.criticalsandfumbles.workers.dev" }],
+        has: [{ type: "host", value: "^cnf-sg\\.criticalsandfumbles\\.workers\\.dev$" }],
         destination: "https://www.criticalsandfumbles.com/:path*",
         permanent: true,
       },
