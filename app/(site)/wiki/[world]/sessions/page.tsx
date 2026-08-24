@@ -1,12 +1,30 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { SESSION_LOGS_QUERY, WORLD_BY_SLUG_QUERY } from "@/sanity/lib/queries";
 import type { SessionLogCard, World } from "@/sanity/lib/types";
 import { WorldNav } from "@/components/wiki/WorldNav";
 import { SessionCard } from "@/components/wiki/SessionCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/sessions">): Promise<Metadata> {
+  const { world: worldSlug } = await params;
+  const world = await client.fetch<World | null>(WORLD_BY_SLUG_QUERY, {
+    slug: worldSlug,
+  });
+  if (!world) return {};
+
+  return buildMetadata({
+    title: `${world.name} — Session Logs`,
+    description: `Session logs from ${world.name}, a Criticals and Fumbles campaign setting.`,
+    path: `/wiki/${worldSlug}/sessions`,
+  });
+}
 
 export default async function SessionLogIndexPage({
   params,

@@ -1,16 +1,40 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_LORE_ENTRY_QUERY } from "@/sanity/lib/queries";
 import type { LoreEntry } from "@/sanity/lib/types";
+import { urlForImage } from "@/sanity/lib/image";
 import { wikiSiblingHref } from "@/lib/wikiLinks";
 import { Badge } from "@/components/ui/Badge";
 import { CanonBadge } from "@/components/ui/CanonBadge";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/lore/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
+  const entry = await client.fetch<LoreEntry | null>(WORLD_UNIT_LORE_ENTRY_QUERY, {
+    unitSlug,
+    slug,
+  });
+  if (!entry) return {};
+
+  return buildMetadata({
+    title: entry.title,
+    description:
+      entry.summary ??
+      plainTextFromBlocks(entry.body) ??
+      `${entry.title}, a lore entry from ${entry.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/lore/${slug}`,
+    image: urlForImage(entry.coverImage)?.width(1200).height(630).url(),
+  });
+}
 
 export default async function UnitLoreEntryPage({
   params,

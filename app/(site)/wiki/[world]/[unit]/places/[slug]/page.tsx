@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
@@ -10,8 +11,26 @@ import { Badge } from "@/components/ui/Badge";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/places/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
+  const place = await client.fetch<NotablePlace | null>(NOTABLE_PLACE_QUERY, { slug });
+  if (!place) return {};
+
+  return buildMetadata({
+    title: place.name,
+    description:
+      plainTextFromBlocks(place.description) ??
+      `${place.name}${place.placeType ? `, a ${place.placeType}` : ""} in ${place.unit?.name ?? place.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/places/${slug}`,
+    image: urlForImage(place.images?.[0])?.width(1200).height(630).url(),
+  });
+}
 
 const DANGER_VARIANT: Record<string, "emerald" | "amber" | "magenta" | "muted"> = {
   safe: "emerald",

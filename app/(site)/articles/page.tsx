@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { ARTICLES_QUERY } from "@/sanity/lib/queries";
@@ -5,8 +6,16 @@ import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type { ArticleCard } from "@/sanity/lib/types";
 import { ArticleGrid } from "@/components/content/ArticleGrid";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "Articles",
+  description:
+    "Campaign craft, DM advice, reviews, and community writing from Singapore's tabletop RPG scene.",
+  path: "/articles",
+});
 
 export default async function ArticlesPage({
   searchParams,

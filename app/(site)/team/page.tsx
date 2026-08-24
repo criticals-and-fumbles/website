@@ -1,10 +1,19 @@
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { TEAM_MEMBERS_QUERY } from "@/sanity/lib/queries";
 import type { TeamMember } from "@/sanity/lib/types";
 import { CharacterCard } from "@/components/team/CharacterCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "Team",
+  description:
+    "Meet the Horsemen, DM Council, Uncle's League, and Critical Fumblers who run Criticals and Fumbles, Singapore's tabletop RPG community.",
+  path: "/team",
+});
 
 export default async function TeamPage() {
   const members = await client.fetch<TeamMember[]>(TEAM_MEMBERS_QUERY);

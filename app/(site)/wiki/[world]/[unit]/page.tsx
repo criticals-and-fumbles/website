@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, UNIT_RECENT_ENTRIES_QUERY } from "@/sanity/lib/queries";
@@ -10,8 +11,31 @@ import { WorldUnitNav } from "@/components/wiki/WorldUnitNav";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug } = await params;
+  const unit = await client.fetch<WorldUnit | null>(WORLD_UNIT_QUERY, {
+    worldSlug,
+    unitSlug,
+  });
+  if (!unit) return {};
+
+  const unitLabel = unit.world?.unitLabel ?? "Territory";
+
+  return buildMetadata({
+    title: unit.name,
+    description:
+      plainTextFromBlocks(unit.overview) ??
+      `${unit.name}, a ${unitLabel.toLowerCase()} of ${unit.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}`,
+    image: urlForImage(unit.coverImage)?.width(1200).height(630).url(),
+  });
+}
 
 const STATUS_BADGE: Record<
   string,

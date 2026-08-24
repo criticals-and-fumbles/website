@@ -1,12 +1,31 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, UNIT_FACTIONS_QUERY } from "@/sanity/lib/queries";
 import type { FactionCard as FactionCardData, WorldUnit } from "@/sanity/lib/types";
 import { WorldUnitNav } from "@/components/wiki/WorldUnitNav";
 import { FactionCard } from "@/components/wiki/FactionCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/factions">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug } = await params;
+  const unit = await client.fetch<WorldUnit | null>(WORLD_UNIT_QUERY, {
+    worldSlug,
+    unitSlug,
+  });
+  if (!unit) return {};
+
+  return buildMetadata({
+    title: `${unit.name} — Factions`,
+    description: `Factions scoped to ${unit.name}, part of ${unit.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/factions`,
+  });
+}
 
 export default async function UnitFactionsIndexPage({
   params,

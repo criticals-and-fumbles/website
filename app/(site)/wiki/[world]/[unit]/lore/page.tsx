@@ -1,12 +1,31 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, WORLD_UNIT_LORE_QUERY } from "@/sanity/lib/queries";
 import type { LoreEntryCard, WorldUnit } from "@/sanity/lib/types";
 import { WorldUnitNav } from "@/components/wiki/WorldUnitNav";
 import { UnitLoreCard } from "@/components/wiki/UnitLoreCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/lore">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug } = await params;
+  const unit = await client.fetch<WorldUnit | null>(WORLD_UNIT_QUERY, {
+    worldSlug,
+    unitSlug,
+  });
+  if (!unit) return {};
+
+  return buildMetadata({
+    title: `${unit.name} — Lore`,
+    description: `Lore entries scoped to ${unit.name}, part of ${unit.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/lore`,
+  });
+}
 
 export default async function UnitLoreIndexPage({
   params,

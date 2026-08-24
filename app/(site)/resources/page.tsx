@@ -1,11 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { RESOURCES_QUERY } from "@/sanity/lib/queries";
 import type { Resource } from "@/sanity/lib/types";
 import { ResourceCard } from "@/components/resources/ResourceCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "Resources",
+  description:
+    "Guides, tools, and shared materials from the DM & Story Group, Project Wing, and Art House divisions of Criticals and Fumbles.",
+  path: "/resources",
+});
 
 const DIVISION_FILTERS = [
   { label: "DM & Story Group", value: "dm-story" },

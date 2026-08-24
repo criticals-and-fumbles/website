@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_SESSION_QUERY } from "@/sanity/lib/queries";
@@ -8,8 +9,28 @@ import { Badge } from "@/components/ui/Badge";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/sessions/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
+  const session = await client.fetch<SessionLog | null>(WORLD_UNIT_SESSION_QUERY, {
+    unitSlug,
+    slug,
+  });
+  if (!session) return {};
+
+  return buildMetadata({
+    title: session.title,
+    description:
+      session.synopsis ??
+      `Session log from ${session.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/sessions/${slug}`,
+  });
+}
 
 export default async function UnitSessionLogPage({
   params,

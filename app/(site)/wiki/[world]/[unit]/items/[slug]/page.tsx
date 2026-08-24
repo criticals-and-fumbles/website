@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
@@ -11,8 +12,26 @@ import { ItemMechanicsCard } from "@/components/wiki/ItemMechanicsCard";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/items/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
+  const item = await client.fetch<MagicItem | null>(MAGIC_ITEM_QUERY, { slug });
+  if (!item) return {};
+
+  return buildMetadata({
+    title: item.name,
+    description:
+      plainTextFromBlocks(item.lore) ??
+      `${item.name}${item.rarity ? `, a ${item.rarity} item` : ""} from ${item.unit?.name ?? item.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/items/${slug}`,
+    image: urlForImage(item.itemArt)?.width(1200).height(630).url(),
+  });
+}
 
 const RARITY_VARIANT: Record<string, "emerald" | "amber" | "magenta" | "muted"> = {
   common: "muted",

@@ -1,11 +1,20 @@
+import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import { WIKI_SEARCH_INDEX_QUERY, WORLDS_QUERY } from "@/sanity/lib/queries";
 import type { World } from "@/sanity/lib/types";
 import { WorldCard } from "@/components/wiki/WorldCard";
 import { GlobalWikiSearch } from "@/components/wiki/GlobalWikiSearch";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "Wiki",
+  description:
+    "Explore the campaign worlds of Criticals and Fumbles — lore, sessions, and search across every world we play.",
+  path: "/wiki",
+});
 
 interface SearchIndex {
   lore: { _id: string; title: string; slug: string; worldSlug: string }[];

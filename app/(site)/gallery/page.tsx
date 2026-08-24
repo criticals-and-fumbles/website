@@ -1,11 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { GALLERY_EVENTS_QUERY, GALLERY_PHOTOS_QUERY } from "@/sanity/lib/queries";
 import type { GalleryPhoto } from "@/sanity/lib/types";
 import { PhotoGrid } from "@/components/gallery/PhotoGrid";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = buildMetadata({
+  title: "Gallery",
+  description:
+    "Photos from D&D marathons, painting workshops, learn-to-play days, and community events with Criticals and Fumbles in Singapore.",
+  path: "/gallery",
+});
 
 interface GalleryEvent {
   _id: string;

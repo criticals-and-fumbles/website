@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { LORE_ENTRIES_QUERY, WORLD_BY_SLUG_QUERY } from "@/sanity/lib/queries";
@@ -7,8 +8,25 @@ import type { LoreEntryCard, World } from "@/sanity/lib/types";
 import { WorldNav } from "@/components/wiki/WorldNav";
 import { LoreCard } from "@/components/wiki/LoreCard";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/lore">): Promise<Metadata> {
+  const { world: worldSlug } = await params;
+  const world = await client.fetch<World | null>(WORLD_BY_SLUG_QUERY, {
+    slug: worldSlug,
+  });
+  if (!world) return {};
+
+  return buildMetadata({
+    title: `${world.name} — Lore`,
+    description: `Browse lore entries from ${world.name}, a Criticals and Fumbles campaign setting.`,
+    path: `/wiki/${worldSlug}/lore`,
+  });
+}
 
 function filterLink(
   worldSlug: string,

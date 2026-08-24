@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
@@ -11,8 +12,26 @@ import { StatBlockCard } from "@/components/wiki/StatBlockCard";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import { buildMetadata, plainTextFromBlocks } from "@/lib/metadata";
 
 export const revalidate = 300;
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/wiki/[world]/[unit]/figures/[slug]">): Promise<Metadata> {
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
+  const figure = await client.fetch<KeyFigure | null>(KEY_FIGURE_QUERY, { slug });
+  if (!figure) return {};
+
+  return buildMetadata({
+    title: figure.name,
+    description:
+      plainTextFromBlocks(figure.description) ??
+      `${figure.name}${figure.role ? `, ${figure.role}` : ""} — a key figure of ${figure.unit?.name ?? figure.world?.name ?? "Criticals and Fumbles"}.`,
+    path: `/wiki/${worldSlug}/${unitSlug}/figures/${slug}`,
+    image: urlForImage(figure.portrait)?.width(1200).height(630).url(),
+  });
+}
 
 const THREAT_VARIANT: Record<string, "emerald" | "amber" | "magenta" | "muted"> = {
   friendly: "emerald",
