@@ -195,6 +195,35 @@ redirect for a specific already-cased URL, verify both directions**
 200, not another redirect — the second check is what would have caught
 this before deploy.
 
+## Don't assume `git push` = deployed — verify the deploy actually landed (2026-08-25)
+
+A push of 3 commits produced no Cloudflare Workers Build run at all — not
+a failure, just nothing, confirmed by checking the build history in the
+dashboard. Investigated as a possible root-cause issue (see closed issue
+#6): GitHub App access to the repo was confirmed fine, `main` is the
+correct default branch, and an *earlier* push in the same session had
+triggered a real, successful CI build moments before — so the mechanism
+itself works. Webhook delivery logs (which would show whether GitHub
+even attempted to notify Cloudflare for the missed push) aren't visible
+to us — that data belongs to the GitHub App's owner (Cloudflare), not
+the installing org, a GitHub Apps platform restriction, not a
+misconfiguration on this repo's side. Most likely explanation (per the
+user): a second build may have been manually triggered from the
+Cloudflare dashboard before the first had fully committed, dropping the
+subsequent webhook-triggered request. Isolated occurrence, not a
+reproducible pattern — not worth a Cloudflare support ticket unless it
+recurs.
+
+**Practical takeaway, independent of root cause**: `git push` succeeding
+and GitHub showing the merge does NOT confirm the site actually
+redeployed — there is no error surfaced anywhere when a trigger drops.
+After any push expected to go live, verify with `npx wrangler
+deployments list` (check the newest entry's timestamp is actually after
+the push) or a live-site check for something the change would visibly
+affect, before assuming it shipped. If a deploy didn't land, the safe
+manual fallback is documented above (`npm run build:cloudflare && npm
+run deploy` — never skip the build step).
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
