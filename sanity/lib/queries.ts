@@ -391,8 +391,8 @@ export const LORE_ENTRIES_QUERY = groq`
 
 export const LORE_ENTRY_BY_SLUG_QUERY = groq`
   *[_type == "loreEntry" && world->slug.current == $worldSlug && slug.current == $slug][0] {
-    ...,
-    "slug": slug.current,
+    _id, title, "slug": slug.current, category, canonStatus, summary, coverImage,
+    alsoKnownAs, body, firstAppeared, tags, _createdAt, _updatedAt,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
     "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} },
@@ -475,8 +475,8 @@ export const WORLD_UNIT_SESSIONS_QUERY = groq`
 
 export const WORLD_UNIT_LORE_ENTRY_QUERY = groq`
   *[_type == "loreEntry" && unit->slug.current == $unitSlug && slug.current == $slug][0] {
-    ...,
-    "slug": slug.current,
+    _id, title, "slug": slug.current, category, canonStatus, summary, coverImage,
+    alsoKnownAs, body, firstAppeared, tags, _createdAt, _updatedAt,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
     "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
     "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} },

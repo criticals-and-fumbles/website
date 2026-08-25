@@ -111,6 +111,23 @@ export default defineType({
       description: "Manually set by the editor when they save — not sourced from Sanity's history.",
     }),
     defineField({
+      name: "consoleEditedByEmail",
+      title: "Console Editor Email (internal)",
+      type: "string",
+      description:
+        "Cloudflare Access email of whoever last saved this via the GM console's " +
+        "manual/bulk Wiki builder. Internal audit trail only — never add this " +
+        "field to a public-facing GROQ query projection.",
+      readOnly: true,
+    }),
+    defineField({
+      name: "consoleEditedAt",
+      title: "Console Last Edited At (internal)",
+      type: "datetime",
+      description: "Timestamp of the last save via the GM console's Wiki builder.",
+      readOnly: true,
+    }),
+    defineField({
       name: "dmNotes",
       title: "DM Notes (private)",
       type: "array",

@@ -96,6 +96,23 @@ export default defineType({
       to: [{ type: "teamMember" }],
     }),
     defineField({
+      name: "consoleEditedByEmail",
+      title: "Console Editor Email (internal)",
+      type: "string",
+      description:
+        "Cloudflare Access email of whoever last saved this via the GM console's " +
+        "manual/bulk Wiki builder. Internal audit trail only — never add this " +
+        "field to a public-facing GROQ query projection.",
+      readOnly: true,
+    }),
+    defineField({
+      name: "consoleEditedAt",
+      title: "Console Last Edited At (internal)",
+      type: "datetime",
+      description: "Timestamp of the last save via the GM console's Wiki builder.",
+      readOnly: true,
+    }),
+    defineField({
       name: "submittedBy",
       title: "Submitted By",
       type: "reference",
