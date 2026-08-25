@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Bebas_Neue, Crimson_Pro, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { client } from "@/sanity/lib/client";
@@ -83,6 +84,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1 flex flex-col">{children}</main>
           <ToastHost />
         </ThemeProvider>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID ?? "G-JS983LB341"} />
       </body>
     </html>
   );
