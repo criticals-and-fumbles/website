@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   // domain preference from <link rel="canonical"> alone, which produced
   // GSC "Duplicate, Google chose different canonical than user" errors.
   // These host-based redirects give it an explicit signal.
+  //
+  // Path-based (not host-based) redirects, e.g. for a fixed uppercase
+  // slug, do NOT belong here — next.config.ts redirects() path matching
+  // is case-INSENSITIVE by default, so a literal-cased source would also
+  // match its own already-lowercase destination and self-redirect,
+  // making the fixed URL unreachable either way (caught locally before
+  // deploy, 2026-08-25). Use middleware.ts for those instead, where an
+  // exact-case string comparison is straightforward.
   async redirects() {
     return [
       {
