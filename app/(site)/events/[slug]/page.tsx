@@ -133,6 +133,7 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
           <div>
             <Badge variant="amber">{STATUS_LABELS[event.status] ?? event.status}</Badge>
             <h1 className="mt-3 font-display text-5xl text-text">{event.title}</h1>
+            <h2 className="sr-only">Event Details</h2>
             {event.tagline && <p className="mt-2 text-text-muted">{event.tagline}</p>}
 
             {event.startDate && event.status === "registration-open" && (
@@ -303,6 +304,7 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
           <h1 className="mt-3 font-display text-5xl text-text">
             {event.campaignName ?? event.title}
           </h1>
+          <h2 className="sr-only">Event Details</h2>
 
           <dl className="mt-8 grid grid-cols-2 gap-4 border-y border-border py-6 font-ui text-xs sm:grid-cols-4">
             {event.schedule && (

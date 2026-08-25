@@ -31,6 +31,7 @@ export default async function WikiPage() {
     <>
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
         <h1 className="text-center font-display text-5xl text-text">Wiki</h1>
+        <h2 className="sr-only">All Worlds</h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-text-muted">
           Four worlds, shaped session by session. Pick one to start exploring.
         </p>

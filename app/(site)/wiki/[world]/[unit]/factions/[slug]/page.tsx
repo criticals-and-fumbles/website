@@ -60,6 +60,7 @@ export default async function FactionPage({
               <div>
                 {faction.factionType && <Badge variant="muted">{faction.factionType}</Badge>}
                 <h1 className="mt-2 font-display text-5xl text-text">{faction.name}</h1>
+                <h2 className="sr-only">Faction</h2>
               </div>
             </div>
 

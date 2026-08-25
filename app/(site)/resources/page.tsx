@@ -49,6 +49,7 @@ export default async function ResourcesPage({
     <>
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
         <h1 className="font-display text-5xl text-text">Resources</h1>
+        <h2 className="sr-only">All Resources</h2>
         <p className="mt-2 max-w-prose text-text-muted">
           Everything we&apos;ve made, gathered, and want to share.
         </p>

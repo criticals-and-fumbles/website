@@ -65,6 +65,7 @@ export default async function ArticlePage({
         <h1 className="mt-4 font-display text-4xl leading-tight text-text md:text-5xl">
           {article.title}
         </h1>
+        <h2 className="sr-only">Article</h2>
         <div className="mt-4 flex items-center gap-3 font-ui text-xs text-text-muted">
           {article.author && (
             <Link

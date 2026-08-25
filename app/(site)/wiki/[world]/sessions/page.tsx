@@ -56,6 +56,7 @@ export default async function SessionLogIndexPage({
         <h1 className="font-display text-4xl text-text">
           {world.name} — Session Logs
         </h1>
+        <h2 className="sr-only">All Session Logs</h2>
 
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
           {sessions.length === 0 ? (

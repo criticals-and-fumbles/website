@@ -74,6 +74,7 @@ export default async function KeyFigurePage({
                 </div>
               )}
               <h1 className="font-display text-5xl text-text">{figure.name}</h1>
+              <h2 className="sr-only">Key Figure</h2>
               {figure.alsoKnownAs && (
                 <p className="text-sm italic text-text-muted">
                   Also known as {figure.alsoKnownAs}

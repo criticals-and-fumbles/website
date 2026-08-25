@@ -39,6 +39,7 @@ export default async function GalleryPage({
     <>
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
         <h1 className="font-display text-5xl text-text">Gallery</h1>
+        <h2 className="sr-only">All Photos</h2>
 
         {events.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">

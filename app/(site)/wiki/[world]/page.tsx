@@ -89,6 +89,11 @@ export default async function WorldHomePage({
           <h1 className="font-display text-6xl" style={{ color: accent }}>
             {world.name}
           </h1>
+          {/* Fallback so the page always has a real h2 even when this
+              world has no units/lore/sessions yet to trigger one of the
+              conditional headings below — confirmed missing in practice
+              via a Screaming Frog audit, 2026-08-25. */}
+          <h2 className="sr-only">World Overview</h2>
           {world.tagline && <p className="mt-3 text-lg text-text-muted">{world.tagline}</p>}
           {world.dms && world.dms.length > 0 && (
             <p className="mt-2 font-ui text-xs text-text-muted">
