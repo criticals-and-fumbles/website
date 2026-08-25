@@ -51,6 +51,7 @@ export default async function UnitFactionsIndexPage({
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
         <h1 className="font-display text-4xl text-text">{unit.name} — Factions</h1>
 
+        <h2 className="sr-only">All Factions</h2>
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {factions.length === 0 ? (
             <p className="col-span-full text-sm text-text-muted">

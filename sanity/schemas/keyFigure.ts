@@ -33,6 +33,12 @@ export default defineType({
       title: "Slug",
       type: "slug",
       options: { source: "name", maxLength: 96 },
+      validation: (rule) =>
+        rule.custom((slug) =>
+          !slug?.current || /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug.current)
+            ? true
+            : "Slug must be lowercase letters, numbers, and hyphens only — no spaces or uppercase.",
+        ),
     }),
     defineField({ name: "alsoKnownAs", title: "Also Known As", type: "string" }),
     defineField({

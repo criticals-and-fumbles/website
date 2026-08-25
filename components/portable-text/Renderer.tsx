@@ -5,6 +5,18 @@ import { urlForImage } from "@/sanity/lib/image";
 import { CalloutBlock } from "./CalloutBlock";
 
 const components: PortableTextComponents = {
+  // Every page already renders its own single real <h1> outside this
+  // component; Sanity's default block-style list still offers editors an
+  // "H1" option inside body copy (no `styles:` restriction on any rich-text
+  // schema field), which would create a genuine duplicate/multiple-h1 page.
+  // Downgrading to h2 here — rather than restricting the schema's styles
+  // list — fixes existing content too, since it's a pure render-time
+  // decision with no data migration needed. h2/h3 stay default (they're
+  // already styled as intentional body sub-headings, see the wrapper class
+  // below) — multiple h2s within one article body is expected, not a bug.
+  block: {
+    h1: ({ children }) => <h2>{children}</h2>,
+  },
   types: {
     image: ({ value }) => {
       const url = urlForImage(value)?.width(1200).auto("format").url();

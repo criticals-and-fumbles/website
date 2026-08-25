@@ -122,6 +122,45 @@ re-verify this exact failure mode is actually gone** (e.g. Sanity may
 have changed CDN propagation guarantees) before trusting it again —
 don't just assume it was fixed once and stays fixed.
 
+## `next.config.ts`'s `headers()` is not honored on this stack — use `middleware.ts` (2026-08-25)
+
+A Screaming Frog SEO audit found zero security response headers
+(Content-Security-Policy, X-Content-Type-Options, HSTS, Referrer-Policy,
+X-Frame-Options) on any page. The obvious fix — a `headers()` function in
+`next.config.ts` — is the documented Next.js way to do this, but **does
+not work on this stack**: `@opennextjs/cloudflare` does not honor
+`next.config.ts`'s `headers()` at request time the way Vercel's runtime
+does. There's no error or warning when this happens — the headers are
+just silently absent from every response, which is what made this easy to
+miss originally. **Fix:** a root `middleware.ts` — OpenNext does translate
+Next middleware into Cloudflare-compatible behavior, so setting response
+headers there works correctly. If a future session needs to add or change
+response headers on this site, use `middleware.ts`, not `next.config.ts`'s
+`headers()` — verify the header actually appears in a real response
+(`curl -I`) rather than trusting that the config was accepted, since nothing
+surfaces a warning if the wrong mechanism is used again.
+
+## Screaming Frog "missing image size attributes" is a false positive for `next/image` `fill` mode (2026-08-25)
+
+Same SEO audit flagged 43 images (95% of crawled images) as missing
+width/height HTML attributes. Investigating found the overwhelming
+majority are `next/image` used with the `fill` prop (sizing comes from a
+`position: relative` parent with a CSS-fixed aspect ratio, not from
+width/height attributes on the `<img>` tag itself) — this is the correct,
+intentional Next.js pattern for avoiding CLS with variable-source images,
+and Next.js deliberately does not emit width/height attributes in this
+mode. Screaming Frog (and likely other crawlers checking the raw HTML
+attribute rather than computed layout) flags this as an issue when it
+isn't one. **If a future SEO audit re-flags this, don't chase it across
+every `fill`-mode image in the codebase** — check whether the specific
+flagged image is actually `fill` mode (expected, ignore) or a raw `<img>`/
+non-fill `next/image` missing real dimensions (an actual bug, fix it). The
+one genuine case found this session — a raw `<img>` for a Sanity-hosted
+world-unit map — was fixed by switching to `next/image` with an explicit
+`.width(1200).height(675)` crop transform so the delivered image's actual
+dimensions match the width/height attributes exactly, rather than guessing
+an aspect ratio.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, UNIT_RECENT_ENTRIES_QUERY } from "@/sanity/lib/queries";
@@ -81,7 +82,10 @@ export default async function WorldUnitPage({
   const accent = unit.colourAccent ?? "var(--emerald)";
   const badge = unit.developmentStatus ? STATUS_BADGE[unit.developmentStatus] : undefined;
   const coverUrl = urlForImage(unit.coverImage)?.width(1400).height(500).auto("format").url();
-  const mapUrl = urlForImage(unit.mapImage)?.width(1200).auto("format").url();
+  // Fixed 16:9 crop (not just .width()) so the delivered image's actual
+  // dimensions exactly match the width/height attributes below — avoids
+  // guessing an aspect ratio for arbitrary uploaded maps.
+  const mapUrl = urlForImage(unit.mapImage)?.width(1200).height(675).auto("format").url();
 
   return (
     <>
@@ -160,8 +164,13 @@ export default async function WorldUnitPage({
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
           <h2 className="mb-4 font-display text-2xl text-text">Map</h2>
           {mapUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={mapUrl} alt={`${unit.name} map`} className="w-full rounded-lg" />
+            <Image
+              src={mapUrl}
+              alt={`${unit.name} map`}
+              width={1200}
+              height={675}
+              className="h-auto w-full rounded-lg"
+            />
           ) : (
             // Large/high-res maps hosted externally on R2 — rendered as a
             // plain <img>, not next/image, since the domain isn't (and

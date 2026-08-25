@@ -51,6 +51,7 @@ export default async function UnitSessionsIndexPage({
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
         <h1 className="font-display text-4xl text-text">{unit.name} — Session Logs</h1>
 
+        <h2 className="sr-only">All Session Logs</h2>
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
           {sessions.length === 0 ? (
             <p className="text-sm text-text-muted">
