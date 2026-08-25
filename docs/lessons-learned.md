@@ -161,6 +161,40 @@ world-unit map — was fixed by switching to `next/image` with an explicit
 dimensions match the width/height attributes exactly, rather than guessing
 an aspect ratio.
 
+## An aggregate SEO-audit count can wildly overstate real scope — get the per-URL export before estimating fix size (2026-08-25)
+
+Issue #8 (uppercase/spaced slugs) was opened off a Screaming Frog
+"Issues Overview" summary reporting "296 URLs" with uppercase characters.
+When the user later provided the full per-URL export, the real number of
+affected *documents* was 4 — the other ~290 rows were `?category=...`
+filter query strings (expected, already correctly canonicalized), not
+slug data at all. Aggregate issue-type counts in a summary export don't
+distinguish "this pattern repeats across N query-string variants of one
+page" from "N different documents have a real problem" — always ask for
+or generate the per-URL detail before scoping a fix, rather than
+estimating effort (or triage priority) from the summary count alone.
+
+## `next.config.ts` redirects() path matching is case-insensitive — exact-case redirects need `middleware.ts` (2026-08-25)
+
+Fixing the 4 real uppercase-slug documents from the entry above required
+redirecting the old uppercase URL to the new lowercase one. The obvious
+approach — a `next.config.ts` `redirects()` rule with the old uppercase
+path as `source` — silently breaks: that mechanism's path-to-regexp
+matching is case-insensitive by default, so the literal-cased source ALSO
+matches its own already-lowercase `destination`, and the fixed URL
+redirects to itself instead of ever serving the page (caught locally
+before deploy, not in production this time). This is the same underlying
+failure class as the earlier apex/www unanchored-host-regex incident
+(see above) — a redirect rule silently matching more than intended — just
+via case-insensitivity instead of an unanchored regex. **Fix:** exact-case
+path redirects belong in `middleware.ts` via plain JS string
+comparison (`request.nextUrl.pathname === "/exact/Old/Path"`), not
+`next.config.ts`'s `redirects()`. **Whenever a future session adds a
+redirect for a specific already-cased URL, verify both directions**
+— the old URL 308s to the new one, AND the new URL actually resolves
+200, not another redirect — the second check is what would have caught
+this before deploy.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
