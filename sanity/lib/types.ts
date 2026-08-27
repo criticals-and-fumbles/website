@@ -253,6 +253,12 @@ export interface World {
   _createdAt?: string;
   _updatedAt?: string;
   lastEditedBy?: TeamMemberRef;
+  /** Wikipedia/Fandom-style structured lore, replacing the flat
+   * `description` blob above (kept as a fallback for any world not yet
+   * migrated — see sanity/migrations/split-world-description-into-sections.ts). */
+  sections?: { _key: string; heading: string; body?: PortableTextBlock[] }[];
+  relatedArticles?: { _id: string; title: string; slug: string; excerpt?: string; coverImage?: SanityImage }[];
+  relatedDossiers?: { _id: string; title: string; code: string; campaignSlug?: string }[];
 }
 
 export interface WorldUnitRef {

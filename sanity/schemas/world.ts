@@ -114,6 +114,40 @@ export default defineType({
       to: [{ type: "teamMember" }],
       description: "Manually set by the editor when they save — not sourced from Sanity's history.",
     }),
+    defineField({
+      name: "sections",
+      title: "Lore Sections",
+      type: "array",
+      description:
+        "Wikipedia/Fandom-style structured lore, replacing the single flat `description` blob (kept, untouched, as a fallback — never delete it). Each section is its own heading + body; see sanity/migrations/split-world-description-into-sections.ts for how existing worlds were migrated into this shape.",
+      of: [
+        {
+          type: "object",
+          name: "worldSection",
+          fields: [
+            defineField({ name: "heading", title: "Heading", type: "string", validation: (rule) => rule.required() }),
+            defineField({ name: "body", title: "Body", type: "array", of: [{ type: "block" }] }),
+          ],
+          preview: {
+            select: { title: "heading" },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: "relatedArticles",
+      title: "Related Articles",
+      type: "array",
+      description: "Published articles readers may want alongside this world's lore.",
+      of: [{ type: "reference", to: [{ type: "article" }] }],
+    }),
+    defineField({
+      name: "relatedDossiers",
+      title: "Related Campaign Dossiers",
+      type: "array",
+      description: "Campaign session dossiers set in this world, surfaced from the lore page.",
+      of: [{ type: "reference", to: [{ type: "dossier" }] }],
+    }),
   ],
   preview: {
     select: { title: "name", subtitle: "tagline", media: "coverImage" },

@@ -361,7 +361,13 @@ export const WORLD_BY_SLUG_QUERY = groq`
     ...,
     "slug": slug.current,
     "dms": dms[]->{ ${teamMemberRefFields} },
-    ${wikiLastEditedBy}
+    ${wikiLastEditedBy},
+    "relatedArticles": relatedArticles[]->{
+      _id, title, "slug": slug.current, excerpt, coverImage
+    },
+    "relatedDossiers": relatedDossiers[]->{
+      _id, title, code, "campaignSlug": campaign->slug.current
+    }
   }
 `;
 

@@ -22,6 +22,18 @@ import { WorldUnitCard } from "@/components/wiki/WorldUnitCard";
 import { WikiEntryMetaPanel } from "@/components/wiki/WikiEntryMetaPanel";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
+import Link from "next/link";
+
+/** "The Making of the Continent" -> "the-making-of-the-continent" —
+ * anchor id for a section heading. Not a general slugify utility, just
+ * enough for this page's own headings. */
+function headingId(heading: string): string {
+  return heading
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export const revalidate = 300;
 
@@ -106,7 +118,96 @@ export default async function WorldHomePage({
 
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_280px] lg:items-start">
-          <div>{world.description && <Renderer value={world.description} />}</div>
+          <div>
+            {world.sections && world.sections.length > 0 ? (
+              <>
+                {world.sections.length > 1 && (
+                  <nav
+                    aria-label="Contents"
+                    className="mb-8 rounded-md border border-border bg-surface p-4"
+                  >
+                    <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+                      Contents
+                    </span>
+                    <ol className="mt-2 flex flex-col gap-1.5">
+                      {world.sections.map((section, i) => (
+                        <li key={section._key}>
+                          <a
+                            href={`#${headingId(section.heading)}`}
+                            className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
+                          >
+                            {i + 1}. {section.heading}
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  </nav>
+                )}
+
+                {world.sections.map((section) => (
+                  <section key={section._key} id={headingId(section.heading)} className="scroll-mt-24">
+                    <h2 className="mt-8 mb-3 font-display text-3xl text-text">
+                      {section.heading}
+                    </h2>
+                    <Renderer value={section.body} />
+                  </section>
+                ))}
+              </>
+            ) : (
+              world.description && <Renderer value={world.description} />
+            )}
+
+            {((world.relatedArticles && world.relatedArticles.length > 0) ||
+              (world.relatedDossiers && world.relatedDossiers.length > 0)) && (
+              <aside className="mt-12 border-t border-border pt-6">
+                <h2 className="font-ui text-sm uppercase tracking-wider text-text-muted">
+                  Related Reading
+                </h2>
+                <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+                  {world.relatedArticles && world.relatedArticles.length > 0 && (
+                    <div>
+                      <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+                        Articles
+                      </span>
+                      <ul className="mt-1.5 flex flex-col gap-1.5">
+                        {world.relatedArticles.map((article) => (
+                          <li key={article._id}>
+                            <Link
+                              href={`/articles/${article.slug}`}
+                              className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
+                            >
+                              {article.title}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {world.relatedDossiers && world.relatedDossiers.length > 0 && (
+                    <div>
+                      <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
+                        Campaign Dossiers
+                      </span>
+                      <ul className="mt-1.5 flex flex-col gap-1.5">
+                        {world.relatedDossiers.map((dossier) =>
+                          dossier.campaignSlug ? (
+                            <li key={dossier._id}>
+                              <a
+                                href={`https://campaigns.criticalsandfumbles.com/${dossier.campaignSlug}/${dossier.code}`}
+                                className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
+                              >
+                                {dossier.title}
+                              </a>
+                            </li>
+                          ) : null,
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </aside>
+            )}
+          </div>
 
           {world._createdAt && world._updatedAt && (
             <WikiEntryMetaPanel
