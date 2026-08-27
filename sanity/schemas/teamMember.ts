@@ -179,6 +179,14 @@ export default defineType({
       initialValue: true,
     }),
     defineField({
+      name: "ownerEmailHash",
+      title: "Owner Email Hash",
+      type: "string",
+      description:
+        "HMAC-SHA256 of this member's Cloudflare Access login email, keyed by a secret that lives only as a Worker secret (never in any repo or this dataset). Links this document to whoever authenticates with that email in the campaigns console's self-service editing — never store the plain email here, this dataset is publicly readable with no auth. Set via a one-off admin script (see campaigns repo's scripts/link-team-member.js), not typed by hand.",
+      readOnly: true,
+    }),
+    defineField({
       name: "pageFooterCTA",
       title: "Page Footer CTA",
       type: "array",
