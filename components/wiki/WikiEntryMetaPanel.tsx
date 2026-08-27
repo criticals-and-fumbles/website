@@ -145,7 +145,7 @@ export function WikiEntryMetaPanel({
               <li key={c.href}>
                 <Link
                   href={c.href}
-                  className="text-text-muted transition-colors hover:text-emerald"
+                  className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
                 >
                   {c.label}
                 </Link>
@@ -165,7 +165,7 @@ export function WikiEntryMetaPanel({
               <li key={s.href}>
                 <Link
                   href={s.href}
-                  className="line-clamp-1 text-text-muted transition-colors hover:text-emerald"
+                  className="line-clamp-1 text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
                 >
                   {s.title}
                 </Link>
