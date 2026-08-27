@@ -16,11 +16,15 @@ export function NotablePlaceCard({
 }: {
   place: NotablePlaceCardData;
   worldSlug: string;
-  unitSlug: string;
+  unitSlug?: string;
 }) {
+  const href = unitSlug
+    ? `/wiki/${worldSlug}/${unitSlug}/places/${place.slug}`
+    : `/wiki/${worldSlug}/places/${place.slug}`;
+
   return (
     <Link
-      href={`/wiki/${worldSlug}/${unitSlug}/places/${place.slug}`}
+      href={href}
       className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-emerald"
     >
       <div className="flex items-center justify-between gap-2">

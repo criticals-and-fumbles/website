@@ -3,7 +3,10 @@ import Link from "next/link";
 const TABS = [
   { key: "lore", label: "Lore", enabled: true },
   { key: "sessions", label: "Sessions", enabled: true },
-  { key: "npcs", label: "NPCs", enabled: false },
+  { key: "figures", label: "NPCs", enabled: true },
+  { key: "factions", label: "Factions", enabled: true },
+  { key: "places", label: "Places", enabled: true },
+  { key: "items", label: "Items", enabled: true },
   { key: "map", label: "Map", enabled: false },
 ] as const;
 

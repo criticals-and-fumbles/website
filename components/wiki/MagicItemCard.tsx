@@ -20,17 +20,20 @@ export function MagicItemCard({
 }: {
   item: MagicItemCardData;
   worldSlug: string;
-  unitSlug: string;
+  unitSlug?: string;
 }) {
   const imageUrl = urlForImage(item.itemArt)
     ?.width(500)
     .height(300)
     .auto("format")
     .url();
+  const href = unitSlug
+    ? `/wiki/${worldSlug}/${unitSlug}/items/${item.slug}`
+    : `/wiki/${worldSlug}/items/${item.slug}`;
 
   return (
     <Link
-      href={`/wiki/${worldSlug}/${unitSlug}/items/${item.slug}`}
+      href={href}
       className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-emerald"
     >
       {imageUrl && (

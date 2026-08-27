@@ -502,6 +502,13 @@ export const UNIT_KEY_FIGURES_QUERY = groq`
   }
 `;
 
+// World-level listing — see WORLD_FACTIONS_QUERY's comment.
+export const WORLD_KEY_FIGURES_QUERY = groq`
+  *[_type == "keyFigure" && world->slug.current == $worldSlug] | order(name asc) {
+    _id, name, "slug": slug.current, role, status, threatLevel, portrait, hasStatBlock
+  }
+`;
+
 export const KEY_FIGURE_QUERY = groq`
   *[_type == "keyFigure" && slug.current == $slug][0] {
     _id, name, alsoKnownAs, role, status, threatLevel,
@@ -518,6 +525,13 @@ export const KEY_FIGURE_QUERY = groq`
 
 export const UNIT_NOTABLE_PLACES_QUERY = groq`
   *[_type == "notablePlace" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, placeType, dangerLevel
+  }
+`;
+
+// World-level listing — see WORLD_FACTIONS_QUERY's comment.
+export const WORLD_NOTABLE_PLACES_QUERY = groq`
+  *[_type == "notablePlace" && world->slug.current == $worldSlug] | order(name asc) {
     _id, name, "slug": slug.current, placeType, dangerLevel
   }
 `;
@@ -542,6 +556,13 @@ export const UNIT_MAGIC_ITEMS_QUERY = groq`
   }
 `;
 
+// World-level listing — see WORLD_FACTIONS_QUERY's comment.
+export const WORLD_MAGIC_ITEMS_QUERY = groq`
+  *[_type == "magicItem" && world->slug.current == $worldSlug] | order(name asc) {
+    _id, name, "slug": slug.current, rarity, itemArt
+  }
+`;
+
 export const MAGIC_ITEM_QUERY = groq`
   *[_type == "magicItem" && slug.current == $slug][0] {
     _id, name, itemType, rarity, lore, itemArt,
@@ -559,6 +580,15 @@ export const MAGIC_ITEM_QUERY = groq`
 
 export const UNIT_FACTIONS_QUERY = groq`
   *[_type == "faction" && unit->slug.current == $unitSlug] | order(name asc) {
+    _id, name, "slug": slug.current, factionType, banner
+  }
+`;
+
+// World-level listing — every faction in this world, unit-scoped or not
+// (same "browse everything in the world" convention LORE_ENTRIES_QUERY
+// already established; the unit-scoped query above is the narrower view).
+export const WORLD_FACTIONS_QUERY = groq`
+  *[_type == "faction" && world->slug.current == $worldSlug] | order(name asc) {
     _id, name, "slug": slug.current, factionType, banner
   }
 `;

@@ -15,12 +15,20 @@ export function wikiSiblingHref(entry: WikiSiblingEntry): string {
         ? `/wiki/${entry.worldSlug}/${entry.unitSlug}/sessions/${entry.slug}`
         : `/wiki/${entry.worldSlug}/sessions/${entry.slug}`;
     case "keyFigure":
-      return `/wiki/${entry.worldSlug}/${entry.unitSlug}/figures/${entry.slug}`;
+      return entry.unitSlug
+        ? `/wiki/${entry.worldSlug}/${entry.unitSlug}/figures/${entry.slug}`
+        : `/wiki/${entry.worldSlug}/figures/${entry.slug}`;
     case "notablePlace":
-      return `/wiki/${entry.worldSlug}/${entry.unitSlug}/places/${entry.slug}`;
+      return entry.unitSlug
+        ? `/wiki/${entry.worldSlug}/${entry.unitSlug}/places/${entry.slug}`
+        : `/wiki/${entry.worldSlug}/places/${entry.slug}`;
     case "magicItem":
-      return `/wiki/${entry.worldSlug}/${entry.unitSlug}/items/${entry.slug}`;
+      return entry.unitSlug
+        ? `/wiki/${entry.worldSlug}/${entry.unitSlug}/items/${entry.slug}`
+        : `/wiki/${entry.worldSlug}/items/${entry.slug}`;
     case "faction":
-      return `/wiki/${entry.worldSlug}/${entry.unitSlug}/factions/${entry.slug}`;
+      return entry.unitSlug
+        ? `/wiki/${entry.worldSlug}/${entry.unitSlug}/factions/${entry.slug}`
+        : `/wiki/${entry.worldSlug}/factions/${entry.slug}`;
   }
 }

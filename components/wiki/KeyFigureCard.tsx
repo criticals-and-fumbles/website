@@ -19,17 +19,20 @@ export function KeyFigureCard({
 }: {
   figure: KeyFigureCardData;
   worldSlug: string;
-  unitSlug: string;
+  unitSlug?: string;
 }) {
   const imageUrl = urlForImage(figure.portrait)
     ?.width(300)
     .height(300)
     .auto("format")
     .url();
+  const href = unitSlug
+    ? `/wiki/${worldSlug}/${unitSlug}/figures/${figure.slug}`
+    : `/wiki/${worldSlug}/figures/${figure.slug}`;
 
   return (
     <Link
-      href={`/wiki/${worldSlug}/${unitSlug}/figures/${figure.slug}`}
+      href={href}
       className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface p-5 text-center transition-colors hover:border-emerald"
     >
       <div className="relative h-20 w-20 overflow-hidden rounded-full bg-bg-forest">

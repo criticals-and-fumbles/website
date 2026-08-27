@@ -10,17 +10,20 @@ export function FactionCard({
 }: {
   faction: FactionCardData;
   worldSlug: string;
-  unitSlug: string;
+  unitSlug?: string;
 }) {
   const imageUrl = urlForImage(faction.banner)
     ?.width(200)
     .height(200)
     .auto("format")
     .url();
+  const href = unitSlug
+    ? `/wiki/${worldSlug}/${unitSlug}/factions/${faction.slug}`
+    : `/wiki/${worldSlug}/factions/${faction.slug}`;
 
   return (
     <Link
-      href={`/wiki/${worldSlug}/${unitSlug}/factions/${faction.slug}`}
+      href={href}
       className="flex items-center gap-4 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-emerald"
     >
       {imageUrl && (
