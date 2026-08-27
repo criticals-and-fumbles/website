@@ -21,6 +21,15 @@ function alignmentRingClass(alignment?: string) {
   return "ring-amber";
 }
 
+// Horsemen (gold) and Uncle's League (green) get a tier-coloured card
+// border — the other two tiers stay the default border-border/
+// hover:border-emerald, no tier accent assigned to them.
+function tierBorderClass(tier?: string) {
+  if (tier === "Horsemen") return "border-amber";
+  if (tier === "UnclesLeague") return "border-emerald";
+  return "border-border";
+}
+
 export function CharacterCard({
   member,
   compact = false,
@@ -37,7 +46,7 @@ export function CharacterCard({
   return (
     <Link
       href={`/team/${member.slug}`}
-      className="flex flex-col items-center gap-3 rounded-lg border border-border bg-surface p-5 text-center transition-colors hover:border-emerald"
+      className={`flex flex-col items-center gap-3 rounded-lg border ${tierBorderClass(member.tier)} bg-surface p-5 text-center transition-colors hover:border-emerald`}
     >
       <div
         className={`relative h-20 w-20 overflow-hidden rounded-full bg-bg-forest ring-2 ${alignmentRingClass(member.alignment)}`}

@@ -34,7 +34,7 @@ export default async function TeamPage() {
 
         {horsemen.length > 0 && (
           <section className="mt-14">
-            <h2 className="mb-6 font-display text-3xl text-text">Horsemen</h2>
+            <h2 className="mb-6 font-display text-3xl text-amber">Horsemen</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {horsemen.map((member) => (
                 <CharacterCard key={member._id} member={member} />
@@ -56,7 +56,7 @@ export default async function TeamPage() {
 
         {unclesLeague.length > 0 && (
           <section className="mt-14">
-            <h2 className="mb-6 font-display text-3xl text-text">
+            <h2 className="mb-6 font-display text-3xl text-emerald">
               Uncle&apos;s League
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
