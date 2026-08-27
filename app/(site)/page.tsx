@@ -27,7 +27,7 @@ import { ArticleStrip } from "@/components/home/ArticleStrip";
 import { EventStrip } from "@/components/home/EventStrip";
 import { WorldStrip } from "@/components/home/WorldStrip";
 import { PhilosophyStrip } from "@/components/home/PhilosophyStrip";
-import { NewsletterStrip } from "@/components/home/NewsletterStrip";
+// import { NewsletterStrip } from "@/components/home/NewsletterStrip"; // hidden until ready — see below
 import { Footer } from "@/components/layout/Footer";
 
 export const revalidate = 300;
@@ -104,7 +104,8 @@ export default async function HomePage() {
 
       <PhilosophyStrip tagline={philosophy?.tagline} />
 
-      <NewsletterStrip />
+      {/* Hidden until the newsletter is ready to develop — see NewsletterStrip.tsx */}
+      {/* <NewsletterStrip /> */}
 
       <Footer />
     </>
