@@ -121,29 +121,6 @@ export default async function WorldHomePage({
           <div>
             {world.sections && world.sections.length > 0 ? (
               <>
-                {world.sections.length > 1 && (
-                  <nav
-                    aria-label="Contents"
-                    className="mb-8 rounded-md border border-border bg-surface p-4"
-                  >
-                    <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
-                      Contents
-                    </span>
-                    <ol className="mt-2 flex flex-col gap-1.5">
-                      {world.sections.map((section, i) => (
-                        <li key={section._key}>
-                          <a
-                            href={`#${headingId(section.heading)}`}
-                            className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
-                          >
-                            {i + 1}. {section.heading}
-                          </a>
-                        </li>
-                      ))}
-                    </ol>
-                  </nav>
-                )}
-
                 {world.sections.map((section) => (
                   <section key={section._key} id={headingId(section.heading)} className="scroll-mt-24">
                     <h2 className="mt-8 mb-3 font-display text-3xl text-text">
@@ -209,23 +186,45 @@ export default async function WorldHomePage({
             )}
           </div>
 
-          {world._createdAt && world._updatedAt && (
-            <WikiEntryMetaPanel
-              title={world.name}
-              image={world.coverImage}
-              typeLabel="World"
-              statusChip={world.status ? STATUS_BADGE[world.status] : undefined}
-              ownerHandle={world.dms?.[0]?.handle}
-              createdAt={world._createdAt}
-              updatedAt={world._updatedAt}
-              lastEditedByHandle={world.lastEditedBy?.handle}
-              siblingsHeading={pluralize(unitLabel)}
-              siblings={units.slice(0, 4).map((unit) => ({
-                title: unit.name,
-                href: `/wiki/${world.slug}/${unit.slug}`,
-              }))}
-            />
-          )}
+          <div className="flex flex-col gap-6">
+            {world._createdAt && world._updatedAt && (
+              <WikiEntryMetaPanel
+                title={world.name}
+                image={world.coverImage}
+                typeLabel="World"
+                statusChip={world.status ? STATUS_BADGE[world.status] : undefined}
+                ownerHandle={world.dms?.[0]?.handle}
+                createdAt={world._createdAt}
+                updatedAt={world._updatedAt}
+                lastEditedByHandle={world.lastEditedBy?.handle}
+                siblingsHeading={pluralize(unitLabel)}
+                siblings={units.slice(0, 4).map((unit) => ({
+                  title: unit.name,
+                  href: `/wiki/${world.slug}/${unit.slug}`,
+                }))}
+              />
+            )}
+
+            {world.sections && world.sections.length > 1 && (
+              <details className="rounded-md border border-border bg-surface p-4">
+                <summary className="cursor-pointer font-ui text-xs uppercase tracking-wider text-text-muted">
+                  Contents
+                </summary>
+                <ol className="mt-3 flex flex-col gap-1.5 text-sm">
+                  {world.sections.map((section, i) => (
+                    <li key={section._key}>
+                      <a
+                        href={`#${headingId(section.heading)}`}
+                        className="text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
+                      >
+                        {i + 1}. {section.heading}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+          </div>
         </div>
       </div>
 
