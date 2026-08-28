@@ -19,7 +19,11 @@ export async function generateMetadata({
   params,
 }: PageProps<"/wiki/[world]/[unit]/places/[slug]">): Promise<Metadata> {
   const { world: worldSlug, unit: unitSlug, slug } = await params;
-  const place = await client.fetch<NotablePlace | null>(NOTABLE_PLACE_QUERY, { slug });
+  const place = await client.fetch<NotablePlace | null>(NOTABLE_PLACE_QUERY, {
+    slug,
+    worldSlug,
+    unitSlug,
+  });
   if (!place) return {};
 
   return buildMetadata({
@@ -43,7 +47,11 @@ export default async function NotablePlacePage({
   params,
 }: PageProps<"/wiki/[world]/[unit]/places/[slug]">) {
   const { world: worldSlug, unit: unitSlug, slug } = await params;
-  const place = await client.fetch<NotablePlace | null>(NOTABLE_PLACE_QUERY, { slug });
+  const place = await client.fetch<NotablePlace | null>(NOTABLE_PLACE_QUERY, {
+    slug,
+    worldSlug,
+    unitSlug,
+  });
 
   if (!place) notFound();
 

@@ -39,6 +39,7 @@ export default async function UnitSessionsIndexPage({
   if (!unit) notFound();
 
   const sessions = await client.fetch<SessionLogCard[]>(WORLD_UNIT_SESSIONS_QUERY, {
+    worldSlug,
     unitSlug,
   });
 

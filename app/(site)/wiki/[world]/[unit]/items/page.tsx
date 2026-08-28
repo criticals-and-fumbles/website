@@ -39,6 +39,7 @@ export default async function UnitMagicItemsIndexPage({
   if (!unit) notFound();
 
   const items = await client.fetch<MagicItemCardData[]>(UNIT_MAGIC_ITEMS_QUERY, {
+    worldSlug,
     unitSlug,
   });
 

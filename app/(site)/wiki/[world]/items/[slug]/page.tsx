@@ -20,7 +20,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/wiki/[world]/items/[slug]">): Promise<Metadata> {
   const { world: worldSlug, slug } = await params;
-  const item = await client.fetch<MagicItem | null>(MAGIC_ITEM_QUERY, { slug });
+  const item = await client.fetch<MagicItem | null>(MAGIC_ITEM_QUERY, { slug, worldSlug });
   if (!item) return {};
 
   return buildMetadata({
@@ -46,7 +46,7 @@ export default async function WorldMagicItemPage({
   params,
 }: PageProps<"/wiki/[world]/items/[slug]">) {
   const { world: worldSlug, slug } = await params;
-  const item = await client.fetch<MagicItem | null>(MAGIC_ITEM_QUERY, { slug });
+  const item = await client.fetch<MagicItem | null>(MAGIC_ITEM_QUERY, { slug, worldSlug });
 
   if (!item) notFound();
 

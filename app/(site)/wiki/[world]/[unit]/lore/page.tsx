@@ -39,6 +39,7 @@ export default async function UnitLoreIndexPage({
   if (!unit) notFound();
 
   const entries = await client.fetch<LoreEntryCard[]>(WORLD_UNIT_LORE_QUERY, {
+    worldSlug,
     unitSlug,
   });
 

@@ -40,7 +40,7 @@ export default async function UnitNotablePlacesIndexPage({
 
   const places = await client.fetch<NotablePlaceCardData[]>(
     UNIT_NOTABLE_PLACES_QUERY,
-    { unitSlug },
+    { worldSlug, unitSlug },
   );
 
   return (

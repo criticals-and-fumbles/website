@@ -39,6 +39,7 @@ export default async function UnitKeyFiguresIndexPage({
   if (!unit) notFound();
 
   const figures = await client.fetch<KeyFigureCardData[]>(UNIT_KEY_FIGURES_QUERY, {
+    worldSlug,
     unitSlug,
   });
 

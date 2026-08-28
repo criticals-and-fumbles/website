@@ -39,6 +39,7 @@ export default async function UnitFactionsIndexPage({
   if (!unit) notFound();
 
   const factions = await client.fetch<FactionCardData[]>(UNIT_FACTIONS_QUERY, {
+    worldSlug,
     unitSlug,
   });
 

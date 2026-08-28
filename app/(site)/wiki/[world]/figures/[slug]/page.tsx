@@ -20,7 +20,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/wiki/[world]/figures/[slug]">): Promise<Metadata> {
   const { world: worldSlug, slug } = await params;
-  const figure = await client.fetch<KeyFigure | null>(KEY_FIGURE_QUERY, { slug });
+  const figure = await client.fetch<KeyFigure | null>(KEY_FIGURE_QUERY, { slug, worldSlug });
   if (!figure) return {};
 
   return buildMetadata({
@@ -51,8 +51,8 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function WorldKeyFigurePage({
   params,
 }: PageProps<"/wiki/[world]/figures/[slug]">) {
-  const { slug } = await params;
-  const figure = await client.fetch<KeyFigure | null>(KEY_FIGURE_QUERY, { slug });
+  const { world: worldSlug, slug } = await params;
+  const figure = await client.fetch<KeyFigure | null>(KEY_FIGURE_QUERY, { slug, worldSlug });
 
   if (!figure) notFound();
 

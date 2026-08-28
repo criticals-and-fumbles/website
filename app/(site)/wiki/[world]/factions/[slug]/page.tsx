@@ -19,7 +19,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/wiki/[world]/factions/[slug]">): Promise<Metadata> {
   const { world: worldSlug, slug } = await params;
-  const faction = await client.fetch<Faction | null>(FACTION_QUERY, { slug });
+  const faction = await client.fetch<Faction | null>(FACTION_QUERY, { slug, worldSlug });
   if (!faction) return {};
 
   return buildMetadata({
@@ -36,7 +36,7 @@ export default async function WorldFactionPage({
   params,
 }: PageProps<"/wiki/[world]/factions/[slug]">) {
   const { world: worldSlug, slug } = await params;
-  const faction = await client.fetch<Faction | null>(FACTION_QUERY, { slug });
+  const faction = await client.fetch<Faction | null>(FACTION_QUERY, { slug, worldSlug });
 
   if (!faction) notFound();
 

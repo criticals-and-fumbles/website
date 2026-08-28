@@ -76,7 +76,7 @@ export default async function WorldUnitPage({
 
   const recentEntries = await client.fetch<RecentUnitEntry[]>(
     UNIT_RECENT_ENTRIES_QUERY,
-    { unitSlug },
+    { worldSlug, unitSlug },
   );
 
   const accent = unit.colourAccent ?? "var(--emerald)";
