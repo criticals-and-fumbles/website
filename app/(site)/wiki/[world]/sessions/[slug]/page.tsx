@@ -126,6 +126,7 @@ export default async function SessionLogPage({
               createdAt={session._createdAt}
               updatedAt={session._updatedAt}
               lastEditedByHandle={session.lastEditedBy?.handle}
+              parentLink={{ label: session.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading="In this world"
               siblings={(session.siblingEntries ?? []).map((s) => ({
                 title: s.title,

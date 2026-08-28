@@ -20,6 +20,7 @@ export async function generateMetadata({
 }: PageProps<"/wiki/[world]/[unit]/lore/[slug]">): Promise<Metadata> {
   const { world: worldSlug, unit: unitSlug, slug } = await params;
   const entry = await client.fetch<LoreEntry | null>(WORLD_UNIT_LORE_ENTRY_QUERY, {
+    worldSlug,
     unitSlug,
     slug,
   });
@@ -41,6 +42,7 @@ export default async function UnitLoreEntryPage({
 }: PageProps<"/wiki/[world]/[unit]/lore/[slug]">) {
   const { world: worldSlug, unit: unitSlug, slug } = await params;
   const entry = await client.fetch<LoreEntry | null>(WORLD_UNIT_LORE_ENTRY_QUERY, {
+    worldSlug,
     unitSlug,
     slug,
   });
@@ -108,6 +110,10 @@ export default async function UnitLoreEntryPage({
               createdAt={entry._createdAt}
               updatedAt={entry._updatedAt}
               lastEditedByHandle={entry.lastEditedBy?.handle}
+              parentLink={{
+                label: entry.unit?.name ?? unitSlug,
+                href: `/wiki/${worldSlug}/${unitSlug}`,
+              }}
               siblingsHeading="In this unit"
               siblings={(entry.siblingEntries ?? []).map((s) => ({
                 title: s.title,

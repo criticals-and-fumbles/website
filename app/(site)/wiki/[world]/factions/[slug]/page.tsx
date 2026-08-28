@@ -98,6 +98,7 @@ export default async function WorldFactionPage({
               createdAt={faction._createdAt}
               updatedAt={faction._updatedAt}
               lastEditedByHandle={faction.lastEditedBy?.handle}
+              parentLink={{ label: faction.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading={faction.unit ? "In this unit" : "In this world"}
               siblings={(faction.siblingEntries ?? []).map((s) => ({
                 title: s.title,

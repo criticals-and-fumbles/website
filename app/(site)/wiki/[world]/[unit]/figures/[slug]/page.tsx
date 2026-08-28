@@ -149,6 +149,10 @@ export default async function KeyFigurePage({
               createdAt={figure._createdAt}
               updatedAt={figure._updatedAt}
               lastEditedByHandle={figure.lastEditedBy?.handle}
+              parentLink={{
+                label: figure.unit?.name ?? unitSlug,
+                href: `/wiki/${worldSlug}/${unitSlug}`,
+              }}
               siblingsHeading={figure.unit ? "In this unit" : "In this world"}
               siblings={(figure.siblingEntries ?? []).map((s) => ({
                 title: s.title,

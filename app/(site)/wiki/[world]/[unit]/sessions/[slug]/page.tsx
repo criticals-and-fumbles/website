@@ -18,6 +18,7 @@ export async function generateMetadata({
 }: PageProps<"/wiki/[world]/[unit]/sessions/[slug]">): Promise<Metadata> {
   const { world: worldSlug, unit: unitSlug, slug } = await params;
   const session = await client.fetch<SessionLog | null>(WORLD_UNIT_SESSION_QUERY, {
+    worldSlug,
     unitSlug,
     slug,
   });
@@ -35,8 +36,9 @@ export async function generateMetadata({
 export default async function UnitSessionLogPage({
   params,
 }: PageProps<"/wiki/[world]/[unit]/sessions/[slug]">) {
-  const { unit: unitSlug, slug } = await params;
+  const { world: worldSlug, unit: unitSlug, slug } = await params;
   const session = await client.fetch<SessionLog | null>(WORLD_UNIT_SESSION_QUERY, {
+    worldSlug,
     unitSlug,
     slug,
   });
@@ -124,6 +126,10 @@ export default async function UnitSessionLogPage({
               createdAt={session._createdAt}
               updatedAt={session._updatedAt}
               lastEditedByHandle={session.lastEditedBy?.handle}
+              parentLink={{
+                label: session.unit?.name ?? unitSlug,
+                href: `/wiki/${worldSlug}/${unitSlug}`,
+              }}
               siblingsHeading="In this unit"
               siblings={(session.siblingEntries ?? []).map((s) => ({
                 title: s.title,

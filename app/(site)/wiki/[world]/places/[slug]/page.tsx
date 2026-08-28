@@ -140,6 +140,7 @@ export default async function WorldNotablePlacePage({
               createdAt={place._createdAt}
               updatedAt={place._updatedAt}
               lastEditedByHandle={place.lastEditedBy?.handle}
+              parentLink={{ label: place.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading={place.unit ? "In this unit" : "In this world"}
               siblings={(place.siblingEntries ?? []).map((s) => ({
                 title: s.title,

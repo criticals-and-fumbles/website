@@ -50,6 +50,20 @@ export interface WikiEntryMetaPanelProps {
   categoryLinks?: { label: string; href: string }[];
   siblingsHeading: string;
   siblings: { title: string; href: string }[];
+  /** Nav link back to this entry's immediate parent in the wiki hierarchy
+   * (World → World Unit → entity/lore/session) — rendered at the very
+   * top of the panel, right under the title bar. Omit for the top of the
+   * hierarchy (a World itself), which has no parent entry. */
+  parentLink?: { label: string; href: string };
+  /** ALL of this entry's own child documents, grouped by type and
+   * rendered as the panel's lowest section — distinct from `siblings`
+   * (other entries at the SAME level) and `categoryLinks` (worldUnit's
+   * shortcut links to each category's browse page, not an actual
+   * listing). Omit entirely for entry types with no children (every
+   * leaf type — keyFigure/notablePlace/magicItem/faction/loreEntry/
+   * sessionLog). Groups with zero items should be filtered out by the
+   * caller before this prop is set. */
+  childGroups?: { heading: string; items: { title: string; href: string }[] }[];
 }
 
 /** Wikipedia/Fandom-style infobox: title bar, image, labeled key/value
@@ -67,16 +81,29 @@ export function WikiEntryMetaPanel({
   categoryLinks,
   siblingsHeading,
   siblings,
+  parentLink,
+  childGroups,
 }: WikiEntryMetaPanelProps) {
   const owner = firstName(ownerHandle);
   const lastEditor = firstName(lastEditedByHandle);
   const imageUrl = urlForImage(image)?.width(480).height(360).auto("format").url();
+  const totalChildren = childGroups?.reduce((sum, g) => sum + g.items.length, 0) ?? 0;
 
   return (
     <aside className="overflow-hidden rounded-md border border-border bg-surface text-sm">
       <div className="border-b border-border bg-bg-forest px-4 py-2 text-center">
         <span className="font-display text-lg text-on-forest">{title}</span>
       </div>
+
+      {parentLink && (
+        <Link
+          href={parentLink.href}
+          className="flex items-center gap-1.5 border-b border-border px-4 py-2 font-ui text-xs uppercase tracking-wider text-text-muted transition-colors hover:text-emerald"
+        >
+          <span aria-hidden="true">←</span>
+          {parentLink.label}
+        </Link>
+      )}
 
       {imageUrl && (
         <div className="relative aspect-[4/3] w-full border-b border-border bg-bg-forest">
@@ -156,7 +183,11 @@ export function WikiEntryMetaPanel({
       )}
 
       {siblings.length > 0 && (
-        <div className="flex flex-col gap-2 px-4 py-3">
+        <div
+          className={`flex flex-col gap-2 px-4 py-3 ${
+            childGroups && childGroups.length > 0 ? "border-b border-border" : ""
+          }`}
+        >
           <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
             {siblingsHeading}
           </span>
@@ -173,6 +204,40 @@ export function WikiEntryMetaPanel({
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Lowest section, per design: ALL of this entry's own children,
+          grouped by type. Collapsed by default once the list gets long
+          enough to dominate the panel — same <details> convention as the
+          wiki article Contents box — so a busy World Unit's infobox
+          doesn't force everything else below it off-screen. */}
+      {childGroups && childGroups.length > 0 && (
+        <details className="px-4 py-3" open={totalChildren <= 6}>
+          <summary className="cursor-pointer font-ui text-xs uppercase tracking-wider text-text-muted">
+            All Entries{totalChildren > 0 ? ` (${totalChildren})` : ""}
+          </summary>
+          <div className="mt-3 flex flex-col gap-3">
+            {childGroups.map((group) => (
+              <div key={group.heading} className="flex flex-col gap-1.5">
+                <span className="font-ui text-[0.7rem] uppercase tracking-wider text-text-muted/80">
+                  {group.heading}
+                </span>
+                <ul className="flex flex-col gap-1.5">
+                  {group.items.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="line-clamp-1 text-emerald underline decoration-emerald/40 underline-offset-2 transition-colors hover:decoration-emerald"
+                      >
+                        {item.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </aside>
   );

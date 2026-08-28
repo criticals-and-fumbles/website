@@ -300,6 +300,7 @@ export interface WorldUnit extends WorldUnitCard {
   _updatedAt?: string;
   lastEditedBy?: TeamMemberRef;
   siblingEntries?: WikiSiblingEntry[];
+  childEntries?: WikiSiblingEntry[];
   counts?: {
     keyFigures: number;
     notablePlaces: number;
@@ -325,6 +326,7 @@ export interface LoreEntry extends LoreEntryCard {
   body?: PortableTextBlock[];
   firstAppeared?: string;
   world?: WorldRef;
+  unit?: WorldUnitRef;
   relatedEntries?: LoreEntryCard[];
   lastEditedBy?: TeamMemberRef;
   tags?: string[];
@@ -347,6 +349,7 @@ export interface SessionLogCard {
 
 export interface SessionLog extends SessionLogCard {
   world?: WorldRef;
+  unit?: WorldUnitRef;
   players?: TeamMemberRef[];
   fullRecap?: PortableTextBlock[];
   notableMoments?: PortableTextBlock[];

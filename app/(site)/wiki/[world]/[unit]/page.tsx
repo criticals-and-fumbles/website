@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { WORLD_UNIT_QUERY, UNIT_RECENT_ENTRIES_QUERY } from "@/sanity/lib/queries";
-import type { RecentUnitEntry, WorldUnit } from "@/sanity/lib/types";
+import type { RecentUnitEntry, WikiSiblingEntry, WorldUnit } from "@/sanity/lib/types";
 import { urlForImage } from "@/sanity/lib/image";
 import { wikiSiblingHref } from "@/lib/wikiLinks";
 import { Badge } from "@/components/ui/Badge";
@@ -61,6 +61,36 @@ const RECENT_ENTRY_META: Record<RecentUnitEntry["_type"], (e: RecentUnitEntry) =
   magicItem: (e) => e.rarity,
   faction: (e) => e.factionType,
 };
+
+// Canonical child-type order — matches WorldUnitNav's own tab order, so
+// the meta panel's "All Entries" groups appear in the same sequence a
+// visitor already sees along the top of the page.
+const CHILD_TYPE_HEADINGS: Record<WikiSiblingEntry["_type"], string> = {
+  loreEntry: "Lore",
+  keyFigure: "Key Figures",
+  notablePlace: "Notable Places",
+  magicItem: "Magic Items",
+  faction: "Factions",
+  sessionLog: "Sessions",
+  worldUnit: "Territories", // never actually appears in a unit's own children
+};
+const CHILD_TYPE_ORDER: WikiSiblingEntry["_type"][] = [
+  "loreEntry",
+  "keyFigure",
+  "notablePlace",
+  "magicItem",
+  "faction",
+  "sessionLog",
+];
+
+function groupChildEntries(entries: WikiSiblingEntry[]) {
+  return CHILD_TYPE_ORDER.map((type) => ({
+    heading: CHILD_TYPE_HEADINGS[type],
+    items: entries
+      .filter((e) => e._type === type)
+      .map((e) => ({ title: e.title, href: wikiSiblingHref(e) })),
+  })).filter((group) => group.items.length > 0);
+}
 
 export default async function WorldUnitPage({
   params,
@@ -143,6 +173,16 @@ export default async function WorldUnitPage({
               createdAt={unit._createdAt}
               updatedAt={unit._updatedAt}
               lastEditedByHandle={unit.lastEditedBy?.handle}
+              parentLink={
+                unit.world
+                  ? { label: unit.world.name, href: `/wiki/${worldSlug}` }
+                  : undefined
+              }
+              childGroups={
+                unit.childEntries && unit.childEntries.length > 0
+                  ? groupChildEntries(unit.childEntries)
+                  : undefined
+              }
               categoryLinks={[
                 { label: "Lore", href: `/wiki/${worldSlug}/${unitSlug}/lore` },
                 { label: "Key Figures", href: `/wiki/${worldSlug}/${unitSlug}/figures` },

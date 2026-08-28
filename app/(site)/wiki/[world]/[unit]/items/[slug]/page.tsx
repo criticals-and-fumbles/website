@@ -123,6 +123,10 @@ export default async function MagicItemPage({
               createdAt={item._createdAt}
               updatedAt={item._updatedAt}
               lastEditedByHandle={item.lastEditedBy?.handle}
+              parentLink={{
+                label: item.unit?.name ?? unitSlug,
+                href: `/wiki/${worldSlug}/${unitSlug}`,
+              }}
               siblingsHeading={item.unit ? "In this unit" : "In this world"}
               siblings={(item.siblingEntries ?? []).map((s) => ({
                 title: s.title,

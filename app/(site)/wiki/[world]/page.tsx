@@ -197,11 +197,22 @@ export default async function WorldHomePage({
                 createdAt={world._createdAt}
                 updatedAt={world._updatedAt}
                 lastEditedByHandle={world.lastEditedBy?.handle}
+                parentLink={{ label: "All Worlds", href: "/wiki" }}
                 siblingsHeading={pluralize(unitLabel)}
-                siblings={units.slice(0, 4).map((unit) => ({
-                  title: unit.name,
-                  href: `/wiki/${world.slug}/${unit.slug}`,
-                }))}
+                siblings={[]}
+                childGroups={
+                  units.length > 0
+                    ? [
+                        {
+                          heading: pluralize(unitLabel),
+                          items: units.map((unit) => ({
+                            title: unit.name,
+                            href: `/wiki/${world.slug}/${unit.slug}`,
+                          })),
+                        },
+                      ]
+                    : undefined
+                }
               />
             )}
 

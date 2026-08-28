@@ -107,6 +107,7 @@ export default async function LoreEntryPage({
               createdAt={entry._createdAt}
               updatedAt={entry._updatedAt}
               lastEditedByHandle={entry.lastEditedBy?.handle}
+              parentLink={{ label: entry.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading="In this world"
               siblings={(entry.siblingEntries ?? []).map((s) => ({
                 title: s.title,

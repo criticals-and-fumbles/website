@@ -466,6 +466,22 @@ export const WORLD_UNIT_QUERY = groq`
       _type == "worldUnit" && _id != ^._id && world._ref == ^.world._ref
     ] | order(_updatedAt desc) [0...4] {
       _type, "title": name, "slug": slug.current, "worldSlug": world->slug.current
+    },
+    // ALL of this unit's own children (unlike siblingEntries above, which
+    // is worldUnit's own siblings at the World level) — feeds the meta
+    // panel's "All Entries" section. Same WikiSiblingEntry shape so
+    // wikiSiblingHref can build each item's URL. No cap: the panel's own
+    // <details> wrapper handles a long list, per the child-listing
+    // feature's own design (see WikiEntryMetaPanel.tsx).
+    "childEntries": *[
+      _type in ["loreEntry", "sessionLog", "keyFigure", "notablePlace", "magicItem", "faction"]
+      && unit._ref == ^._id
+    ] | order(coalesce(title, name) asc) {
+      _type,
+      "title": coalesce(title, name),
+      "slug": slug.current,
+      "worldSlug": world->slug.current,
+      "unitSlug": unit->slug.current
     }
   }
 `;
@@ -483,22 +499,27 @@ export const WORLD_UNIT_SESSIONS_QUERY = groq`
   }
 `;
 
+// $worldSlug scoping added alongside $unitSlug/$slug — same cross-
+// world/unit collision risk #15 fixed for the other entity types.
 export const WORLD_UNIT_LORE_ENTRY_QUERY = groq`
-  *[_type == "loreEntry" && unit->slug.current == $unitSlug && slug.current == $slug][0] {
+  *[_type == "loreEntry" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug && slug.current == $slug][0] {
     _id, title, "slug": slug.current, category, canonStatus, summary, coverImage,
     alsoKnownAs, body, firstAppeared, tags, _createdAt, _updatedAt,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
+    "unit": unit->{ name, "slug": slug.current },
     "relatedEntries": relatedEntries[]->{ _id, title, "slug": slug.current, category },
     "lastEditedBy": lastEditedBy->{ ${teamMemberRefFields} },
     ${wikiSiblingEntries}
   }
 `;
 
+// $worldSlug scoping added alongside $unitSlug/$slug — see #15.
 export const WORLD_UNIT_SESSION_QUERY = groq`
-  *[_type == "sessionLog" && unit->slug.current == $unitSlug && slug.current == $slug][0] {
+  *[_type == "sessionLog" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug && slug.current == $slug][0] {
     ...,
     "slug": slug.current,
     "world": world->{ _id, name, "slug": slug.current, colourAccent },
+    "unit": unit->{ name, "slug": slug.current },
     "dm": dm->{ ${teamMemberRefFields} },
     "players": players[]->{ ${teamMemberRefFields} },
     ${wikiLastEditedBy},

@@ -139,6 +139,7 @@ export default async function WorldKeyFigurePage({
               createdAt={figure._createdAt}
               updatedAt={figure._updatedAt}
               lastEditedByHandle={figure.lastEditedBy?.handle}
+              parentLink={{ label: figure.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading={figure.unit ? "In this unit" : "In this world"}
               siblings={(figure.siblingEntries ?? []).map((s) => ({
                 title: s.title,

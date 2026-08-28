@@ -115,6 +115,7 @@ export default async function WorldMagicItemPage({
               createdAt={item._createdAt}
               updatedAt={item._updatedAt}
               lastEditedByHandle={item.lastEditedBy?.handle}
+              parentLink={{ label: item.world?.name ?? worldSlug, href: `/wiki/${worldSlug}` }}
               siblingsHeading={item.unit ? "In this unit" : "In this world"}
               siblings={(item.siblingEntries ?? []).map((s) => ({
                 title: s.title,
