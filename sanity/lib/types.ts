@@ -220,6 +220,7 @@ export interface TeamMember {
   socialLinks?: { platform: string; url: string }[];
   worlds?: WorldRef[];
   division?: DivisionRef;
+  pageFooterCTA?: PortableTextBlock[];
 }
 
 /** See sanity/schemas/division.ts. */

@@ -32,30 +32,46 @@ const typeConfig: Record<
   faction: { icon: "🛡️", label: "Faction", colour: "var(--color-emerald)" },
 };
 
-function itemHref(item: RssFeedItem): string {
+// Returns null (never a string containing "undefined") when a required
+// route part is missing — the query already filters these out at the
+// source for unit-scoped types (see HOME_RSS_FEED_QUERY's keyFigures/
+// notablePlaces/magicItems/factions subqueries), but this is a second,
+// independent guard so a malformed link can never render regardless of
+// how an item reached this component. See issue #16.
+function itemHref(item: RssFeedItem): string | null {
   switch (item._type) {
     case "article":
-      return `/articles/${item.slug}`;
+      return item.slug ? `/articles/${item.slug}` : null;
     case "majorEvent":
-      return `/events/${item.slug}`;
+      return item.slug ? `/events/${item.slug}` : null;
     case "regularEvent":
-      return `/events/${item.slug}`;
+      return item.slug ? `/events/${item.slug}` : null;
     case "loreEntry":
-      return `/wiki/${item.worldSlug}/lore/${item.slug}`;
+      return item.worldSlug && item.slug ? `/wiki/${item.worldSlug}/lore/${item.slug}` : null;
     case "sessionLog":
-      return `/wiki/${item.worldSlug}/sessions/${item.slug}`;
+      return item.worldSlug && item.slug
+        ? `/wiki/${item.worldSlug}/sessions/${item.slug}`
+        : null;
     case "teamMember":
-      return `/team/${item.slug}`;
+      return item.slug ? `/team/${item.slug}` : null;
     case "worldUnit":
-      return `/wiki/${item.worldSlug}/${item.slug}`;
+      return item.worldSlug && item.slug ? `/wiki/${item.worldSlug}/${item.slug}` : null;
     case "keyFigure":
-      return `/wiki/${item.worldSlug}/${item.unitSlug}/figures/${item.slug}`;
+      return item.worldSlug && item.unitSlug && item.slug
+        ? `/wiki/${item.worldSlug}/${item.unitSlug}/figures/${item.slug}`
+        : null;
     case "notablePlace":
-      return `/wiki/${item.worldSlug}/${item.unitSlug}/places/${item.slug}`;
+      return item.worldSlug && item.unitSlug && item.slug
+        ? `/wiki/${item.worldSlug}/${item.unitSlug}/places/${item.slug}`
+        : null;
     case "magicItem":
-      return `/wiki/${item.worldSlug}/${item.unitSlug}/items/${item.slug}`;
+      return item.worldSlug && item.unitSlug && item.slug
+        ? `/wiki/${item.worldSlug}/${item.unitSlug}/items/${item.slug}`
+        : null;
     case "faction":
-      return `/wiki/${item.worldSlug}/${item.unitSlug}/factions/${item.slug}`;
+      return item.worldSlug && item.unitSlug && item.slug
+        ? `/wiki/${item.worldSlug}/${item.unitSlug}/factions/${item.slug}`
+        : null;
   }
 }
 
@@ -110,9 +126,11 @@ function RssItem({ item, hideOnMobile }: { item: RssFeedItem; hideOnMobile: bool
   // etc., or whatever an editor renames it to) — use the live value from
   // the item's world rather than the static config label.
   const label = item._type === "worldUnit" ? (item.unitLabel ?? config.label) : config.label;
+  const href = itemHref(item);
+  if (!href) return null;
   return (
     <Link
-      href={itemHref(item)}
+      href={href}
       className={`flex flex-col gap-1 border-t border-border py-3 first:border-t-0 first:pt-0 ${
         hideOnMobile ? "hidden md:flex" : "flex"
       }`}

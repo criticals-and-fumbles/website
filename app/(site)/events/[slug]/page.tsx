@@ -35,6 +35,16 @@ export async function generateMetadata({
     slug,
   });
 
+  // Per-event fallback: when there's no direct Sanity photo, point
+  // openGraph/twitter at this route's own opengraph-image.tsx (file
+  // convention) instead of letting buildMetadata's DEFAULT_OG_IMAGE win —
+  // that route already knows how to serve a branded per-event R2 image
+  // (or the site-wide default as its own last resort). Passing an
+  // explicit `image` to buildMetadata always overrides the file
+  // convention, so this has to be the convention route's own URL, not
+  // simply omitted. See issue #3.
+  const generatedOgImageUrl = `${(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "")}/events/${slug}/opengraph-image`;
+
   if (event) {
     const descriptionText = plainTextFromBlocks(event.description);
 
@@ -45,10 +55,11 @@ export async function generateMetadata({
         descriptionText ??
         `Join Criticals and Fumbles for ${event.title} in Singapore.`,
       path: `/events/${slug}`,
-      image: urlForImage(event.splashImage ?? event.coverImage)
-        ?.width(1200)
-        .height(630)
-        .url(),
+      image:
+        urlForImage(event.splashImage ?? event.coverImage)
+          ?.width(1200)
+          .height(630)
+          .url() ?? generatedOgImageUrl,
       type: "event",
     });
   }
@@ -67,7 +78,9 @@ export async function generateMetadata({
       regularDescriptionText ??
       `Join Criticals and Fumbles for ${regularEvent.campaignName ?? regularEvent.title} in Singapore.`,
     path: `/events/${slug}`,
-    image: urlForImage(regularEvent.coverImage)?.width(1200).height(630).url(),
+    image:
+      urlForImage(regularEvent.coverImage)?.width(1200).height(630).url() ??
+      generatedOgImageUrl,
     type: "event",
   });
 }

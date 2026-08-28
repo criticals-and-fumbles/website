@@ -140,7 +140,7 @@ export const HOME_RSS_FEED_QUERY = groq`{
     _type, _id,
     "title": coalesce(sessionTitle, "Session " + string(sessionNumber)),
     "slug": slug.current,
-    "date": coalesce(sessionDate, _updatedAt),
+    "date": _updatedAt,
     "worldSlug": world->slug.current,
     campaignName
   },
@@ -164,6 +164,7 @@ export const HOME_RSS_FEED_QUERY = groq`{
     developmentStatus
   },
   "keyFigures": *[_type == "keyFigure"
+    && defined(world->slug.current) && defined(unit->slug.current) && defined(slug.current)
   ] | order(_updatedAt desc)[0...5] {
     _type, _id,
     "title": name,
@@ -174,6 +175,7 @@ export const HOME_RSS_FEED_QUERY = groq`{
     role
   },
   "notablePlaces": *[_type == "notablePlace"
+    && defined(world->slug.current) && defined(unit->slug.current) && defined(slug.current)
   ] | order(_updatedAt desc)[0...5] {
     _type, _id,
     "title": name,
@@ -184,6 +186,7 @@ export const HOME_RSS_FEED_QUERY = groq`{
     placeType
   },
   "magicItems": *[_type == "magicItem"
+    && defined(world->slug.current) && defined(unit->slug.current) && defined(slug.current)
   ] | order(_updatedAt desc)[0...5] {
     _type, _id,
     "title": name,
@@ -194,6 +197,7 @@ export const HOME_RSS_FEED_QUERY = groq`{
     rarity
   },
   "factions": *[_type == "faction"
+    && defined(world->slug.current) && defined(unit->slug.current) && defined(slug.current)
   ] | order(_updatedAt desc)[0...5] {
     _type, _id,
     "title": name,
@@ -252,7 +256,7 @@ export const ARTICLES_QUERY = groq`
 `;
 
 export const ARTICLE_BY_SLUG_QUERY = groq`
-  *[_type == "article" && slug.current == $slug][0] {
+  *[_type == "article" && slug.current == $slug && status == "published"][0] {
     ...,
     "slug": slug.current,
     "author": author->{ ${teamMemberRefFields}, realName, roles },
@@ -286,7 +290,7 @@ export const MAJOR_EVENTS_PAST_QUERY = groq`
 `;
 
 export const REGULAR_EVENTS_QUERY = groq`
-  *[_type == "regularEvent"] | order(title asc) {
+  *[_type == "regularEvent" && status != "Ended"] | order(title asc) {
     _id, title, "slug": slug.current, campaignName, schedule, system,
     playerCount, status, registrationUrl,
     "dm": dm->{ ${teamMemberRefFields} },
@@ -326,7 +330,7 @@ export const TEAM_MEMBERS_QUERY = groq`
 `;
 
 export const TEAM_MEMBER_BY_SLUG_QUERY = groq`
-  *[_type == "teamMember" && slug.current == $slug][0] {
+  *[_type == "teamMember" && slug.current == $slug && active == true][0] {
     ...,
     "slug": slug.current,
     "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
@@ -467,13 +471,13 @@ export const WORLD_UNIT_QUERY = groq`
 `;
 
 export const WORLD_UNIT_LORE_QUERY = groq`
-  *[_type == "loreEntry" && unit->slug.current == $unitSlug] | order(title asc) {
+  *[_type == "loreEntry" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(title asc) {
     _id, title, "slug": slug.current, category, canonStatus, summary, coverImage
   }
 `;
 
 export const WORLD_UNIT_SESSIONS_QUERY = groq`
-  *[_type == "sessionLog" && unit->slug.current == $unitSlug] | order(sessionDate desc) {
+  *[_type == "sessionLog" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(sessionDate desc) {
     _id, title, "slug": slug.current, sessionNumber, campaignName, sessionDate,
     tone, synopsis, "dm": dm->{ ${teamMemberRefFields} }
   }
@@ -503,7 +507,7 @@ export const WORLD_UNIT_SESSION_QUERY = groq`
 `;
 
 export const UNIT_KEY_FIGURES_QUERY = groq`
-  *[_type == "keyFigure" && unit->slug.current == $unitSlug] | order(name asc) {
+  *[_type == "keyFigure" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(name asc) {
     _id, name, "slug": slug.current, role, status, threatLevel, portrait, hasStatBlock
   }
 `;
@@ -515,8 +519,13 @@ export const WORLD_KEY_FIGURES_QUERY = groq`
   }
 `;
 
+// $unitSlug is optional (null when called from the world-level
+// /wiki/[world]/figures/[slug] route rather than the unit-scoped one) —
+// worldSlug is always required since every route shape has it. See #15.
 export const KEY_FIGURE_QUERY = groq`
-  *[_type == "keyFigure" && slug.current == $slug][0] {
+  *[_type == "keyFigure" && slug.current == $slug
+    && world->slug.current == $worldSlug
+    && (!defined($unitSlug) || unit->slug.current == $unitSlug)][0] {
     _id, name, alsoKnownAs, role, status, threatLevel,
     description, portrait, hasStatBlock, statBlock,
     _createdAt, _updatedAt,
@@ -530,7 +539,7 @@ export const KEY_FIGURE_QUERY = groq`
 `;
 
 export const UNIT_NOTABLE_PLACES_QUERY = groq`
-  *[_type == "notablePlace" && unit->slug.current == $unitSlug] | order(name asc) {
+  *[_type == "notablePlace" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(name asc) {
     _id, name, "slug": slug.current, placeType, dangerLevel
   }
 `;
@@ -542,8 +551,11 @@ export const WORLD_NOTABLE_PLACES_QUERY = groq`
   }
 `;
 
+// $unitSlug optional — see KEY_FIGURE_QUERY's comment.
 export const NOTABLE_PLACE_QUERY = groq`
-  *[_type == "notablePlace" && slug.current == $slug][0] {
+  *[_type == "notablePlace" && slug.current == $slug
+    && world->slug.current == $worldSlug
+    && (!defined($unitSlug) || unit->slug.current == $unitSlug)][0] {
     _id, name, placeType, dangerLevel, description, images,
     _createdAt, _updatedAt,
     "keyFigures": keyFigures[]->{ _id, name, "slug": slug.current, role, portrait },
@@ -557,7 +569,7 @@ export const NOTABLE_PLACE_QUERY = groq`
 `;
 
 export const UNIT_MAGIC_ITEMS_QUERY = groq`
-  *[_type == "magicItem" && unit->slug.current == $unitSlug] | order(name asc) {
+  *[_type == "magicItem" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(name asc) {
     _id, name, "slug": slug.current, rarity, itemArt
   }
 `;
@@ -569,8 +581,11 @@ export const WORLD_MAGIC_ITEMS_QUERY = groq`
   }
 `;
 
+// $unitSlug optional — see KEY_FIGURE_QUERY's comment.
 export const MAGIC_ITEM_QUERY = groq`
-  *[_type == "magicItem" && slug.current == $slug][0] {
+  *[_type == "magicItem" && slug.current == $slug
+    && world->slug.current == $worldSlug
+    && (!defined($unitSlug) || unit->slug.current == $unitSlug)][0] {
     _id, name, itemType, rarity, lore, itemArt,
     hasMechanics, mechanics,
     _createdAt, _updatedAt,
@@ -585,7 +600,7 @@ export const MAGIC_ITEM_QUERY = groq`
 `;
 
 export const UNIT_FACTIONS_QUERY = groq`
-  *[_type == "faction" && unit->slug.current == $unitSlug] | order(name asc) {
+  *[_type == "faction" && world->slug.current == $worldSlug && unit->slug.current == $unitSlug] | order(name asc) {
     _id, name, "slug": slug.current, factionType, banner
   }
 `;
@@ -599,8 +614,11 @@ export const WORLD_FACTIONS_QUERY = groq`
   }
 `;
 
+// $unitSlug optional — see KEY_FIGURE_QUERY's comment.
 export const FACTION_QUERY = groq`
-  *[_type == "faction" && slug.current == $slug][0] {
+  *[_type == "faction" && slug.current == $slug
+    && world->slug.current == $worldSlug
+    && (!defined($unitSlug) || unit->slug.current == $unitSlug)][0] {
     _id, name, factionType, description, banner,
     _createdAt, _updatedAt,
     "members": members[]->{ _id, name, "slug": slug.current, role, portrait },
@@ -622,7 +640,7 @@ export const FACTION_QUERY = groq`
  */
 export const UNIT_RECENT_ENTRIES_QUERY = groq`
   *[_type in ["keyFigure", "notablePlace", "magicItem", "faction"]
-    && unit->slug.current == $unitSlug]
+    && world->slug.current == $worldSlug && unit->slug.current == $unitSlug]
     | order(_createdAt desc)[0...3] {
     _type, _id, name, "slug": slug.current,
     role, placeType, rarity, factionType
@@ -647,9 +665,73 @@ export const SITEMAP_EVENTS_QUERY = groq`
   }
 `;
 
+// regularEvent shares the /events/[slug] route with majorEvent, but was
+// missing from the sitemap entirely — see issue #19.
+export const SITEMAP_REGULAR_EVENTS_QUERY = groq`
+  *[_type == "regularEvent" && status != "Ended"] {
+    "slug": slug.current, _updatedAt
+  }
+`;
+
 export const SITEMAP_WORLDS_QUERY = groq`
   *[_type == "world"] {
     "slug": slug.current, _updatedAt
+  }
+`;
+
+// Added for issue #19 — team, worldUnit, and the four unit-scoped wiki
+// entity types, plus lore/session logs, none of which were in the
+// sitemap before. Entity types use their world-level route
+// (/wiki/{world}/{type}/{slug}) as the single canonical URL even though
+// a unit-scoped alternate path also exists for unit-bound entries — see
+// KEY_FIGURE_QUERY's comment for why both route shapes are valid; the
+// sitemap only needs to name one to avoid listing duplicate URLs for the
+// same content.
+export const SITEMAP_TEAM_MEMBERS_QUERY = groq`
+  *[_type == "teamMember" && active == true && defined(slug.current)] {
+    "slug": slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_WORLD_UNITS_QUERY = groq`
+  *[_type == "worldUnit" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_LORE_ENTRIES_QUERY = groq`
+  *[_type == "loreEntry" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_SESSION_LOGS_QUERY = groq`
+  *[_type == "sessionLog" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_KEY_FIGURES_QUERY = groq`
+  *[_type == "keyFigure" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_NOTABLE_PLACES_QUERY = groq`
+  *[_type == "notablePlace" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_MAGIC_ITEMS_QUERY = groq`
+  *[_type == "magicItem" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
+  }
+`;
+
+export const SITEMAP_FACTIONS_QUERY = groq`
+  *[_type == "faction" && defined(slug.current) && defined(world->slug.current)] {
+    "slug": slug.current, "worldSlug": world->slug.current, _updatedAt
   }
 `;
 

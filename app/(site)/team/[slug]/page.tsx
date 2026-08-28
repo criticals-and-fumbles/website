@@ -146,7 +146,7 @@ export default async function TeamMemberPage({
         )}
       </div>
 
-      <Footer />
+      <Footer pageFooterCTA={member.pageFooterCTA} />
     </>
   );
 }
