@@ -98,6 +98,91 @@ closing), and leave issues open with a progress comment if only partially
 resolved. The user reviews periodically, not per-action — write closing
 comments that stand alone as a clear audit trail.
 
+## GitHub issue workflow (added 2026-08-28, issue #25)
+
+**Mode switching.** A holistic review pass (reading many/all open issues,
+auditing code against them) is review-first by default: read, verify
+against live code/data, classify, and only implement the fixes that are
+genuinely safe and self-contained — leave anything needing a product
+decision or infrastructure change as an open issue with a written
+recommendation instead of guessing. Switch to implementation mode within
+the same session once the user has actually said to fix things (not
+merely to review/triage) — at that point work issue-by-issue, verify
+each fix (typecheck/lint/build, and live data checks per the Schema
+Safety Protocol where relevant), and close what's resolved. Don't treat
+a review session's "don't fix, just advise" instruction as carrying over
+to a later, differently-scoped session — re-read what the current
+request actually asks for.
+
+**Duplicate-check rule.** Before filing a new issue, search by more than
+one axis — title keywords (`gh issue list --search "<keyword>"`), the
+affected file/route path, and the core symptom in plain words — not just
+one short query. A finding that reuses the same file/route as an
+existing open issue is very likely the same issue restated, not a new
+one.
+
+**Label taxonomy.** `known-risk` (parent label, always applied alongside
+a severity label) + `risk-high` / `risk-medium` / `risk-low` for
+severity. `risk-medium` exists as of 2026-08-28 — use it for findings
+that are real but not urgent (won't lose data or expose private content,
+but should be fixed before it compounds), reserving `risk-high` for
+actual security/privacy/data-integrity exposure and `risk-low` for
+polish/hygiene items.
+
+**Issue body template** — copy this shape directly rather than
+improvising a new structure each time:
+
+```markdown
+## What was found
+
+<Concrete description of the bug/gap, written for someone with zero
+session context.>
+
+Observed refs:
+
+- `path/to/file.ts:123`
+
+## Impact
+
+<Who/what is affected and how, in one short paragraph.>
+
+## Recommendation
+
+<The suggested fix, or the decision that needs to be made if there are
+multiple valid options.>
+
+## Checklist
+
+- [ ] <Concrete, checkable step>
+
+Source: <date> review at `<baseline label if any>` / <commit SHA>.
+```
+
+**Shell-safety for issue bodies.** Never inline a Markdown-heavy body
+(especially anything with backtick-fenced code, `<`/`>`, or nested
+quotes) directly into a `gh issue create -b "..."` shell argument — it
+breaks the same way commit messages with those characters do (see
+`docs/lessons-learned.md`). Write the body to a temp file and use `gh
+issue create --body-file /tmp/issue-body.md` instead, every time, not
+just when a first attempt fails.
+
+**Spawned-agent finding format.** A subagent doing part of a review
+should return findings as a short structured list — severity
+(high/medium/low), a suggested issue title, suggested labels, and
+file/line refs — not prose. The orchestrating session turns that into
+the issue body template above; it shouldn't have to re-derive severity
+or file locations from a paragraph.
+
+**Instruction source of truth.** `AGENTS.md` (repo root) is a
+Next.js-generated pointer to that Next.js version's own docs and is not
+hand-maintained — don't add project guidance there. The active,
+hand-maintained instructions are this file (`CLAUDE.md`) plus the
+`docs/*.md` modules it indexes below. There is no `docs/reference/`
+archive in this repo (checked 2026-08-28) — if one is added later for
+superseded/historical instructions, it holds context only, never
+current policy; root `CLAUDE.md` and its indexed modules are always the
+active source.
+
 ## Bundle size budget
 
 **Current verified baseline: ~1.36 MB gzip / 3 MiB free-tier limit (45%

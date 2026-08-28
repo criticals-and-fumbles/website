@@ -38,8 +38,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — .env.local.example is deliberately committed (placeholder
+# values only, see issue #23); everything else stays ignored.
 .env*
+!.env.local.example
 
 # vercel
 .vercel
