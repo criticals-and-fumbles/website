@@ -9,10 +9,12 @@
     "lint": "eslint",
     "build:cloudflare": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare deploy",
+    "deploy": "npm run build:cloudflare && opennextjs-cloudflare deploy",
+    "deploy:prebuilt": "opennextjs-cloudflare deploy",
     "seed": "tsx sanity/seed.ts",
     "studio": "sanity dev",
-    "studio:deploy": "sanity deploy"
+    "studio:deploy": "sanity deploy",
+    "verify:og-default": "node scripts/verify-og-default.mjs"
   },
   "dependencies": {
     "@next/third-parties": "^16.3.0",

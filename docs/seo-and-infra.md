@@ -95,13 +95,22 @@ config so publishing content would trigger a rebuild) — left as-is,
 not investigated further. If content publishes ever appear to trigger a
 build, that's why; revisit if it also misbehaves.
 
-Deploy manually with `npm run deploy` (currently just
-`opennextjs-cloudflare deploy`). **CONFIRMED 2026-08-20, the hard way:
-`opennextjs-cloudflare deploy` does NOT build — its own `--help` says
-"Deploy a **built** OpenNext app," and it will happily redeploy a stale
-`.open-next` directory with zero warning that nothing actually changed.**
-A session ran `npm run deploy` four times across ~15 minutes of real
-Nav/Footer/route changes, and every one reported success — but
+Deploy manually with `npm run deploy`. **Fixed 2026-08-28 (issue #20):**
+`npm run deploy` now runs `build:cloudflare` first
+(`"deploy": "npm run build:cloudflare && opennextjs-cloudflare deploy"`)
+— it's no longer possible to accidentally redeploy a stale `.open-next`
+directory via the normal script. If prebuilt output genuinely needs to
+be deployed as-is (e.g. re-pushing an already-built version with no
+source changes), use `npm run deploy:prebuilt` instead — that's the one
+remaining path that skips the build, and it's named so it can't be run
+by accident.
+
+**CONFIRMED 2026-08-20, the hard way, before this fix existed:** the old
+plain `opennextjs-cloudflare deploy` does NOT build — its own `--help`
+says "Deploy a **built** OpenNext app," and it happily redeployed a
+stale `.open-next` directory with zero warning that nothing actually
+changed. A session ran `npm run deploy` four times across ~15 minutes of
+real Nav/Footer/route changes, and every one reported success — but
 `.open-next`'s mtime was from a full day earlier, so all four deploys
 re-shipped the exact same stale bundle. The tell, in hindsight: the
 upload step said "No updated asset files to upload" every time (should
@@ -110,10 +119,10 @@ rebuild, at which point it correctly said "Found 1 new or modified
 static asset to upload... + /BUILD_ID". The pages *looked* like they'd
 updated once (a Sanity content change made an unrelated, already-
 deployed component render new data) which masked the problem for a
-while. **Always run `npm run build:cloudflare` immediately before
-`npm run deploy`, no exceptions, even for "just deploying what's already
-there" — there is no such thing as safely skipping the build step.**
-This promotes straight to production traffic.
+while. This history is kept here as the reason `deploy:prebuilt` is a
+separate, deliberately-named script rather than a flag — the whole point
+is that skipping the build should never be the default or an accident.
+`npm run deploy` promotes straight to production traffic.
 
 **Preview a branch without touching production:** build (`npm run
 build:cloudflare`), then `npx wrangler versions upload --preview-alias
@@ -316,6 +325,15 @@ doesn't have an object yet (webhook hasn't fired, or `/generate/default`
 was never run), these routes 404 rather than falling back to generating
 on-the-fly — there's no on-the-fly path left at all by design.
 
+**Verify after any deploy that touches R2 config, or after a fresh
+environment setup (issue #21):** `npm run verify:og-default` fetches the
+live `/og-default` route and confirms it actually returns a 200 image,
+not just that the deploy succeeded — a missing `og-default.png` object
+has no visible symptom otherwise (every page's `og:image`/Twitter card
+just silently points at a 404 until someone shares a link and notices).
+Pass a preview alias URL as an argument to check a preview deploy instead
+of production: `npm run verify:og-default -- https://<alias>-cnf-sg.criticalsandfumbles.workers.dev`.
+
 **Repo structure note:** `workers/` is excluded from the root
 `tsconfig.json` and `eslint.config.mjs` — it's a fully separate npm
 project with its own `node_modules`/toolchain, not part of the Next.js
@@ -326,13 +344,24 @@ which has its own) purely so `cloudflare-env.d.ts` can reference
 
 ## Environment variables
 
-See `.env.local.example`. Required: `NEXT_PUBLIC_SANITY_PROJECT_ID`,
-`NEXT_PUBLIC_SANITY_DATASET`, `NEXT_PUBLIC_SANITY_API_VERSION`,
-`SANITY_API_READ_TOKEN` (Viewer role, server-only — never expose to the
-client), `NEXT_PUBLIC_SITE_URL` (`https://www.criticalsandfumbles.com` as
-of 2026-08-14 — see `docs/release-history.md` v0.1.12; must match whatever's
-set in Cloudflare's Workers Builds dashboard env vars for production, see
-Cloudflare deployment above), `NEXT_PUBLIC_SITE_NAME`.
+See `.env.local.example` (restored 2026-08-28, issue #23 — it had been
+missing from the repo despite being referenced here). Required:
+`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`,
+`NEXT_PUBLIC_SANITY_API_VERSION`, `SANITY_API_READ_TOKEN` (Viewer role,
+server-only — never expose to the client), `NEXT_PUBLIC_SITE_URL`
+(`https://www.criticalsandfumbles.com` as of 2026-08-14 — see
+`docs/release-history.md` v0.1.12; must match whatever's set in
+Cloudflare's Workers Builds dashboard env vars for production, see
+Cloudflare deployment above). `NEXT_PUBLIC_GA_ID` is optional (Google
+Analytics, no-op if unset).
+
+**Correction, 2026-08-28:** this section previously also listed
+`NEXT_PUBLIC_SITE_NAME` as required — checked against actual code while
+restoring `.env.local.example` and it isn't read from `process.env`
+anywhere; `lib/metadata.ts`'s `SITE_NAME` is a hardcoded string constant.
+Not included in the restored example file for that reason. If a future
+session wants the site name configurable via env, that's a real (small)
+code change to `lib/metadata.ts`, not just a docs fix.
 
 **`SANITY_API_WRITE_TOKEN`** — added to `.env.local` on 2026-08-11 (Editor
 role) for `sanity/migrations/patch-unit-labels.ts`. Not in
