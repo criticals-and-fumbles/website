@@ -91,6 +91,14 @@ export const structure: StructureResolver = (S) =>
                             .schemaType("aiCharter")
                             .documentId("aiCharter"),
                         ),
+                      S.listItem()
+                        .title("Divisions Synergy")
+                        .id("divisionsSynergy")
+                        .child(
+                          S.document()
+                            .schemaType("divisionsSynergy")
+                            .documentId("divisionsSynergy"),
+                        ),
                     ]),
                 ),
             ]),

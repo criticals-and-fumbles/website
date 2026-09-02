@@ -804,3 +804,7 @@ export const DIVISIONS_QUERY = groq`
     "memberCount": count(*[_type == "teamMember" && active == true && division._ref == ^._id])
   }
 `;
+
+export const DIVISIONS_SYNERGY_QUERY = groq`
+  *[_type == "divisionsSynergy"][0] { heading, body }
+`;

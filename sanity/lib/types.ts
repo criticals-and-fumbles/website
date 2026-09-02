@@ -235,6 +235,13 @@ export interface Division {
   memberCount?: number;
 }
 
+/** See sanity/schemas/divisionsSynergy.ts — singleton, About page's
+ * Divisions tab, rendered below DivisionsGrid. */
+export interface DivisionsSynergy {
+  heading?: string;
+  body?: string;
+}
+
 export interface World {
   _id: string;
   name: string;

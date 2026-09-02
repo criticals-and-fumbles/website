@@ -4,6 +4,7 @@ import {
   AI_CHARTER_QUERY,
   CODE_OF_CONDUCT_QUERY,
   DIVISIONS_QUERY,
+  DIVISIONS_SYNERGY_QUERY,
   ORGANISATIONS_QUERY,
   PHILOSOPHY_QUERY,
   SITE_SETTINGS_QUERY,
@@ -12,6 +13,7 @@ import type {
   AiCharter as AiCharterData,
   CodeOfConduct as CodeOfConductData,
   Division,
+  DivisionsSynergy as DivisionsSynergyData,
   Organisation,
   Philosophy,
   SiteSettings,
@@ -21,6 +23,7 @@ import { AboutTabs, type AboutTabSection } from "@/components/about/AboutTabs";
 import { AboutIntro } from "@/components/about/AboutIntro";
 import { PillarsTier, BehavioursTier } from "@/components/about/PhilosophyTier";
 import { DivisionsGrid } from "@/components/about/DivisionsGrid";
+import { DivisionsSynergy } from "@/components/about/DivisionsSynergy";
 import { CodeOfConduct } from "@/components/about/CodeOfConduct";
 import { AiCharter } from "@/components/about/AiCharter";
 import { Footer } from "@/components/layout/Footer";
@@ -37,7 +40,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function AboutPage() {
-  const [settings, philosophy, codeOfConduct, organisations, divisions, aiCharter] =
+  const [settings, philosophy, codeOfConduct, organisations, divisions, aiCharter, divisionsSynergy] =
     await Promise.all([
       client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
       client.fetch<Philosophy | null>(PHILOSOPHY_QUERY),
@@ -45,6 +48,7 @@ export default async function AboutPage() {
       client.fetch<Organisation[]>(ORGANISATIONS_QUERY),
       client.fetch<Division[]>(DIVISIONS_QUERY),
       client.fetch<AiCharterData | null>(AI_CHARTER_QUERY),
+      client.fetch<DivisionsSynergyData | null>(DIVISIONS_SYNERGY_QUERY),
     ]);
 
   const sections: AboutTabSection[] = [
@@ -109,7 +113,12 @@ export default async function AboutPage() {
     {
       id: "divisions",
       label: "Divisions",
-      content: <DivisionsGrid divisions={divisions} />,
+      content: (
+        <>
+          <DivisionsGrid divisions={divisions} />
+          <DivisionsSynergy data={divisionsSynergy} />
+        </>
+      ),
     },
     {
       id: "code-of-conduct",

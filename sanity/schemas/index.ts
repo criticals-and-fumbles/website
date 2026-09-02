@@ -5,6 +5,7 @@ import siteSettings from "./siteSettings";
 import philosophy from "./philosophy";
 import codeOfConduct from "./codeOfConduct";
 import aiCharter from "./aiCharter";
+import divisionsSynergy from "./divisionsSynergy";
 import world from "./world";
 import worldUnit from "./worldUnit";
 import division from "./division";
@@ -32,6 +33,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     philosophy,
     codeOfConduct,
     aiCharter,
+    divisionsSynergy,
     // Documents
     world,
     worldUnit,
