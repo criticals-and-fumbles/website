@@ -368,3 +368,33 @@ role) for `sanity/migrations/patch-unit-labels.ts`. Not in
 `.env.local.example` since it's not required for normal dev/build — only
 for running a write-access migration script. Server/script-only, never
 client-side; never commit the actual value.
+
+## Scheduled Sanity backup (2026-09-04)
+
+`.github/workflows/sanity-backup.yml` — the first GitHub Actions
+workflow in this repo (everything else deploys via Cloudflare's git-
+integrated Workers Builds, see "Cloudflare deployment" above; this
+workflow exists only because a scheduled job needs somewhere to run,
+and this repo already had a working `sanity.cli.ts` for it to use).
+
+Runs daily at 04:00 Singapore Time (`0 20 * * *` in UTC — SGT is UTC+8,
+no DST) via `sanity dataset export` (documents + assets, drafts
+included — confirmed a Viewer-role token is sufficient, no elevated
+token needed for a read-only backup), uploaded to the `cnf-media` R2
+bucket's S3-compatible API under `sanity-backups/<weekday>.tar.gz`.
+
+**Retention is 7 rotating filenames, not an R2 lifecycle rule.** The
+upload key is named after the CURRENT day of the week in Singapore time
+(`monday.tar.gz` … `sunday.tar.gz`) — next Monday's run overwrites this
+Monday's file in place, so exactly 7 archives ever exist and nothing
+needs pruning. Also has a `workflow_dispatch` trigger for a manual
+on-demand backup (e.g. right before a risky operation like a Wiki
+Restructure import, which does a full-replace of a world's
+`world.sections` — see cnf-website issue #26).
+
+Required repo secrets: `SANITY_API_READ_TOKEN` (same token already used
+elsewhere in this app — reused, not a new credential) plus
+`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` — R2's S3-compatible HMAC key
+pair, NOT a Cloudflare API token (different credential type). Create via
+Cloudflare dashboard → R2 → Manage R2 API Tokens, scoped to "Object Read
+& Write" on the `cnf-media` bucket specifically, not account-wide.

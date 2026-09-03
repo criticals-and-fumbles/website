@@ -1,0 +1,109 @@
+name: Sanity Full Backup
+
+# Full Sanity dataset backup (documents + assets), uploaded to Cloudflare
+# R2. Rotating 7-slot retention by design, not by an R2 lifecycle rule:
+# each run uploads to a filename named after the CURRENT day of the week
+# in Singapore time (e.g. sanity-backups/monday.tar.gz), so next Monday's
+# run overwrites this Monday's file in place — nothing to prune, nothing
+# ever grows past 7 archives.
+#
+# This workflow deliberately lives in cnf-website, not campaigns, even
+# though the Sanity project/dataset is shared between both repos — this
+# repo's sanity.cli.ts already has the projectId/dataset the Sanity CLI's
+# `dataset export` command needs, and it's the one place that config
+# already existed working correctly (verified locally before this was
+# written). Independent of either app's own deploy pipeline (this repo
+# deploys via Cloudflare's git-integrated Workers Builds, not GitHub
+# Actions, at all — this is the first GitHub Actions workflow in this
+# repo, added ONLY for this scheduled job).
+#
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   SANITY_API_READ_TOKEN — same Viewer-role token already used for
+#     Sanity reads elsewhere in this app. Sufficient for a full export
+#     (drafts included) — confirmed locally exporting all 94 documents
+#     with this exact token before this workflow was written; no
+#     elevated/write token needed for a read-only backup.
+#   R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY — S3-compatible credentials
+#     for the cnf-media R2 bucket, NOT a Cloudflare API token (R2's
+#     S3-compatible API uses its own HMAC key pair). Create via
+#     Cloudflare dashboard > R2 > Manage R2 API Tokens > Create API
+#     Token, scoped to "Object Read & Write" on the cnf-media bucket
+#     specifically (not account-wide) — least privilege for what this
+#     workflow actually needs.
+on:
+  schedule:
+    # 04:00 Singapore Time (SGT, UTC+8, no DST) daily = 20:00 UTC the
+    # previous calendar day.
+    - cron: "0 20 * * *"
+  # Manual trigger — for testing this workflow itself, or an ad-hoc
+  # backup right before a risky operation (e.g. before running a Wiki
+  # Restructure import that does a full-replace of world.sections).
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Not a project dependency (this repo's own app doesn't need the
+      # CLI at runtime, only Studio deploys do, via a separate script) —
+      # installed fresh into a scratch dir so it isn't added to
+      # package.json/package-lock.json by this workflow.
+      - name: Install Sanity CLI
+        run: npm install --no-save @sanity/cli@7.2.3
+
+      - name: Determine rotating filename (day of week, Singapore time)
+        id: day
+        run: echo "name=$(TZ=Asia/Singapore date +%A | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      # Reads projectId/dataset from this repo's own sanity.cli.ts —
+      # SANITY_AUTH_TOKEN is the Sanity CLI's documented env var for
+      # non-interactive auth (confirmed locally: works identically to an
+      # interactive `sanity login` session for this command).
+      - name: Export full dataset (documents + assets)
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
+        run: npx sanity dataset export production sanity-backup.tar.gz --overwrite
+
+      - name: Verify AWS CLI is available
+        run: aws --version || (echo "aws CLI not found on runner" && exit 1)
+
+      - name: Upload to Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+          FILE="sanity-backup.tar.gz"
+          KEY="sanity-backups/${{ steps.day.outputs.name }}.tar.gz"
+          SIZE=$(stat -c%s "$FILE")
+          echo "Uploading $FILE ($SIZE bytes) to s3://cnf-media/$KEY"
+
+          aws s3 cp "$FILE" "s3://cnf-media/$KEY" \
+            --endpoint-url https://f991ad1056656f2a81675071124651b4.r2.cloudflarestorage.com
+
+          # Confirm the object actually landed and its size matches what
+          # was uploaded — catches a silent partial-upload rather than
+          # trusting `aws s3 cp`'s own exit code alone.
+          REMOTE_SIZE=$(aws s3api head-object \
+            --endpoint-url https://f991ad1056656f2a81675071124651b4.r2.cloudflarestorage.com \
+            --bucket cnf-media --key "$KEY" --query ContentLength --output text)
+
+          if [ "$REMOTE_SIZE" != "$SIZE" ]; then
+            echo "Size mismatch: local $SIZE bytes, remote $REMOTE_SIZE bytes"
+            exit 1
+          fi
+          echo "Verified: s3://cnf-media/$KEY is $REMOTE_SIZE bytes"
+
+      - name: Summary
+        run: |
+          echo "### Sanity backup complete :white_check_mark:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Slot: \`${{ steps.day.outputs.name }}.tar.gz\` (overwrites weekly)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Size: $(stat -c%s sanity-backup.tar.gz) bytes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Location: \`s3://cnf-media/sanity-backups/${{ steps.day.outputs.name }}.tar.gz\`" >> "$GITHUB_STEP_SUMMARY"
