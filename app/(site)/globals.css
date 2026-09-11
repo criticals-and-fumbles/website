@@ -17,9 +17,35 @@
   --color-amber: var(--amber);
   --color-magenta: var(--magenta);
 
+  /* /celestial preview only — a real Tailwind colour SCALE (not just a
+     single custom property) so mockup-faithful utilities like
+     `bg-gold-500/20`/`text-gold-300` work as Tailwind utilities, matching
+     code.html's own JS tailwind.config `colors.gold` scale exactly. Purely
+     additive: nothing outside /celestial references `gold-*` today. */
+  --color-gold-300: #fde047;
+  --color-gold-400: #eab308;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #b89324;
+  --color-gold-700: #8c6d17;
+  --color-gold-900: #3e2e05;
+
   --font-display: var(--font-bebas-neue);
   --font-body: var(--font-crimson-pro);
   --font-ui: var(--font-space-mono);
+
+  /* /celestial preview only — overrides Tailwind's default font-serif/
+     font-sans/font-mono utility mappings (confirmed unused anywhere else
+     in this codebase — grepped before adding, see docs/design-system.md)
+     and adds font-cinzel (not a Tailwind default). Variables come from
+     next/font/local declarations in app/celestial/layout.tsx, so they
+     resolve to real font-family values only within that route's <html>
+     subtree — everywhere else these fall back to Tailwind's own default
+     serif/sans/mono stacks since the CSS variable is simply undefined
+     there. */
+  --font-cinzel: var(--font-celestial-cinzel);
+  --font-serif: var(--font-celestial-eb-garamond);
+  --font-sans: var(--font-celestial-plus-jakarta);
+  --font-mono: var(--font-celestial-space-grotesk);
 
   /* Custom body text scale (4K-display tuning). This project uses Tailwind
      v4's CSS-based theme config — there is no tailwind.config.ts — so these
@@ -72,6 +98,36 @@
   --amber: #b36a1a;
   --magenta: #c4306a;
 }
+
+/* Celestial theme scope (2026-09 alternative homepage preview, /celestial
+ * route only) — ported from an approved static mockup (code.html), a
+ * different and more ornate direction than the earlier /lobby preview
+ * (which has been scrapped entirely). None of these values are close
+ * enough to the site's existing --emerald/--amber/--magenta to reuse —
+ * the mockup's "gold" (#d4af37) and "magenta" (#f43f5e, closer to rose)
+ * are genuinely different hues from this site's amber/magenta — so
+ * everything here is a new, standalone token rather than an override of
+ * dark/light's tokens. Applied only within the /celestial route's own
+ * layout, never sitewide. The gold-* SCALE itself lives in the @theme
+ * inline block above (as real Tailwind utilities); what's left here is
+ * everything that isn't a Tailwind-default-palette match. */
+.celestial {
+  --bg: #020509;
+  --celestial-deep: #03080c;
+  --celestial-surface: #0d141d;
+  --celestial-card: #151c26;
+  --border-color: #2a2a2a;
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+  --celestial-teal: #00e5c8;
+  --celestial-cyan: #38bdf8;
+  --celestial-magenta: #f43f5e;
+  --celestial-purple: #c084fc;
+}
+
+.bg-celestial-deep { background: var(--celestial-deep); }
+.bg-celestial-surface { background: var(--celestial-surface); }
+.bg-celestial-card { background: var(--celestial-card); }
 
 /* Base rem size — 18px instead of the browser default 16px, tuned for 4K
    displays. Scales every rem-based size (including Tailwind's own spacing

@@ -1,0 +1,117 @@
+/*
+ * /celestial-only layout CSS — imported solely by app/celestial/layout.tsx,
+ * so nothing here can affect any other route. Ported from the approved
+ * code.html mockup's <style data-purpose="custom-decorations"> block and
+ * its Tailwind utility usage, translated into plain CSS since this preview
+ * doesn't load the Tailwind CDN script the mockup used (it uses this
+ * project's real Tailwind v4 build + these extra classes for the mockup's
+ * bespoke effects that have no Tailwind utility equivalent).
+ */
+
+.celestial-page {
+  background: var(--bg);
+  color: var(--text-color);
+  min-height: 100%;
+}
+
+/* Subtle glowing cosmic elements */
+.glow-cyan {
+  filter: drop-shadow(0 0 12px rgba(0, 229, 200, 0.75)) drop-shadow(0 0 35px rgba(0, 229, 200, 0.4));
+}
+.glow-magenta {
+  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.9)) drop-shadow(0 0 25px rgba(244, 63, 94, 0.5));
+}
+.glow-gold {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+}
+
+/* Ornate card border bevel style — this route's shared card look,
+ * replacing what ArticleCard/EventCard/etc. use sitewide (those are
+ * untouched; this is a standalone equivalent for this preview only). */
+.ornate-card {
+  position: relative;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.9);
+  transition: all 0.3s ease;
+}
+.ornate-card::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  pointer-events: none;
+}
+.ornate-card:hover {
+  border-color: rgba(212, 175, 55, 0.8);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(212, 175, 55, 0.15);
+}
+
+/* Corner ornate notches for cards */
+.corner-notch {
+  position: relative;
+}
+.corner-notch::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid #d4af37;
+  border-bottom: 1px solid #d4af37;
+  bottom: 2px;
+  right: 2px;
+}
+.corner-notch::before {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-left: 1px solid #d4af37;
+  border-top: 1px solid #d4af37;
+  top: 2px;
+  left: 2px;
+}
+
+/* Celestial star chart slow rotation — respects prefers-reduced-motion
+ * (the mockup itself had no such guard; added here since this becomes
+ * persistent, always-on chrome rather than a one-off hero flourish). */
+@keyframes celestial-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes celestial-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes celestial-pulse-glow {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+.spin-slow {
+  animation: celestial-spin-slow 180s linear infinite;
+}
+.spin-reverse {
+  animation: celestial-spin-reverse 240s linear infinite;
+}
+.pulse-star {
+  animation: celestial-pulse-glow 4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin-slow,
+  .spin-reverse,
+  .pulse-star,
+  .celestial-page .animate-ping {
+    animation: none;
+  }
+}
+
+/* Scroll journey sections below the hero — same reveal-once pattern used
+ * throughout this site's other preview work. */
+.celestial-scene-inner {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.celestial-scene-inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
