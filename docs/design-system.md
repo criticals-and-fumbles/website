@@ -77,6 +77,59 @@ Used on: homepage hero (`components/home/Hero.tsx`), `not-found.tsx`. Not
 duplicated into a shared component per the original spec — copy the JSX if
 you need it somewhere new, or extract one if it starts drifting.
 
+## `.celestial` theme scope (added 2026-09-12, `/celestial` preview route only)
+
+A third scope alongside `.dark`/`.light` in `app/(site)/globals.css`,
+applied only within the `/celestial` preview route (see
+`docs/components.md`). Ported from an approved static mockup
+(`code.html`) — a different, more ornate "TTRPGs with a Twist"
+celestial/astrolabe direction than the earlier (now-scrapped) `/lobby`
+preview. None of these values overlap with the site's existing
+`--emerald`/`--amber`/`--magenta` closely enough to reuse — the
+mockup's gold and rose-magenta are genuinely different hues.
+
+| Token | Value |
+|---|---|
+| `--celestial-deep` | `#03080c` |
+| `--celestial-surface` | `#0d141d` |
+| `--celestial-card` | `#151c26` |
+| `--celestial-teal` | `#00e5c8` |
+| `--celestial-cyan` | `#38bdf8` |
+| `--celestial-magenta` | `#f43f5e` |
+| `--celestial-purple` | `#c084fc` |
+
+Also adds a real Tailwind colour **scale** (not just a single custom
+property) via the `@theme inline` block, matching the mockup's own gold
+palette exactly so `bg-gold-500/20`/`text-gold-300`/etc. work as plain
+Tailwind utilities:
+
+| Utility prefix | Value |
+|---|---|
+| `gold-300` | `#fde047` |
+| `gold-400` | `#eab308` |
+| `gold-500` | `#d4af37` |
+| `gold-600` | `#b89324` |
+| `gold-700` | `#8c6d17` |
+| `gold-900` | `#3e2e05` |
+
+This is additive sitewide (confirmed nothing outside `/celestial`
+references `gold-*` before adding it) — unlike the token table above,
+which stays scoped to the `.celestial` class itself.
+
+Fonts (self-hosted under `public/fonts/`, loaded via `next/font/local`
+in `app/celestial/layout.tsx`, distinct from the site's normal Bebas
+Neue/Crimson Pro/Space Mono): Cinzel, EB Garamond (incl. a separate
+italic file), Plus Jakarta Sans, Space Grotesk — all genuine variable
+fonts (Google served one identical file across every requested weight
+per family), so one file per family/style covers the full range these
+pages use. `font-serif`/`font-sans`/`font-mono` (Tailwind's own
+defaults) are overridden to point at these for this route only — the
+underlying CSS variables are only ever defined on `/celestial`'s own
+`<html>`, so elsewhere they're simply unset and those utilities fall
+back to inherited font-family, same as if this override didn't exist
+(confirmed no other file in this codebase uses `font-serif`/`font-sans`/
+`font-mono` before doing this).
+
 ## C&F design philosophy (for reference / prompting)
 
 **Tagline:** "Good Players Make Good Tables. Good Tables Make Good Stories."

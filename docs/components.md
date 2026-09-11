@@ -167,6 +167,51 @@ class in `globals.css`, paired with the normal theme-flipping
 The "live" pulsing dot next to the "Latest Updates" heading is the
 `.live-dot` class + `@keyframes pulse-dot` in `globals.css`.
 
+## /celestial — alternative homepage preview (added 2026-09-12)
+
+Preview-only route at `/celestial`, built from an approved static
+mockup (`code.html` — a "TTRPGs with a Twist" celestial/astrolabe
+design direction). **This is NOT the live homepage** — `/` still
+serves `app/(site)/page.tsx` untouched. Replaces an earlier `/lobby`
+preview entirely (scrapped, branch deleted — not merged, not promoted).
+`/celestial` stays a parallel preview until a separate, explicit
+decision is made to promote it, same as `/lobby` was scoped to be.
+
+- Own standalone root layout (`app/celestial/layout.tsx`), not nested
+  under `app/(site)/layout.tsx` — fully isolated from the live
+  homepage's layout/fonts/theme wiring.
+- `components/celestial/CelestialNav.tsx` is a **dedicated component**,
+  not a Nav.tsx theme variant — its floating rounded-pill shape is a
+  structural difference from Nav.tsx's full-width bordered bar, not
+  just a re-colour, so it couldn't be done via CSS custom properties
+  alone (unlike the design tokens below, which are just new variables).
+  Uses real routes throughout, plus a basic mobile drawer the source
+  mockup never had at any breakpoint.
+- New `.celestial` theme scope in `app/(site)/globals.css` (a third
+  scope alongside `.dark`/`.light`, applied only within this route) —
+  see `docs/design-system.md` for the full token table. Also adds a
+  real Tailwind `gold-*` colour scale and overrides the default
+  `font-serif`/`font-sans`/`font-mono` utility mappings (both confirmed
+  unused anywhere else in this codebase before doing so).
+- 5 new self-hosted variable-weight fonts under `public/fonts/`
+  (Cinzel, EB Garamond incl. italic, Plus Jakarta Sans, Space Grotesk)
+  — this site's CSP blocks `fonts.googleapis.com` directly (same
+  constraint hit building the Wiki Restructure Kit pages), so these are
+  downloaded once and self-hosted via `next/font/local`.
+- No new GROQ queries — reuses `HOME_RSS_FEED_QUERY`,
+  `HOME_LATEST_ARTICLES_QUERY`, and `SITE_SETTINGS_QUERY` exactly as
+  the current homepage does.
+- Presentational-only, not wired to real behaviour (flagged rather
+  than faked): the Chronicles category filter pills, the Living
+  Grimoire type filter pills, and the mockup's "Load More
+  Transmissions" button (dropped entirely rather than shipped as a
+  dead control — a real paginated activity feed would need its own
+  page).
+- Bundle size impact: +~58 KiB gzip (1676 KiB total vs. the prior
+  ~1618 KiB baseline), verified via `npx wrangler versions upload
+  --preview-alias <name>` — still well within the 3 MiB Workers
+  free-tier limit.
+
 ## Component conventions
 
 - Data-fetching pages are `async` Server Components calling `client.fetch()`
