@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -61,18 +62,14 @@ export function CelestialNav() {
         <div className="absolute inset-[3px] rounded-full border border-[#d4af37]/20 pointer-events-none" />
 
         <Link href="/celestial" className="flex items-center gap-3.5 group">
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <svg
-              className="w-full h-full text-[#eab308] fill-none stroke-current stroke-[1.4] transition-transform duration-500 group-hover:rotate-45"
-              viewBox="0 0 40 40"
-              aria-hidden="true"
-            >
-              <circle cx="20" cy="20" opacity="0.75" r="16" strokeWidth="1.2" />
-              <circle cx="20" cy="20" opacity="0.6" r="11" strokeDasharray="2 2" strokeWidth="0.8" />
-              <path d="M20 2 L23 17 L38 20 L23 23 L20 38 L17 23 L2 20 L17 17 Z" fill="#d4af37" fillOpacity="0.3" stroke="#eab308" strokeWidth="1.2" />
-              <circle cx="20" cy="20" fill="#fff" r="2.2" stroke="none" />
-            </svg>
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Criticals and Fumbles logo"
+            width={32}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
           <span className="font-cinzel tracking-[0.24em] text-sm md:text-[15px] font-semibold text-gold-300 group-hover:text-yellow-200 transition-colors uppercase">
             Criticals &amp; Fumbles
           </span>

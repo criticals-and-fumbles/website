@@ -15,6 +15,11 @@ import { itemHref, timeAgo, TYPE_BADGE } from "@/components/celestial/feedHelper
  * fixture. The brand wordmark itself stays in the nav, matching the
  * mockup's own layout (headline is themed tagline copy, not the brand
  * name repeated).
+ *
+ * TODO(sanity): the eyebrow line below ("Singapore's home for...") is
+ * also hardcoded, same as the headline — add a siteSettings.heroEyebrow
+ * (or similar) field so this is editable from Studio without a code
+ * change, per the 2026-09-13 request. Not added this session.
  */
 export function CelestialHero({
   siteSettings,
@@ -29,13 +34,27 @@ export function CelestialHero({
       <main className="relative w-full my-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* LEFT: headline, tagline, CTAs */}
         <section className="lg:col-span-6 xl:col-span-5 flex flex-col items-start z-20 max-w-xl lg:max-w-none pt-2 sm:pt-6">
-          <div className="flex items-center gap-3 text-gold-400/90 font-cinzel text-xs tracking-[0.28em] uppercase mb-4">
+          <div className="flex items-center gap-3 text-gold-400/90 font-cinzel text-xs tracking-[0.1em] mb-4">
             <span className="inline-flex items-center gap-1 text-gold-500">
               <span className="w-1.5 h-1.5 rounded-full bg-gold-400" />
               <span className="w-1 h-1 rotate-45 border border-gold-400" />
               <span className="w-6 h-[1px] bg-gradient-to-r from-transparent to-gold-400" />
             </span>
-            <span className="font-medium text-gold-300/90">TTRPGs with a Twist</span>
+            <span className="inline-flex items-center gap-2 font-medium text-gold-300/90">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="h-3.5 w-3.5 flex-shrink-0 text-gold-400"
+              >
+                <path d="M12 2 21 7.5v9L12 22 3 16.5v-9L12 2Z" />
+                <path d="M12 2v20M3 7.5l9 5 9-5M3 16.5l9-5 9 5" />
+              </svg>
+              Singapore&apos;s home for new tabletop RPG players &amp; lifelong game masters
+            </span>
             <span className="inline-flex items-center gap-1 text-gold-500">
               <span className="w-6 h-[1px] bg-gradient-to-l from-transparent to-gold-400" />
               <span className="w-1 h-1 rotate-45 border border-gold-400" />

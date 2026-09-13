@@ -149,11 +149,6 @@ export function CelestialBackdrop() {
       <div className="fixed inset-0 pointer-events-none z-50 p-2 sm:p-4 flex flex-col justify-between">
         <div className="relative w-full flex items-center justify-between">
           <CornerCompass className="-translate-x-1 -translate-y-1" ticks="M4 4 L22 4 M4 4 L4 22 M10 10 L28 10 M10 10 L10 28" />
-          <div className="flex-1 mx-3 h-[2px] relative flex items-center">
-            <div className="w-full h-[1px] bg-gradient-to-r from-[#d4af37]/80 via-[#d4af37]/20 to-[#d4af37]/80" />
-            <div className="absolute left-1/4 -translate-y-1/2 w-2 h-2 rotate-45 border border-[#d4af37]/70 bg-[#03080c]" />
-            <div className="absolute right-1/4 -translate-y-1/2 w-2 h-2 rotate-45 border border-[#d4af37]/70 bg-[#03080c]" />
-          </div>
           <CornerCompass className="translate-x-1 -translate-y-1" ticks="M56 4 L38 4 M56 4 L56 22 M50 10 L32 10 M50 10 L50 28" />
         </div>
         <div className="w-full flex-1 flex justify-between pointer-events-none relative px-1">
@@ -170,11 +165,6 @@ export function CelestialBackdrop() {
         </div>
         <div className="relative w-full flex items-center justify-between">
           <CornerCompass className="-translate-x-1 translate-y-1" ticks="M4 56 L22 56 M4 56 L4 38 M10 50 L28 50 M10 50 L10 32" />
-          <div className="flex-1 mx-3 h-[2px] relative flex items-center">
-            <div className="w-full h-[1px] bg-gradient-to-r from-[#d4af37]/80 via-[#d4af37]/20 to-[#d4af37]/80" />
-            <div className="absolute left-1/3 -translate-y-1/2 w-2 h-2 rotate-45 border border-[#d4af37]/70 bg-[#03080c]" />
-            <div className="absolute right-1/3 -translate-y-1/2 w-2 h-2 rotate-45 border border-[#d4af37]/70 bg-[#03080c]" />
-          </div>
           <CornerCompass className="translate-x-1 translate-y-1" ticks="M56 56 L38 56 M56 56 L56 38 M50 50 L32 50 M50 50 L50 32" />
         </div>
       </div>
