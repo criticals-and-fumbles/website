@@ -64,23 +64,34 @@ export function CelestialThemeToggle({ className = "" }: { className?: string })
     window.location.reload();
   }
 
+  // Sizing lives on the button itself (h-4 w-4, matching the social
+  // icon anchors exactly); `className` only ever carries the divider/
+  // spacing classes from CelestialNav — those used to be merged onto
+  // this SAME element, and `pl-5`'s padding-left ate the entire
+  // border-box width budget of a fixed w-4 button, silently collapsing
+  // the SVG to 0px wide (invisible, not just small). Splitting them
+  // into a wrapping div fixes that the same way CelestialSocialLinks
+  // already does it — the divider/padding go on the wrapper, sizing
+  // stays on the icon.
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex h-6 w-6 items-center justify-center text-[var(--celestial-ink-muted)] transition-colors hover:text-gold-500 ${className}`}
-    >
-      {theme === "dark" ? (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-4 w-4" aria-hidden="true">
-          <circle cx="12" cy="12" r="4.5" />
-          <path strokeLinecap="round" d="M12 2.5v2.5M12 19v2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M2.5 12H5M19 12h2.5M4.4 19.6l1.8-1.8M17.8 6.2l1.8-1.8" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-4 w-4">
-          <path d="M20.5 14.5a8.5 8.5 0 1 1-9-11.9 7 7 0 0 0 9 11.9Z" />
-        </svg>
-      )}
-    </button>
+    <div className={className}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        className="h-4 w-4 text-[var(--celestial-ink-muted)] transition-colors hover:text-gold-500"
+      >
+        {theme === "dark" ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" />
+            <path strokeLinecap="round" d="M12 2.5v2.5M12 19v2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M2.5 12H5M19 12h2.5M4.4 19.6l1.8-1.8M17.8 6.2l1.8-1.8" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-full w-full">
+            <path d="M20.5 14.5a8.5 8.5 0 1 1-9-11.9 7 7 0 0 0 9 11.9Z" />
+          </svg>
+        )}
+      </button>
+    </div>
   );
 }
