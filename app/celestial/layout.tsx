@@ -7,7 +7,10 @@ import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import type { SiteSettings } from "@/sanity/lib/types";
 import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
 import { CelestialNav } from "@/components/celestial/CelestialNav";
-import { CELESTIAL_THEME_INIT_SCRIPT } from "@/components/celestial/CelestialThemeToggle";
+import {
+  CELESTIAL_THEME_INIT_SCRIPT,
+  CelestialThemeProvider,
+} from "@/components/celestial/CelestialThemeProvider";
 
 /**
  * Standalone root layout for the /celestial preview route — same
@@ -21,7 +24,11 @@ import { CELESTIAL_THEME_INIT_SCRIPT } from "@/components/celestial/CelestialThe
  * comment for why: those tokens hold this route's whole separate
  * palette, not an override of the site's own). CELESTIAL_THEME_INIT_SCRIPT
  * runs before hydration, same anti-flash reasoning as the sitewide
- * THEME_INIT_SCRIPT.
+ * THEME_INIT_SCRIPT. CelestialThemeProvider wraps the backdrop + nav +
+ * page content together and remounts that whole subtree on toggle — see
+ * that file's own comment for the real Chromium invalidation bug this
+ * works around (a live class toggle alone silently leaves existing
+ * elements' colours frozen; fresh DOM doesn't have that problem).
  *
  * Fonts: self-hosted (public/fonts/*.woff2, downloaded from Google
  * Fonts' own CDN — this site's CSP blocks fonts.googleapis.com directly,
@@ -83,16 +90,18 @@ export default async function CelestialLayout({ children }: { children: React.Re
         <script dangerouslySetInnerHTML={{ __html: CELESTIAL_THEME_INIT_SCRIPT }} />
       </head>
       <body className="celestial-page min-h-full w-full relative overflow-x-hidden" suppressHydrationWarning>
-        <CelestialBackdrop />
-        <div className="relative z-10 min-h-screen flex flex-col justify-between px-5 sm:px-10 md:px-16 pt-6 pb-12 max-w-[1720px] mx-auto">
-          <CelestialNav
-            facebookUrl={facebookUrl}
-            instagramUrl={instagramUrl}
-            discordUrl={siteSettings?.discordUrl}
-            whatsappUrl={whatsappUrl}
-          />
-          {children}
-        </div>
+        <CelestialThemeProvider>
+          <CelestialBackdrop />
+          <div className="relative z-10 min-h-screen flex flex-col justify-between px-5 sm:px-10 md:px-16 pt-6 pb-12 max-w-[1720px] mx-auto">
+            <CelestialNav
+              facebookUrl={facebookUrl}
+              instagramUrl={instagramUrl}
+              discordUrl={siteSettings?.discordUrl}
+              whatsappUrl={whatsappUrl}
+            />
+            {children}
+          </div>
+        </CelestialThemeProvider>
       </body>
     </html>
   );
