@@ -34,13 +34,13 @@ export function CelestialHero({
       <main className="relative w-full my-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* LEFT: headline, tagline, CTAs */}
         <section className="lg:col-span-6 xl:col-span-5 flex flex-col items-start z-20 max-w-xl lg:max-w-none pt-2 sm:pt-6">
-          <div className="flex items-center gap-3 text-gold-400/90 font-cinzel text-xs tracking-[0.1em] mb-4">
+          <div className="flex items-center gap-3 text-[var(--celestial-gold-400-90)] font-cinzel text-xs tracking-[0.1em] mb-4">
             <span className="inline-flex items-center gap-1 text-gold-500">
               <span className="w-1.5 h-1.5 rounded-full bg-gold-400" />
               <span className="w-1 h-1 rotate-45 border border-gold-400" />
               <span className="w-6 h-[1px] bg-gradient-to-r from-transparent to-gold-400" />
             </span>
-            <span className="inline-flex items-center gap-2 font-medium text-gold-300/90">
+            <span className="inline-flex items-center gap-2 font-medium text-[var(--celestial-gold-300-90)]">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -74,9 +74,9 @@ export function CelestialHero({
               href="https://campaigns.criticalsandfumbles.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-[#0a3532]/90 hover:bg-[#0d4541] border border-gold-400/70 rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(0,180,150,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
+              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-[#0a3532]/90 hover:bg-[#0d4541] border border-[var(--celestial-gold-400-70)] rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(0,180,150,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
             >
-              <div className="absolute inset-[3px] border border-gold-500/40 rounded-sm pointer-events-none" />
+              <div className="absolute inset-[3px] border border-[var(--celestial-gold-500-40)] rounded-sm pointer-events-none" />
               <span className="font-cinzel tracking-[0.2em] text-xs sm:text-sm font-bold text-gold-200 group-hover:text-yellow-100">
                 ENTER THE CAMPAIGN
               </span>
@@ -87,10 +87,10 @@ export function CelestialHero({
             <div className="w-full flex justify-start pl-3 pt-1">
               <Link
                 href="/articles"
-                className="inline-flex items-center gap-3 text-gold-400/80 hover:text-gold-600 transition-colors font-cinzel text-[11px] tracking-[0.24em] uppercase group"
+                className="inline-flex items-center gap-3 text-[var(--celestial-gold-400-80)] hover:text-gold-600 transition-colors font-cinzel text-[11px] tracking-[0.24em] uppercase group"
               >
                 <span className="text-gold-500 group-hover:-translate-x-1 transition-transform">←</span>
-                <span className="border-b border-gold-500/40 pb-[2px] group-hover:border-gold-300">EXPLORE THE ARCHIVE</span>
+                <span className="border-b border-[var(--celestial-gold-500-40)] pb-[2px] group-hover:border-gold-300">EXPLORE THE ARCHIVE</span>
                 <span className="text-gold-500 group-hover:translate-x-1 transition-transform">→</span>
               </Link>
             </div>
@@ -101,15 +101,15 @@ export function CelestialHero({
         <section className="lg:col-span-6 xl:col-span-7 relative flex items-center justify-center">
           <div className="relative w-full min-h-[420px] lg:min-h-[520px] flex items-end justify-end pointer-events-none">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-full max-w-[480px] aspect-square rounded-full border border-gold-500/20 bg-gradient-to-tr from-transparent via-[#081f2c]/30 to-transparent blur-[1px] relative flex items-center justify-center">
+              <div className="w-full max-w-[480px] aspect-square rounded-full border border-[var(--celestial-gold-500-20)] bg-gradient-to-tr from-transparent via-[#081f2c]/30 to-transparent blur-[1px] relative flex items-center justify-center">
                 <div className="w-3/4 aspect-square rounded-full border border-teal-400/20" />
                 <div className="absolute w-40 h-40 rounded-full bg-[radial-gradient(circle_at_center,_rgba(0,229,200,0.18)_0%,_transparent_70%)] blur-xl" />
               </div>
             </div>
 
             <div className="relative z-30 w-full max-w-[340px] xl:max-w-[360px] pointer-events-auto">
-              <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface)]/95 backdrop-blur-md border border-gold-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
-                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-gold-500/20">
+              <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface-95)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[var(--celestial-gold-500-20)]">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
@@ -119,7 +119,7 @@ export function CelestialHero({
                       Live Realm Dispatches
                     </span>
                   </div>
-                  <a href="#living-grimoire" className="font-mono text-[10px] text-teal-700/90 hover:text-teal-800 transition-colors flex items-center gap-1 tracking-wider">
+                  <a href="#living-grimoire" className="font-mono text-[10px] text-[var(--celestial-teal-90)] hover:text-[var(--celestial-teal-hi)] transition-colors flex items-center gap-1 tracking-wider">
                     <span>Feed</span>
                     <span className="text-gold-400">↓</span>
                   </a>
@@ -133,7 +133,7 @@ export function CelestialHero({
                       <Link
                         key={`${item._type}-${item._id}`}
                         href={href}
-                        className="group block p-2 rounded bg-[var(--celestial-card)]/70 hover:bg-[var(--celestial-card)] border border-gold-500/15 hover:border-gold-400/60 transition-all"
+                        className="group block p-2 rounded bg-[var(--celestial-card-70)] hover:bg-[var(--celestial-card)] border border-[var(--celestial-gold-500-15)] hover:border-[var(--celestial-gold-400-60)] transition-all"
                       >
                         <div className="flex items-center justify-between text-[10px] font-mono mb-1">
                           <span className={`px-1.5 py-0.5 rounded border text-[9px] font-cinzel font-semibold uppercase tracking-wider ${badge.classes}`}>
@@ -151,7 +151,7 @@ export function CelestialHero({
                     );
                   })}
                 </div>
-                <div className="pt-2.5 mt-2.5 border-t border-gold-500/20 flex items-center justify-between text-[10px]">
+                <div className="pt-2.5 mt-2.5 border-t border-[var(--celestial-gold-500-20)] flex items-center justify-between text-[10px]">
                   <span className="text-[var(--celestial-ink-muted)] font-mono">The Grimoire • Live</span>
                   <a href="#living-grimoire" className="font-cinzel text-gold-300 hover:text-gold-700 tracking-wider transition-colors flex items-center gap-1 group">
                     <span>Explore All Updates</span>
@@ -197,7 +197,7 @@ function FeatureCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-7 max-w-[1500px] mx-auto">
       {cards.map((card) => {
-        const cardClasses = `ornate-card corner-notch rounded-md px-5 py-4 bg-gradient-to-r ${card.gradient} backdrop-blur-md flex items-center justify-between group border-gold-500/40 hover:border-gold-400`;
+        const cardClasses = `ornate-card corner-notch rounded-md px-5 py-4 bg-gradient-to-r ${card.gradient} backdrop-blur-md flex items-center justify-between group border-[var(--celestial-gold-500-40)] hover:border-gold-400`;
         const inner = (
           <>
             <div className="flex flex-col">

@@ -13,17 +13,17 @@ import { ScrollReveal } from "@/components/celestial/ScrollReveal";
  * dedicated page, out of scope for this preview. */
 export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
   return (
-    <section className="relative w-full py-20 border-t border-gold-500/20 max-w-[1500px] mx-auto" id="living-grimoire">
+    <section className="relative w-full py-20 border-t border-[var(--celestial-gold-500-20)] max-w-[1500px] mx-auto" id="living-grimoire">
       <div className="flex flex-col items-center justify-center gap-3 mb-6">
-        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[var(--celestial-surface)]/95 border border-teal-400/50 shadow-[0_0_16px_rgba(0,229,200,0.25)]">
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[var(--celestial-surface-95)] border border-teal-400/50 shadow-[0_0_16px_rgba(0,229,200,0.25)]">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-300" />
           </span>
-          <span className="font-mono text-[11px] font-semibold text-teal-300 tracking-[0.16em] uppercase">
+          <span className="font-mono text-[11px] font-semibold text-[var(--celestial-teal)] tracking-[0.16em] uppercase">
             Live Grimoire Stream: Connected
           </span>
-          <span className="text-gold-400/60 text-xs">|</span>
+          <span className="text-[var(--celestial-gold-400-60)] text-xs">|</span>
           <span className="font-cinzel text-[10px] text-gold-400 tracking-widest uppercase">The Living Grimoire</span>
         </div>
         <SectionCrest label="Real-Time Transmissions" />
@@ -33,7 +33,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
         <h2 className="font-serif text-4xl sm:text-5xl font-semibold text-[var(--celestial-ink)] mb-3">
           Latest Updates Across the Realm
         </h2>
-        <p className="text-[var(--celestial-ink-muted)]/90 font-serif text-lg italic leading-relaxed">
+        <p className="text-[var(--celestial-ink-muted-90)] font-serif text-lg italic leading-relaxed">
           A synchronized stream of newly penned lore, upcoming events, world entries, and campaign updates
           directly from our celestial archives.
         </p>
@@ -51,7 +51,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
             <Link
               key={`${item._type}-${item._id}`}
               href={href}
-              className="ornate-card rounded-md p-5 bg-[var(--celestial-card)]/85 backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="ornate-card rounded-md p-5 bg-[var(--celestial-card-85)] backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${badge.classes}`}>
@@ -62,7 +62,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
                     <span className={`px-2 py-0.5 rounded text-[10px] font-cinzel font-bold uppercase tracking-wider border ${badge.classes}`}>
                       {badge.label}
                     </span>
-                    <span className="text-[11px] font-mono text-teal-300/90 flex items-center gap-1">
+                    <span className="text-[11px] font-mono text-[var(--celestial-teal-90)] flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> Synced from the Grimoire
                     </span>
                   </div>
@@ -70,7 +70,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
                     {item.title}
                   </h4>
                   {item.subtitle && (
-                    <p className="font-serif text-sm text-[var(--celestial-ink-muted)]/85 mt-1 line-clamp-1">{item.subtitle}</p>
+                    <p className="font-serif text-sm text-[var(--celestial-ink-muted-85)] mt-1 line-clamp-1">{item.subtitle}</p>
                   )}
                 </div>
               </div>

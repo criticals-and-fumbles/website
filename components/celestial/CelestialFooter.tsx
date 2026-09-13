@@ -34,8 +34,8 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
   const discordUrl = siteSettings?.discordUrl;
 
   return (
-    <footer className="w-full pt-16 pb-8 border-t border-gold-500/20 text-[var(--celestial-ink-muted)] relative mt-10">
-      <div className="max-w-[1460px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-gold-500/15">
+    <footer className="w-full pt-16 pb-8 border-t border-[var(--celestial-gold-500-20)] text-[var(--celestial-ink-muted)] relative mt-10">
+      <div className="max-w-[1460px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-[var(--celestial-gold-500-15)]">
         <div className="md:col-span-6 flex flex-col items-start pr-0 md:pr-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-7 h-7 text-gold-400">
@@ -48,7 +48,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
               Criticals &amp; Fumbles
             </span>
           </div>
-          <p className="font-serif text-base text-[var(--celestial-ink-muted)]/80 mb-6 max-w-md leading-relaxed">
+          <p className="font-serif text-base text-[var(--celestial-ink-muted-80)] mb-6 max-w-md leading-relaxed">
             {siteSettings?.shortDescription ??
               "An indie TTRPG collective weaving cosmic wonder, grounded roleplay, and community-driven storytelling into living campaign universes."}
           </p>
@@ -63,11 +63,11 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your arcane email..."
-                className="w-full bg-[var(--celestial-surface)] border border-gold-500/40 rounded px-4 py-2.5 text-xs text-[var(--celestial-ink)] placeholder-gray-500 font-sans focus:outline-none focus:border-gold-400 pr-28"
+                className="w-full bg-[var(--celestial-surface)] border border-[var(--celestial-gold-500-40)] rounded px-4 py-2.5 text-xs text-[var(--celestial-ink)] placeholder-gray-500 font-sans focus:outline-none focus:border-gold-400 pr-28"
               />
               <button
                 type="submit"
-                className="absolute right-1.5 px-3.5 py-1.5 bg-[#0b332d] hover:bg-[#0e423a] text-gold-300 font-cinzel text-[10px] tracking-widest font-semibold uppercase rounded border border-gold-400/60 transition-colors"
+                className="absolute right-1.5 px-3.5 py-1.5 bg-[#0b332d] hover:bg-[#0e423a] text-gold-300 font-cinzel text-[10px] tracking-widest font-semibold uppercase rounded border border-[var(--celestial-gold-400-60)] transition-colors"
               >
                 Transmit
               </button>

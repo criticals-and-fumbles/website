@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FacebookIcon, InstagramIcon, DiscordIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
+import { CelestialThemeToggle } from "@/components/celestial/CelestialThemeToggle";
 
 /**
  * Floating pill nav — a genuinely different SHAPE from the sitewide
@@ -77,7 +78,7 @@ function CelestialSocialLinks({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={label}
-            className="h-4 w-4 text-gold-400/80 transition-colors hover:text-gold-200"
+            className="h-4 w-4 text-[var(--celestial-gold-400-80)] transition-colors hover:text-gold-200"
           >
             <Icon />
           </a>
@@ -123,7 +124,7 @@ export function CelestialNav({
 
   return (
     <header className="w-full pt-1 sticky top-3 z-40">
-      <div className="w-full max-w-[1460px] mx-auto relative rounded-full bg-[var(--celestial-surface)]/90 backdrop-blur-md border border-[#d4af37]/40 px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.85)] flex items-center justify-between">
+      <div className="w-full max-w-[1460px] mx-auto relative rounded-full bg-[var(--celestial-surface-90)] backdrop-blur-md border border-[#d4af37]/40 px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.85)] flex items-center justify-between">
         <div className="absolute inset-[3px] rounded-full border border-[#d4af37]/20 pointer-events-none" />
 
         <Link href="/celestial" className="flex items-center gap-3.5 group">
@@ -149,8 +150,9 @@ export function CelestialNav({
             instagramUrl={instagramUrl}
             discordUrl={discordUrl}
             whatsappUrl={whatsappUrl}
-            className="border-l border-gold-500/30 pl-5"
+            className="border-l border-[var(--celestial-gold-500-30)] pl-5"
           />
+          <CelestialThemeToggle className="border-l border-[var(--celestial-gold-500-30)] pl-5" />
         </nav>
 
         <button
@@ -189,8 +191,9 @@ export function CelestialNav({
               instagramUrl={instagramUrl}
               discordUrl={discordUrl}
               whatsappUrl={whatsappUrl}
-              className="mt-4 border-t border-gold-500/20 pt-5"
+              className="mt-4 border-t border-[var(--celestial-gold-500-20)] pt-5"
             />
+            <CelestialThemeToggle className="mt-4" />
           </div>
         </>
       )}

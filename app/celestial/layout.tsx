@@ -7,15 +7,21 @@ import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import type { SiteSettings } from "@/sanity/lib/types";
 import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
 import { CelestialNav } from "@/components/celestial/CelestialNav";
+import { CELESTIAL_THEME_INIT_SCRIPT } from "@/components/celestial/CelestialThemeToggle";
 
 /**
  * Standalone root layout for the /celestial preview route — same
  * isolation pattern the earlier (now-scrapped) /lobby preview used: its
  * own <html>, not nested under app/(site)/layout.tsx, so this can't
- * affect the live homepage or any other route. No ThemeProvider here —
- * this design has no dark/light toggle (matches the code.html mockup,
- * which is single-theme), and the bespoke CelestialNav doesn't use
- * Nav.tsx's ThemeToggle.
+ * affect the live homepage or any other route.
+ *
+ * Light/dark toggle (2026-09-14): NOT the sitewide ThemeProvider/
+ * ThemeToggle — this route has its own `celestial-light` class instead
+ * of the sitewide `dark`/`light` ones (see globals.css's `.celestial`
+ * comment for why: those tokens hold this route's whole separate
+ * palette, not an override of the site's own). CELESTIAL_THEME_INIT_SCRIPT
+ * runs before hydration, same anti-flash reasoning as the sitewide
+ * THEME_INIT_SCRIPT.
  *
  * Fonts: self-hosted (public/fonts/*.woff2, downloaded from Google
  * Fonts' own CDN — this site's CSP blocks fonts.googleapis.com directly,
@@ -71,8 +77,12 @@ export default async function CelestialLayout({ children }: { children: React.Re
     <html
       lang="en"
       className={`${cinzel.variable} ${ebGaramond.variable} ${plusJakartaSans.variable} ${spaceGrotesk.variable} celestial h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="celestial-page min-h-full w-full relative overflow-x-hidden">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: CELESTIAL_THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="celestial-page min-h-full w-full relative overflow-x-hidden" suppressHydrationWarning>
         <CelestialBackdrop />
         <div className="relative z-10 min-h-screen flex flex-col justify-between px-5 sm:px-10 md:px-16 pt-6 pb-12 max-w-[1720px] mx-auto">
           <CelestialNav

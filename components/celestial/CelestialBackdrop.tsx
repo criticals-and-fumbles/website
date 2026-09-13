@@ -9,15 +9,25 @@
  * chrome by construction; that's flagged in this project's review as a
  * decision to make later, not assumed here.
  *
- * Recoloured 2026-09-14 for the off-white page background (see
- * app/(site)/globals.css's .celestial scope comment). The astrolabe
- * line-art, frame, and pulsing planetary markers all still work as
- * thin/saturated accents on a light page — kept as-is. Three elements
- * were built specifically as "glow in the dark" effects (a translucent
- * near-black night-sky wash, an opaque mountain silhouette, a white
- * starburst blur) that would either vanish or look like a smudge
- * against cream instead of black, so those are dropped/reworked below
- * rather than left as literal night-sky decoration on a day-mode page.
+ * This route got a light/dark toggle (2026-09-14 — see
+ * CelestialThemeToggle.tsx and globals.css's .celestial /
+ * .celestial.celestial-light blocks). This component itself needed no
+ * theme-reactive logic to support that: the astrolabe line-art, frame,
+ * and pulsing planetary markers are saturated/thin enough to work as
+ * accents on EITHER background unchanged, and the one spot that did
+ * hardcode a page-matching colour (the frame's small diamond notches)
+ * now reads `var(--bg)` instead of a literal hex, so it tracks whichever
+ * theme is active automatically.
+ *
+ * Three elements from the original code.html mockup were dropped/
+ * reworked entirely rather than made theme-reactive, because they were
+ * built specifically as "glow in the dark" effects with no light-mode
+ * equivalent worth inventing: a translucent near-black night-sky wash,
+ * an opaque mountain silhouette, and a white starburst blur (all three
+ * would read as invisible or a muddy smudge against the light variant,
+ * not just low-contrast) — the starburst was recoloured to gold/cream
+ * rather than dropped, since a glinting accent still suits dark mode
+ * too; the wash and silhouette have no dark-only replacement here.
  */
 export function CelestialBackdrop() {
   return (
@@ -124,8 +134,8 @@ export function CelestialBackdrop() {
               to gold/cream, so it still reads as a glinting accent rather
               than vanishing. */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pulse-star">
-            <div className="absolute w-44 h-44 rounded-full bg-gold-400/25 blur-2xl" />
-            <div className="absolute w-20 h-20 rounded-full bg-gold-200/70 blur-lg" />
+            <div className="absolute w-44 h-44 rounded-full bg-[var(--celestial-gold-400-25)] blur-2xl" />
+            <div className="absolute w-20 h-20 rounded-full bg-[var(--celestial-gold-200-70)] blur-lg" />
             <svg className="w-44 h-44 text-gold-600 fill-current filter drop-shadow-[0_0_15px_rgba(146,114,31,0.5)]" viewBox="0 0 100 100" aria-hidden="true">
               <path d="M50 0 L53 43 L96 50 L53 57 L50 100 L47 57 L4 50 L47 43 Z" />
               <path d="M50 18 L55 45 L82 50 L55 55 L50 82 L45 55 L18 50 L45 45 Z" fill="#fdf9f0" opacity="0.9" />
@@ -143,12 +153,12 @@ export function CelestialBackdrop() {
         </div>
         <div className="w-full flex-1 flex justify-between pointer-events-none relative px-1">
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#f7f2e6]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[var(--bg)]" />
             <div className="absolute top-1/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#f7f2e6]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[var(--bg)]" />
             <div className="absolute top-1/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>

@@ -21,24 +21,25 @@
      single custom property) so mockup-faithful utilities like
      `bg-gold-500/20`/`text-gold-300` work as Tailwind utilities, matching
      code.html's own JS tailwind.config `colors.gold` scale exactly. Purely
-     additive: nothing outside /celestial references `gold-*` today. */
-  /* Retuned 2026-09-14 for the light-mode recolour below — the original
-     code.html values (gold-300 #fde047, gold-400 #eab308) are bright,
-     near-white-adjacent yellows tuned to pop against a near-black page;
-     against the new off-white background they'd have almost no contrast.
-     Darkened the whole scale into antique-gold/bronze territory instead,
-     which reads clearly on the new cream background and still looks like
-     "gold" against dark elements (nav pill, CTA border) that stayed dark.
-     Also added gold-200, which components/celestial/CelestialHero.tsx
-     referenced already but was never actually defined (a latent bug —
-     `text-gold-200` was silently a no-op utility; fixed in passing). */
-  --color-gold-200: #d9c48a;
-  --color-gold-300: #b8860b;
-  --color-gold-400: #a67c00;
-  --color-gold-500: #92721f;
-  --color-gold-600: #7a5f1a;
-  --color-gold-700: #5c470f;
-  --color-gold-900: #2b1f08;
+     additive: nothing outside /celestial references `gold-*` today.
+     Each step is one level of indirection into a --celestial-gold-*
+     custom property (below), rather than a literal hex — added
+     2026-09-14 for the light/dark toggle: the ORIGINAL code.html values
+     (gold-300 #fde047, gold-400 #eab308) are bright, near-white yellows
+     tuned to pop against a near-black page, which is genuinely too
+     low-contrast against the off-white variant. Since Tailwind utility
+     classes are static CSS (can't react to a runtime class toggle on
+     their own), the gold-* scale has to point at a variable that
+     itself changes per scope — .celestial (dark) and
+     .celestial.celestial-light (light) define different values for
+     these same --celestial-gold-* names below. */
+  --color-gold-200: var(--celestial-gold-200);
+  --color-gold-300: var(--celestial-gold-300);
+  --color-gold-400: var(--celestial-gold-400);
+  --color-gold-500: var(--celestial-gold-500);
+  --color-gold-600: var(--celestial-gold-600);
+  --color-gold-700: var(--celestial-gold-700);
+  --color-gold-900: var(--celestial-gold-900);
 
   --font-display: var(--font-bebas-neue);
   --font-body: var(--font-crimson-pro);
@@ -120,22 +121,96 @@
  * everything here is a new, standalone token rather than an override of
  * dark/light's tokens. Applied only within the /celestial route's own
  * layout, never sitewide. The gold-* SCALE itself lives in the @theme
- * inline block above (as real Tailwind utilities); what's left here is
+ * inline block above (as real Tailwind utilities, pointing back at the
+ * --celestial-gold-* names defined here) — what's left here is
  * everything that isn't a Tailwind-default-palette match.
  *
- * Recoloured 2026-09-14 to an off-white/parchment background (per
- * request — "replaces the green with off white", i.e. the whole page
- * background, not a toggle-able theme, so this REPLACES the original
- * near-black values rather than adding a second scope). --celestial-ink/
- * --celestial-ink-muted are new — the original design leaned on
- * Tailwind's stock text-gray-300/400/etc. utilities directly in each
- * component (tuned for a near-black page), which read as low-contrast
- * washed-out grey on the new light background; those component files
- * were updated to use these two tokens instead of that grep-and-replace,
- * see components/celestial/*.tsx. --celestial-surface/-deep/-card keep
- * their original names but now hold light card/panel tones instead of
- * dark ones — same reasoning, reused rather than renamed. */
+ * 2026-09-14: this route got a light/dark TOGGLE (a `celestial-light`
+ * class, added/removed client-side by the nav button — see
+ * components/celestial/CelestialThemeToggle.tsx). .celestial alone is
+ * the dark palette (the original code.html values) and doubles as the
+ * default/fallback; .celestial.celestial-light overrides every token
+ * below with light-tuned values. Every celestial component reads
+ * colour through one of these custom properties rather than a literal
+ * hex specifically so this toggle works without per-component JS —
+ * see docs/design-system.md for the full token table. */
 .celestial {
+  --bg: #020509;
+  --celestial-deep: #03080c;
+  --celestial-surface: #0d141d;
+  --celestial-card: #151c26;
+  --celestial-ink: #e5e7eb;
+  --celestial-ink-muted: #9ca3af;
+  --border-color: #2a2a2a;
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+
+  /* Pre-mixed translucent variants of the tokens above, at the exact
+     opacity levels the celestial components actually use — added
+     2026-09-14 alongside the toggle. Tailwind's own `/NN` opacity
+     MODIFIER on an arbitrary `var(...)` value compiles to
+     `color-mix(in oklab, var(--x) NN%, transparent)`; that's normally
+     fine, but empirically (tested in headless Chromium) it does NOT
+     get repainted when `--x` changes from a LIVE class toggle the way
+     every other var()-based utility here does — it only picks up the
+     new value after a full page reload. Root cause looks like a
+     browser-level invalidation gap specific to a custom property used
+     only inside color-mix(), not anything about this component
+     architecture. Referencing one of these pre-mixed tokens directly
+     (no Tailwind opacity modifier at all) sidesteps color-mix()
+     entirely, so it repaints correctly on toggle like everything else. */
+  --celestial-surface-95: rgba(13, 20, 29, 0.95);
+  --celestial-surface-90: rgba(13, 20, 29, 0.9);
+  --celestial-surface-85: rgba(13, 20, 29, 0.85);
+  --celestial-card-85: rgba(21, 28, 38, 0.85);
+  --celestial-card-80: rgba(21, 28, 38, 0.8);
+  --celestial-card-70: rgba(21, 28, 38, 0.7);
+  --celestial-ink-muted-90: rgba(156, 163, 175, 0.9);
+  --celestial-ink-muted-85: rgba(156, 163, 175, 0.85);
+  --celestial-ink-muted-80: rgba(156, 163, 175, 0.8);
+
+  /* Badge/accent text colours (feedHelpers.ts's TYPE_BADGE, the Feed
+     link, footer's Discord dot, etc.) — Tailwind's stock -300 shades,
+     bright enough to read against this dark background. */
+  --celestial-teal: #5eead4;
+  --celestial-teal-90: rgba(94, 234, 212, 0.9);
+  --celestial-teal-hi: #99f6e4;
+  --celestial-cyan: #67e8f9;
+  --celestial-magenta: #f9a8d4;
+  --celestial-purple: #d8b4fe;
+  --celestial-emerald: #6ee7b7;
+
+  --celestial-gold-200: #fef3c7;
+  --celestial-gold-300: #fde047;
+  --celestial-gold-400: #eab308;
+  --celestial-gold-500: #d4af37;
+  --celestial-gold-600: #b89324;
+  --celestial-gold-700: #8c6d17;
+  --celestial-gold-900: #3e2e05;
+
+  /* Pre-mixed gold-at-opacity tokens — same "avoid Tailwind's opacity
+     modifier on a live-toggle-reactive colour" reasoning as the
+     --celestial-surface-95-style tokens above (see that comment).
+     gold-* IS the toggle-reactive colour here (defined via indirection
+     in the @theme inline block), so any `border-gold-400/70`-style
+     class anywhere in this route has the same stale-on-toggle bug —
+     these cover every (step, opacity) pair actually used. */
+  --celestial-gold-200-70: rgba(254, 243, 199, 0.7);
+  --celestial-gold-300-90: rgba(253, 224, 71, 0.9);
+  --celestial-gold-400-25: rgba(234, 179, 8, 0.25);
+  --celestial-gold-400-60: rgba(234, 179, 8, 0.6);
+  --celestial-gold-400-70: rgba(234, 179, 8, 0.7);
+  --celestial-gold-400-80: rgba(234, 179, 8, 0.8);
+  --celestial-gold-400-90: rgba(234, 179, 8, 0.9);
+  --celestial-gold-500-15: rgba(212, 175, 55, 0.15);
+  --celestial-gold-500-20: rgba(212, 175, 55, 0.2);
+  --celestial-gold-500-25: rgba(212, 175, 55, 0.25);
+  --celestial-gold-500-30: rgba(212, 175, 55, 0.3);
+  --celestial-gold-500-40: rgba(212, 175, 55, 0.4);
+  --celestial-gold-500-60: rgba(212, 175, 55, 0.6);
+}
+
+.celestial.celestial-light {
   --bg: #f7f2e6;
   --celestial-deep: #ece0c5;
   --celestial-surface: #fdf9f0;
@@ -145,10 +220,51 @@
   --border-color: #d8c69a;
   --text-color: #2b2416;
   --text-muted: #6b6152;
-  --celestial-teal: #00958a;
-  --celestial-cyan: #0f7bb0;
-  --celestial-magenta: #d1256b;
-  --celestial-purple: #c084fc;
+
+  --celestial-surface-95: rgba(253, 249, 240, 0.95);
+  --celestial-surface-90: rgba(253, 249, 240, 0.9);
+  --celestial-surface-85: rgba(253, 249, 240, 0.85);
+  --celestial-card-85: rgba(241, 232, 211, 0.85);
+  --celestial-card-80: rgba(241, 232, 211, 0.8);
+  --celestial-card-70: rgba(241, 232, 211, 0.7);
+  --celestial-ink-muted-90: rgba(107, 97, 82, 0.9);
+  --celestial-ink-muted-85: rgba(107, 97, 82, 0.85);
+  --celestial-ink-muted-80: rgba(107, 97, 82, 0.8);
+
+  /* Same accent roles, darkened (Tailwind's stock -700 shades) so they
+     don't wash out against the lighter chips/panels those same
+     variables now sit on — see components/celestial/feedHelpers.ts's
+     comment for why a straight light/dark swap of the SAME Tailwind
+     step wouldn't have worked here. */
+  --celestial-teal: #0f766e;
+  --celestial-teal-90: rgba(15, 118, 110, 0.9);
+  --celestial-teal-hi: #115e59;
+  --celestial-cyan: #0e7490;
+  --celestial-magenta: #be185d;
+  --celestial-purple: #7e22ce;
+  --celestial-emerald: #047857;
+
+  --celestial-gold-200: #d9c48a;
+  --celestial-gold-300: #b8860b;
+  --celestial-gold-400: #a67c00;
+  --celestial-gold-500: #92721f;
+  --celestial-gold-600: #7a5f1a;
+  --celestial-gold-700: #5c470f;
+  --celestial-gold-900: #2b1f08;
+
+  --celestial-gold-200-70: rgba(217, 196, 138, 0.7);
+  --celestial-gold-300-90: rgba(184, 134, 11, 0.9);
+  --celestial-gold-400-25: rgba(166, 124, 0, 0.25);
+  --celestial-gold-400-60: rgba(166, 124, 0, 0.6);
+  --celestial-gold-400-70: rgba(166, 124, 0, 0.7);
+  --celestial-gold-400-80: rgba(166, 124, 0, 0.8);
+  --celestial-gold-400-90: rgba(166, 124, 0, 0.9);
+  --celestial-gold-500-15: rgba(146, 114, 31, 0.15);
+  --celestial-gold-500-20: rgba(146, 114, 31, 0.2);
+  --celestial-gold-500-25: rgba(146, 114, 31, 0.25);
+  --celestial-gold-500-30: rgba(146, 114, 31, 0.3);
+  --celestial-gold-500-40: rgba(146, 114, 31, 0.4);
+  --celestial-gold-500-60: rgba(146, 114, 31, 0.6);
 }
 
 .bg-celestial-deep { background: var(--celestial-deep); }
