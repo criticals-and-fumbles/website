@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@/app/(site)/globals.css";
 import "./celestial.css";
+import { client } from "@/sanity/lib/client";
+import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
+import type { SiteSettings } from "@/sanity/lib/types";
 import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
 import { CelestialNav } from "@/components/celestial/CelestialNav";
 
@@ -58,7 +61,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function CelestialLayout({ children }: { children: React.ReactNode }) {
+export default async function CelestialLayout({ children }: { children: React.ReactNode }) {
+  const siteSettings = await client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY);
+  const facebookUrl = siteSettings?.socialLinks?.find((l) => l.platform === "Facebook")?.url;
+  const instagramUrl = siteSettings?.socialLinks?.find((l) => l.platform === "Instagram")?.url;
+  const whatsappUrl = siteSettings?.socialLinks?.find((l) => l.platform === "WhatsApp")?.url;
+
   return (
     <html
       lang="en"
@@ -67,7 +75,12 @@ export default function CelestialLayout({ children }: { children: React.ReactNod
       <body className="celestial-page min-h-full w-full relative overflow-x-hidden">
         <CelestialBackdrop />
         <div className="relative z-10 min-h-screen flex flex-col justify-between px-5 sm:px-10 md:px-16 pt-6 pb-12 max-w-[1720px] mx-auto">
-          <CelestialNav />
+          <CelestialNav
+            facebookUrl={facebookUrl}
+            instagramUrl={instagramUrl}
+            discordUrl={siteSettings?.discordUrl}
+            whatsappUrl={whatsappUrl}
+          />
           {children}
         </div>
       </body>

@@ -152,7 +152,7 @@ export function CelestialHero({
                   })}
                 </div>
                 <div className="pt-2.5 mt-2.5 border-t border-gold-500/20 flex items-center justify-between text-[10px]">
-                  <span className="text-gray-500 font-mono">Sanity CMS • Live</span>
+                  <span className="text-gray-500 font-mono">The Grimoire • Live</span>
                   <a href="#living-grimoire" className="font-cinzel text-gold-300 hover:text-yellow-100 tracking-wider transition-colors flex items-center gap-1 group">
                     <span>Explore All Updates</span>
                     <span className="text-gold-400 group-hover:translate-y-0.5 transition-transform">↓</span>

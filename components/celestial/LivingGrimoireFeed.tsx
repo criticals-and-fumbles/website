@@ -21,7 +21,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-300" />
           </span>
           <span className="font-mono text-[11px] font-semibold text-teal-300 tracking-[0.16em] uppercase">
-            Live Sanity CMS Stream: Connected
+            Live Grimoire Stream: Connected
           </span>
           <span className="text-gold-400/60 text-xs">|</span>
           <span className="font-cinzel text-[10px] text-gold-400 tracking-widest uppercase">The Living Grimoire</span>
@@ -63,7 +63,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
                       {badge.label}
                     </span>
                     <span className="text-[11px] font-mono text-teal-300/90 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> Synced via Sanity
+                      <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> Synced from the Grimoire
                     </span>
                   </div>
                   <h4 className="font-serif text-xl font-semibold text-gray-100 group-hover:text-gold-200 transition-colors">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FacebookIcon, InstagramIcon, DiscordIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
 
 /**
  * Floating pill nav — a genuinely different SHAPE from the sitewide
@@ -32,6 +33,60 @@ const NAV_LINKS = [
   { label: "About", href: "/about" },
 ];
 
+const SOCIAL_ICONS = {
+  facebook: FacebookIcon,
+  instagram: InstagramIcon,
+  discord: DiscordIcon,
+  whatsapp: WhatsAppIcon,
+} as const;
+
+/** Same 4 platforms Nav.tsx's own SocialLinks shows, same real
+ * siteSettings/discordUrl data — just restyled (gold, smaller) to match
+ * this pill nav rather than reusing that component's markup, since
+ * CelestialNav is already a from-scratch component (see file header). */
+function CelestialSocialLinks({
+  facebookUrl,
+  instagramUrl,
+  discordUrl,
+  whatsappUrl,
+  className = "",
+}: {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  discordUrl?: string;
+  whatsappUrl?: string;
+  className?: string;
+}) {
+  const links = [
+    { platform: "facebook" as const, url: facebookUrl, label: "Facebook" },
+    { platform: "instagram" as const, url: instagramUrl, label: "Instagram" },
+    { platform: "discord" as const, url: discordUrl, label: "Discord" },
+    { platform: "whatsapp" as const, url: whatsappUrl, label: "WhatsApp Community" },
+  ].filter((l) => l.url);
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className={`flex items-center gap-3.5 ${className}`}>
+      {links.map(({ platform, url, label }) => {
+        const Icon = SOCIAL_ICONS[platform];
+        return (
+          <a
+            key={platform}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            className="h-4 w-4 text-gold-400/80 transition-colors hover:text-gold-200"
+          >
+            <Icon />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 function NavLink({ link, onClick }: { link: (typeof NAV_LINKS)[number]; onClick?: () => void }) {
   if (link.external) {
     return (
@@ -53,7 +108,17 @@ function NavLink({ link, onClick }: { link: (typeof NAV_LINKS)[number]; onClick?
   );
 }
 
-export function CelestialNav() {
+export function CelestialNav({
+  facebookUrl,
+  instagramUrl,
+  discordUrl,
+  whatsappUrl,
+}: {
+  facebookUrl?: string;
+  instagramUrl?: string;
+  discordUrl?: string;
+  whatsappUrl?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -79,6 +144,13 @@ export function CelestialNav() {
           {NAV_LINKS.map((link) => (
             <NavLink key={link.label} link={link} />
           ))}
+          <CelestialSocialLinks
+            facebookUrl={facebookUrl}
+            instagramUrl={instagramUrl}
+            discordUrl={discordUrl}
+            whatsappUrl={whatsappUrl}
+            className="border-l border-gold-500/30 pl-5"
+          />
         </nav>
 
         <button
@@ -112,6 +184,13 @@ export function CelestialNav() {
             {NAV_LINKS.map((link) => (
               <NavLink key={link.label} link={link} onClick={() => setOpen(false)} />
             ))}
+            <CelestialSocialLinks
+              facebookUrl={facebookUrl}
+              instagramUrl={instagramUrl}
+              discordUrl={discordUrl}
+              whatsappUrl={whatsappUrl}
+              className="mt-4 border-t border-gold-500/20 pt-5"
+            />
           </div>
         </>
       )}
