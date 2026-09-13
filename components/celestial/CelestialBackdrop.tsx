@@ -8,44 +8,30 @@
  * places this outside the scrollable content wrapper, i.e. as sitewide
  * chrome by construction; that's flagged in this project's review as a
  * decision to make later, not assumed here.
+ *
+ * Recoloured 2026-09-14 for the off-white page background (see
+ * app/(site)/globals.css's .celestial scope comment). The astrolabe
+ * line-art, frame, and pulsing planetary markers all still work as
+ * thin/saturated accents on a light page — kept as-is. Three elements
+ * were built specifically as "glow in the dark" effects (a translucent
+ * near-black night-sky wash, an opaque mountain silhouette, a white
+ * starburst blur) that would either vanish or look like a smudge
+ * against cream instead of black, so those are dropped/reworked below
+ * rather than left as literal night-sky decoration on a day-mode page.
  */
 export function CelestialBackdrop() {
   return (
     <>
-      {/* Deep backdrop with nebula gradients & celestial lighting */}
+      {/* Ambient backdrop — nebula/celestial lighting only, no night-sky wash */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/60 via-[#030710] to-[#010306]" />
-
-        {/* Mountain citadel silhouette at horizon */}
-        <svg
-          className="absolute bottom-0 left-0 w-full h-[38vw] min-h-[300px] object-cover opacity-40 z-10"
-          fill="none"
-          preserveAspectRatio="none"
-          viewBox="0 0 1440 460"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="citadelGrad" x1="50%" x2="50%" y1="0%" y2="100%">
-              <stop offset="0%" stopColor="#07151e" stopOpacity="0.95" />
-              <stop offset="40%" stopColor="#040c12" stopOpacity="0.98" />
-              <stop offset="100%" stopColor="#010305" stopOpacity="1" />
-            </linearGradient>
-            <radialGradient cx="25%" cy="60%" id="mistGlow" r="50%">
-              <stop offset="0%" stopColor="#006666" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <path
-            d="M0 460L0 350L30 340L55 240L65 240L70 190L75 190L80 140L83 140L85 110L87 140L90 140L95 190L100 190L105 240L115 240L140 330L170 310L200 345L230 290L250 300L280 270L300 270L305 230L310 230L315 180L320 230L325 230L330 270L350 280L390 350L430 330L470 370L540 310L590 340L630 315L690 360L750 320L820 370L890 330L950 365L1020 310L1090 350L1150 295L1210 340L1290 280L1350 330L1440 290L1440 460Z"
-            fill="url(#citadelGrad)"
-          />
-          <rect fill="url(#mistGlow)" height="360" width="1440" x="0" y="100" />
-        </svg>
-
-        {/* Ambient planetary crescent + nebula clouds */}
-        <div className="absolute -right-28 top-96 w-96 h-96 rounded-full border-r-[18px] border-t-[8px] border-teal-200/20 bg-transparent blur-[1px] rotate-[-25deg] shadow-[35px_-20px_90px_rgba(0,229,200,0.15)] opacity-40" />
-        <div className="absolute top-[5%] right-[2%] w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(0,229,200,0.22)_0%,_rgba(6,95,90,0.14)_40%,_rgba(3,18,30,0.02)_70%,_transparent_85%)] blur-3xl pointer-events-none" />
-        <div className="absolute top-[45%] left-[2%] w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.07)_0%,_rgba(79,219,200,0.05)_40%,_transparent_75%)] blur-3xl pointer-events-none" />
+        {/* Ambient nebula clouds — same soft radial washes as the original,
+            already low-opacity enough (max ~22%) to read as a gentle colour
+            tint rather than a "glow" either way, so kept unchanged. Dropped
+            the crescent-moon ring shape that sat above these — that one
+            read specifically as "moon in a night sky", no light-mode
+            equivalent worth inventing for a quick recolour. */}
+        <div className="absolute top-[5%] right-[2%] w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(0,149,138,0.16)_0%,_rgba(6,95,90,0.1)_40%,_transparent_70%)] blur-3xl pointer-events-none" />
+        <div className="absolute top-[45%] left-[2%] w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle_at_center,_rgba(146,114,31,0.1)_0%,_rgba(79,219,200,0.06)_40%,_transparent_75%)] blur-3xl pointer-events-none" />
 
         {/* Continuous full-site sacred-geometry astrolabe */}
         <div className="absolute top-[-150px] sm:top-[-100px] left-1/2 -translate-x-1/2 w-[1100px] md:w-[1500px] lg:w-[1850px] aspect-square pointer-events-none opacity-55 mix-blend-screen">
@@ -132,14 +118,18 @@ export function CelestialBackdrop() {
             <span className="w-4 h-4 rounded-full bg-teal-300 glow-cyan" />
           </div>
 
-          {/* Central astral starburst */}
+          {/* Central astral starburst — recoloured from teal/white (a "glow
+              in the dark" effect: a white blur is invisible against a
+              cream page, same problem as the mountain silhouette above)
+              to gold/cream, so it still reads as a glinting accent rather
+              than vanishing. */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pulse-star">
-            <div className="absolute w-44 h-44 rounded-full bg-teal-300/30 blur-2xl" />
-            <div className="absolute w-20 h-20 rounded-full bg-white blur-lg" />
-            <svg className="w-44 h-44 text-teal-200 fill-current filter drop-shadow-[0_0_15px_rgba(0,229,200,0.85)]" viewBox="0 0 100 100" aria-hidden="true">
+            <div className="absolute w-44 h-44 rounded-full bg-gold-400/25 blur-2xl" />
+            <div className="absolute w-20 h-20 rounded-full bg-gold-200/70 blur-lg" />
+            <svg className="w-44 h-44 text-gold-600 fill-current filter drop-shadow-[0_0_15px_rgba(146,114,31,0.5)]" viewBox="0 0 100 100" aria-hidden="true">
               <path d="M50 0 L53 43 L96 50 L53 57 L50 100 L47 57 L4 50 L47 43 Z" />
-              <path d="M50 18 L55 45 L82 50 L55 55 L50 82 L45 55 L18 50 L45 45 Z" fill="#ffffff" opacity="0.85" />
-              <circle cx="50" cy="50" fill="#ffffff" r="4" />
+              <path d="M50 18 L55 45 L82 50 L55 55 L50 82 L45 55 L18 50 L45 45 Z" fill="#fdf9f0" opacity="0.9" />
+              <circle cx="50" cy="50" fill="#fdf9f0" r="4" />
             </svg>
           </div>
         </div>
@@ -153,12 +143,12 @@ export function CelestialBackdrop() {
         </div>
         <div className="w-full flex-1 flex justify-between pointer-events-none relative px-1">
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#020509]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#f7f2e6]" />
             <div className="absolute top-1/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#020509]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[#f7f2e6]" />
             <div className="absolute top-1/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>

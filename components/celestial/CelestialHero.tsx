@@ -61,11 +61,11 @@ export function CelestialHero({
               <span className="w-1.5 h-1.5 rounded-full bg-gold-400" />
             </span>
           </div>
-          <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl font-semibold leading-[1.08] text-[#f4efe6] mb-6 drop-shadow-lg">
+          <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl font-semibold leading-[1.08] text-[var(--celestial-ink)] mb-6 drop-shadow-lg">
             Every Roll Tells
-            <br />a <span className="italic font-normal text-white">Story.</span>
+            <br />a <span className="italic font-normal text-[var(--celestial-ink)]">Story.</span>
           </h1>
-          <p className="text-gray-300 font-sans text-sm sm:text-base leading-relaxed tracking-wide mb-8 max-w-md opacity-90">
+          <p className="text-[var(--celestial-ink-muted)] font-sans text-sm sm:text-base leading-relaxed tracking-wide mb-8 max-w-md opacity-90">
             {siteSettings?.shortDescription ??
               "Original adventures. Familiar systems. Unexpected worlds. Join our community for immersive TTRPG campaigns, creative encounters, and unforgettable moments at the table."}
           </p>
@@ -87,7 +87,7 @@ export function CelestialHero({
             <div className="w-full flex justify-start pl-3 pt-1">
               <Link
                 href="/articles"
-                className="inline-flex items-center gap-3 text-gold-400/80 hover:text-gold-200 transition-colors font-cinzel text-[11px] tracking-[0.24em] uppercase group"
+                className="inline-flex items-center gap-3 text-gold-400/80 hover:text-gold-600 transition-colors font-cinzel text-[11px] tracking-[0.24em] uppercase group"
               >
                 <span className="text-gold-500 group-hover:-translate-x-1 transition-transform">←</span>
                 <span className="border-b border-gold-500/40 pb-[2px] group-hover:border-gold-300">EXPLORE THE ARCHIVE</span>
@@ -108,7 +108,7 @@ export function CelestialHero({
             </div>
 
             <div className="relative z-30 w-full max-w-[340px] xl:max-w-[360px] pointer-events-auto">
-              <div className="ornate-card corner-notch rounded-lg p-4 bg-[#080f18]/85 backdrop-blur-md border border-gold-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+              <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface)]/95 backdrop-blur-md border border-gold-500/30 shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
                 <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-gold-500/20">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
@@ -119,7 +119,7 @@ export function CelestialHero({
                       Live Realm Dispatches
                     </span>
                   </div>
-                  <a href="#living-grimoire" className="font-mono text-[10px] text-teal-300/90 hover:text-teal-200 transition-colors flex items-center gap-1 tracking-wider">
+                  <a href="#living-grimoire" className="font-mono text-[10px] text-teal-700/90 hover:text-teal-800 transition-colors flex items-center gap-1 tracking-wider">
                     <span>Feed</span>
                     <span className="text-gold-400">↓</span>
                   </a>
@@ -133,16 +133,16 @@ export function CelestialHero({
                       <Link
                         key={`${item._type}-${item._id}`}
                         href={href}
-                        className="group block p-2 rounded bg-[#040b12]/90 hover:bg-[#071923]/90 border border-gold-500/15 hover:border-gold-400/60 transition-all"
+                        className="group block p-2 rounded bg-[var(--celestial-card)]/70 hover:bg-[var(--celestial-card)] border border-gold-500/15 hover:border-gold-400/60 transition-all"
                       >
                         <div className="flex items-center justify-between text-[10px] font-mono mb-1">
                           <span className={`px-1.5 py-0.5 rounded border text-[9px] font-cinzel font-semibold uppercase tracking-wider ${badge.classes}`}>
                             {badge.label}
                           </span>
-                          <span className="text-gray-400 text-[10px]">{timeAgo(item.date)}</span>
+                          <span className="text-[var(--celestial-ink-muted)] text-[10px]">{timeAgo(item.date)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-1">
-                          <h5 className="font-serif text-xs font-medium text-gray-200 group-hover:text-gold-200 transition-colors line-clamp-1">
+                          <h5 className="font-serif text-xs font-medium text-[var(--celestial-ink)] group-hover:text-gold-600 transition-colors line-clamp-1">
                             {item.title}
                           </h5>
                           <span className="text-gold-400 text-xs opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">→</span>
@@ -152,8 +152,8 @@ export function CelestialHero({
                   })}
                 </div>
                 <div className="pt-2.5 mt-2.5 border-t border-gold-500/20 flex items-center justify-between text-[10px]">
-                  <span className="text-gray-500 font-mono">The Grimoire • Live</span>
-                  <a href="#living-grimoire" className="font-cinzel text-gold-300 hover:text-yellow-100 tracking-wider transition-colors flex items-center gap-1 group">
+                  <span className="text-[var(--celestial-ink-muted)] font-mono">The Grimoire • Live</span>
+                  <a href="#living-grimoire" className="font-cinzel text-gold-300 hover:text-gold-700 tracking-wider transition-colors flex items-center gap-1 group">
                     <span>Explore All Updates</span>
                     <span className="text-gold-400 group-hover:translate-y-0.5 transition-transform">↓</span>
                   </a>
@@ -204,7 +204,7 @@ function FeatureCards() {
               <h3 className="font-cinzel text-sm sm:text-base font-bold tracking-[0.16em] text-gold-300 uppercase">
                 {card.title}
               </h3>
-              <p className="font-sans text-xs text-gray-300 leading-tight mt-1 line-clamp-2 max-w-[260px]">
+              <p className="font-sans text-xs text-[var(--celestial-ink-muted)] leading-tight mt-1 line-clamp-2 max-w-[260px]">
                 {card.desc}
               </p>
             </div>

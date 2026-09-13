@@ -34,7 +34,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
   const discordUrl = siteSettings?.discordUrl;
 
   return (
-    <footer className="w-full pt-16 pb-8 border-t border-gold-500/20 text-gray-300 relative mt-10">
+    <footer className="w-full pt-16 pb-8 border-t border-gold-500/20 text-[var(--celestial-ink-muted)] relative mt-10">
       <div className="max-w-[1460px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-gold-500/15">
         <div className="md:col-span-6 flex flex-col items-start pr-0 md:pr-10">
           <div className="flex items-center gap-3 mb-4">
@@ -48,7 +48,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
               Criticals &amp; Fumbles
             </span>
           </div>
-          <p className="font-serif text-base text-gray-300/80 mb-6 max-w-md leading-relaxed">
+          <p className="font-serif text-base text-[var(--celestial-ink-muted)]/80 mb-6 max-w-md leading-relaxed">
             {siteSettings?.shortDescription ??
               "An indie TTRPG collective weaving cosmic wonder, grounded roleplay, and community-driven storytelling into living campaign universes."}
           </p>
@@ -63,7 +63,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your arcane email..."
-                className="w-full bg-[#08101a] border border-gold-500/40 rounded px-4 py-2.5 text-xs text-gray-200 placeholder-gray-500 font-sans focus:outline-none focus:border-gold-400 pr-28"
+                className="w-full bg-[var(--celestial-surface)] border border-gold-500/40 rounded px-4 py-2.5 text-xs text-[var(--celestial-ink)] placeholder-gray-500 font-sans focus:outline-none focus:border-gold-400 pr-28"
               />
               <button
                 type="submit"
@@ -77,7 +77,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
 
         <div className="md:col-span-3">
           <h5 className="font-cinzel text-xs tracking-[0.24em] font-semibold text-gold-400 uppercase mb-4">Navigation</h5>
-          <ul className="space-y-2.5 font-cinzel text-xs tracking-[0.16em] text-gray-300">
+          <ul className="space-y-2.5 font-cinzel text-xs tracking-[0.16em] text-[var(--celestial-ink-muted)]">
             {NAV_LINKS.map((link) => (
               <li key={link.label}>
                 <Link href={link.href} className="hover:text-gold-300 transition-colors">
@@ -90,7 +90,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
 
         <div className="md:col-span-3">
           <h5 className="font-cinzel text-xs tracking-[0.24em] font-semibold text-gold-400 uppercase mb-4">Guild Archives</h5>
-          <ul className="space-y-2.5 font-cinzel text-xs tracking-[0.16em] text-gray-300">
+          <ul className="space-y-2.5 font-cinzel text-xs tracking-[0.16em] text-[var(--celestial-ink-muted)]">
             {discordUrl && (
               <li>
                 <a href={discordUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gold-300 transition-colors flex items-center gap-2">
@@ -109,7 +109,7 @@ export function CelestialFooter({ siteSettings }: { siteSettings: SiteSettings |
         </div>
       </div>
 
-      <div className="max-w-[1460px] mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-gray-500">
+      <div className="max-w-[1460px] mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[var(--celestial-ink-muted)]">
         <div>{siteSettings?.copyrightLine ?? `© ${new Date().getFullYear()} Criticals & Fumbles Collective. All rolls respected.`}</div>
       </div>
     </footer>

@@ -95,14 +95,14 @@ function NavLink({ link, onClick }: { link: (typeof NAV_LINKS)[number]; onClick?
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClick}
-        className="text-gray-300 hover:text-gold-300 transition-colors py-1"
+        className="text-[var(--celestial-ink-muted)] hover:text-gold-500 transition-colors py-1"
       >
         {link.label.toUpperCase()}
       </a>
     );
   }
   return (
-    <Link href={link.href} onClick={onClick} className="text-gray-300 hover:text-gold-300 transition-colors py-1">
+    <Link href={link.href} onClick={onClick} className="text-[var(--celestial-ink-muted)] hover:text-gold-500 transition-colors py-1">
       {link.label.toUpperCase()}
     </Link>
   );
@@ -123,7 +123,7 @@ export function CelestialNav({
 
   return (
     <header className="w-full pt-1 sticky top-3 z-40">
-      <div className="w-full max-w-[1460px] mx-auto relative rounded-full bg-[#040b12]/90 backdrop-blur-md border border-[#d4af37]/40 px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.85)] flex items-center justify-between">
+      <div className="w-full max-w-[1460px] mx-auto relative rounded-full bg-[var(--celestial-surface)]/90 backdrop-blur-md border border-[#d4af37]/40 px-6 py-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.85)] flex items-center justify-between">
         <div className="absolute inset-[3px] rounded-full border border-[#d4af37]/20 pointer-events-none" />
 
         <Link href="/celestial" className="flex items-center gap-3.5 group">
@@ -172,7 +172,7 @@ export function CelestialNav({
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed top-0 right-0 z-50 flex h-full w-[280px] flex-col items-end gap-5 border-l border-[#d4af37]/30 bg-[#03080c] p-6">
+          <div className="fixed top-0 right-0 z-50 flex h-full w-[280px] flex-col items-end gap-5 border-l border-[#d4af37]/30 bg-[var(--celestial-surface)] p-6">
             <button
               type="button"
               aria-label="Close menu"

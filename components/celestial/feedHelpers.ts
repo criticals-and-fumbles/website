@@ -54,16 +54,22 @@ export function timeAgo(date: string): string {
  * classes (Tailwind's default palette shades, matching code.html's own
  * choices — not this site's --emerald/--amber/--magenta, since the
  * mockup's badges use plain Tailwind emerald/pink/cyan/purple/gold). */
+// text-*-700 rather than the mockup's original *-300 — those translucent
+// bg-*/20 chips composite much paler against the new off-white page than
+// they did against the original near-black one, so the darker-mode text
+// shade was left too low-contrast. bg-emerald-950/70 (ChroniclesGrid's
+// own badge) isn't affected by this — that's a near-opaque dark chip
+// regardless of page background, so it keeps its original text-emerald-300.
 export const TYPE_BADGE: Record<RssFeedItem["_type"], { label: string; classes: string }> = {
-  article: { label: "Article", classes: "bg-gold-500/20 text-gold-300 border-gold-500/40" },
-  majorEvent: { label: "Event", classes: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
-  regularEvent: { label: "Event", classes: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
-  loreEntry: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" },
-  sessionLog: { label: "Campaign", classes: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
-  teamMember: { label: "Dossier", classes: "bg-purple-500/20 text-purple-300 border-purple-500/40" },
-  worldUnit: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" },
-  keyFigure: { label: "Dossier", classes: "bg-purple-500/20 text-purple-300 border-purple-500/40" },
-  notablePlace: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" },
-  magicItem: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" },
-  faction: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40" },
+  article: { label: "Article", classes: "bg-gold-500/20 text-gold-700 border-gold-500/40" },
+  majorEvent: { label: "Event", classes: "bg-pink-500/20 text-pink-700 border-pink-500/40" },
+  regularEvent: { label: "Event", classes: "bg-pink-500/20 text-pink-700 border-pink-500/40" },
+  loreEntry: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-700 border-cyan-500/40" },
+  sessionLog: { label: "Campaign", classes: "bg-emerald-500/20 text-emerald-700 border-emerald-500/40" },
+  teamMember: { label: "Dossier", classes: "bg-purple-500/20 text-purple-700 border-purple-500/40" },
+  worldUnit: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-700 border-cyan-500/40" },
+  keyFigure: { label: "Dossier", classes: "bg-purple-500/20 text-purple-700 border-purple-500/40" },
+  notablePlace: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-700 border-cyan-500/40" },
+  magicItem: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-700 border-cyan-500/40" },
+  faction: { label: "Wiki Entry", classes: "bg-cyan-500/20 text-cyan-700 border-cyan-500/40" },
 };

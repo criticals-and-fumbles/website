@@ -15,7 +15,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
   return (
     <section className="relative w-full py-20 border-t border-gold-500/20 max-w-[1500px] mx-auto" id="living-grimoire">
       <div className="flex flex-col items-center justify-center gap-3 mb-6">
-        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#04161f]/90 border border-teal-400/50 shadow-[0_0_16px_rgba(0,229,200,0.25)]">
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[var(--celestial-surface)]/95 border border-teal-400/50 shadow-[0_0_16px_rgba(0,229,200,0.25)]">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-300" />
@@ -30,10 +30,10 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
       </div>
 
       <div className="text-center max-w-2xl mx-auto mb-10">
-        <h2 className="font-serif text-4xl sm:text-5xl font-semibold text-[#f8f5ee] mb-3">
+        <h2 className="font-serif text-4xl sm:text-5xl font-semibold text-[var(--celestial-ink)] mb-3">
           Latest Updates Across the Realm
         </h2>
-        <p className="text-gray-300/90 font-serif text-lg italic leading-relaxed">
+        <p className="text-[var(--celestial-ink-muted)]/90 font-serif text-lg italic leading-relaxed">
           A synchronized stream of newly penned lore, upcoming events, world entries, and campaign updates
           directly from our celestial archives.
         </p>
@@ -41,7 +41,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
 
       <ScrollReveal className="space-y-4 max-w-4xl mx-auto">
         {items.length === 0 && (
-          <p className="text-center font-serif text-gray-400 italic">Watch this space — something is brewing.</p>
+          <p className="text-center font-serif text-[var(--celestial-ink-muted)] italic">Watch this space — something is brewing.</p>
         )}
         {items.map((item) => {
           const href = itemHref(item);
@@ -51,7 +51,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
             <Link
               key={`${item._type}-${item._id}`}
               href={href}
-              className="ornate-card rounded-md p-5 bg-[#09151e]/85 backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="ornate-card rounded-md p-5 bg-[var(--celestial-card)]/85 backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${badge.classes}`}>
@@ -66,16 +66,16 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
                       <span className="w-1.5 h-1.5 rounded-full bg-teal-400" /> Synced from the Grimoire
                     </span>
                   </div>
-                  <h4 className="font-serif text-xl font-semibold text-gray-100 group-hover:text-gold-200 transition-colors">
+                  <h4 className="font-serif text-xl font-semibold text-[var(--celestial-ink)] group-hover:text-gold-600 transition-colors">
                     {item.title}
                   </h4>
                   {item.subtitle && (
-                    <p className="font-serif text-sm text-gray-300/85 mt-1 line-clamp-1">{item.subtitle}</p>
+                    <p className="font-serif text-sm text-[var(--celestial-ink-muted)]/85 mt-1 line-clamp-1">{item.subtitle}</p>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-3 sm:flex-col sm:items-end flex-shrink-0">
-                <span className="text-[11px] font-mono text-gray-400">{timeAgo(item.date)}</span>
+                <span className="text-[11px] font-mono text-[var(--celestial-ink-muted)]">{timeAgo(item.date)}</span>
                 <span className="inline-flex items-center gap-1 text-xs font-cinzel tracking-wider text-gold-300 group-hover:translate-x-0.5 transition-all">
                   Inspect Entry →
                 </span>
