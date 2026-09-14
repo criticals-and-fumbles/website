@@ -31,13 +31,15 @@ export function WorldUnitCard({
 
   const cardContent = (
     <>
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; a unit's cover image can be any aspect ratio. */}
       <div className="relative aspect-[3/2] w-full overflow-hidden bg-bg-forest">
         {imageUrl && (
           <Image
             src={imageUrl}
             alt={unit.name}
             fill
-            className={`object-cover ${isDraft ? "opacity-40 grayscale" : ""}`}
+            className={`object-contain ${isDraft ? "opacity-40 grayscale" : ""}`}
           />
         )}
         {isDraft && (

@@ -25,9 +25,11 @@ export function UnitLoreCard({
       href={`/wiki/${worldSlug}/${unitSlug}/lore/${entry.slug}`}
       className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-emerald"
     >
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; a lore entry's image can be any aspect ratio. */}
       {imageUrl && (
         <div className="relative aspect-[5/3] w-full overflow-hidden bg-bg-forest">
-          <Image src={imageUrl} alt={entry.title} fill className="object-cover" />
+          <Image src={imageUrl} alt={entry.title} fill className="object-contain" />
         </div>
       )}
       <div className="flex flex-1 flex-col gap-2 p-4">

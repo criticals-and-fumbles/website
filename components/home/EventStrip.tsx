@@ -45,9 +45,12 @@ export function EventStrip({ events }: { events: HomeUpcomingEvent[] }) {
                   className="flex flex-col overflow-hidden rounded-lg border border-border bg-bg transition-colors hover:border-emerald"
                 >
                   <Link href={detailHref} className="flex flex-1 flex-col">
+                    {/* object-contain, not cover — see ArticleCard.tsx's
+                        identical comment; a cover image can be any
+                        aspect ratio. */}
                     {imageUrl && (
                       <div className="relative aspect-[5/3] w-full overflow-hidden bg-bg-forest">
-                        <Image src={imageUrl} alt={event.title} fill className="object-cover" />
+                        <Image src={imageUrl} alt={event.title} fill className="object-contain" />
                       </div>
                     )}
                     <div className="flex flex-1 flex-col gap-2 p-4 pb-0">

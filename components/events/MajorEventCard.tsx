@@ -45,6 +45,8 @@ export function MajorEventCard({ event }: { event: MajorEventCardData }) {
     // headline items, not compete for space in a grid the way Regular
     // Events (EventCard) do.
     <div className="group overflow-hidden rounded-xl border border-border bg-surface/75 transition-colors hover:border-emerald sm:flex sm:flex-row">
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; a splash/cover image can be any aspect ratio. */}
       <Link
         href={detailHref}
         className="relative block aspect-[16/9] w-full overflow-hidden bg-bg-forest sm:aspect-auto sm:w-1/4 sm:max-w-xs sm:flex-shrink-0"
@@ -54,7 +56,7 @@ export function MajorEventCard({ event }: { event: MajorEventCardData }) {
             src={imageUrl}
             alt={event.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
           />
         )}
       </Link>

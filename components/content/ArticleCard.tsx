@@ -16,13 +16,19 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
       href={`/articles/${article.slug}`}
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface/75 transition-colors hover:border-emerald"
     >
+      {/* object-contain, not cover — a cover image can be any aspect
+          ratio an editor uploaded, and this box is a fixed 16/9. cover
+          was cropping a meaningful chunk off anything that didn't
+          already match that ratio; contain scales the whole image down
+          to fit instead, letterboxed against bg-bg-forest rather than
+          cropped (same fix as campaigns' directory card-image). */}
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-bg-forest">
         {imageUrl && (
           <Image
             src={imageUrl}
             alt={article.coverImage?.alt ?? article.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
           />
         )}
       </div>

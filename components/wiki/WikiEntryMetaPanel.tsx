@@ -105,9 +105,11 @@ export function WikiEntryMetaPanel({
         </Link>
       )}
 
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; an entry's image can be any aspect ratio. */}
       {imageUrl && (
         <div className="relative aspect-[4/3] w-full border-b border-border bg-bg-forest">
-          <Image src={imageUrl} alt={title} fill className="object-cover" />
+          <Image src={imageUrl} alt={title} fill className="object-contain" />
         </div>
       )}
 

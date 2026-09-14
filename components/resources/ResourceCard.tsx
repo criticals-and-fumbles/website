@@ -28,9 +28,11 @@ export function ResourceCard({ resource }: { resource: Resource }) {
 
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; a resource thumbnail can be any aspect ratio. */}
       <div className="relative aspect-[5/3] w-full overflow-hidden bg-bg-forest">
         {imageUrl && (
-          <Image src={imageUrl} alt={resource.title} fill className="object-cover" />
+          <Image src={imageUrl} alt={resource.title} fill className="object-contain" />
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">

@@ -17,13 +17,15 @@ export function WorldCard({ world }: { world: World }) {
       className="group flex flex-col overflow-hidden rounded-xl border-2 bg-surface/75 transition-transform hover:-translate-y-1"
       style={{ borderColor: accent }}
     >
+      {/* object-contain, not cover — see ArticleCard.tsx's identical
+          comment; a world's cover image can be any aspect ratio. */}
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-bg-forest">
         {imageUrl && (
           <Image
             src={imageUrl}
             alt={world.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
           />
         )}
       </div>
