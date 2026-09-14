@@ -3,25 +3,62 @@ import { createClient } from "next-sanity";
 import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
 
 /**
- * Sanity webhook target — creates a Discord Guild Scheduled Event and/or
- * an Eventbrite listing the first time an editor checks Publish to
- * Discord / Publish to Eventbrite (with a Start Date set) on a
- * majorEvent or regularEvent document, then patches the resulting
- * discordEventId/eventbriteEventId (and registrationUrl, for Eventbrite)
- * back so later edits don't create duplicates. The two integrations are
- * independent — either flag alone, both, or neither.
+ * Single consolidated Sanity webhook target — does two independent jobs:
  *
- * Configure the Sanity webhook (Studio project settings, not code) as:
+ * 1. Forwards majorEvent publishes to the OG-image-generator Worker,
+ *    exactly replicating what the "Cloudflare OG Image Generator"
+ *    Sanity webhook used to do by pointing directly at it. That webhook
+ *    was repointed at THIS route instead (2026-09) because the Sanity
+ *    plan's webhook-count limit was hit and no slots were free — see
+ *    (2) below for why creating a brand new webhook wasn't an option.
+ *    Gated on `_type === "majorEvent"` in CODE, not just trusting
+ *    whatever the Sanity-side filter currently allows through — this
+ *    is the exact original condition, kept as a hard rule here so a
+ *    future change to the Sanity filter can't accidentally start
+ *    feeding regularEvent (or anything else) into a Worker endpoint
+ *    that was only ever built/tested against majorEvent's shape.
+ *
+ * 2. Creates a Discord Guild Scheduled Event and/or an Eventbrite
+ *    listing the first time an editor checks Publish to Discord /
+ *    Publish to Eventbrite (with a Start Date set) on a majorEvent or
+ *    regularEvent document, then patches the resulting
+ *    discordEventId/eventbriteEventId (and registrationUrl, for
+ *    Eventbrite) back so later edits don't create duplicates. The two
+ *    integrations are independent — either flag alone, both, or
+ *    neither.
+ *
+ * Both jobs run off the SAME webhook delivery — there was no free
+ * webhook slot on the Sanity plan to give (2) its own dedicated
+ * webhook, so it was folded into the existing "Cloudflare OG Image
+ * Generator" webhook's slot instead of creating a new one.
+ *
+ * Sanity webhook config (Studio project settings, not code) — this is
+ * the EXISTING "Cloudflare OG Image Generator" webhook, repointed:
  *   - Dataset: production, Trigger on: Create + Update
- *   - Filter (GROQ): _type in ["majorEvent", "regularEvent"] &&
- *       (publishToDiscord == true || publishToEventbrite == true)
- *   - Projection: { _id, _type, title, tagline, startDate, endDate,
- *                    location, capacity, registrationUrl,
- *                    publishToDiscord, publishToEventbrite,
- *                    discordEventId, eventbriteEventId }
- *   - URL: https://www.criticalsandfumbles.com/api/publish-event
+ *   - Filter (GROQ), widened from majorEvent-only to also cover
+ *     regularEvent (still excluding drafts, unchanged):
+ *       _type in ["majorEvent", "regularEvent"] && !(_id in path("drafts.**"))
+ *   - Projection (GROQ) — the webhook's ORIGINAL projection only sent
+ *     { slug, title, photoUrl } for the OG generator's own use; this is
+ *     that exact same expression, kept verbatim, with everything job
+ *     (2) needs added alongside it:
+ *       {
+ *         _id, _type, title, tagline, startDate, endDate, location,
+ *         capacity, registrationUrl, publishToDiscord,
+ *         publishToEventbrite, discordEventId, eventbriteEventId,
+ *         "slug": slug.current,
+ *         "photoUrl": splashImage.asset->url
+ *       }
+ *   - URL: https://www.criticalsandfumbles.com/api/sanity-webhook
+ *     (was: https://cnf-og-generator.criticalsandfumbles.workers.dev/generate/event)
  *   - HTTP method: POST
- *   - Secret header: x-publish-event-secret: <PUBLISH_EVENT_WEBHOOK_SECRET>
+ *   - Secret headers — this webhook already had its OWN header for the
+ *     OG generator's separate auth check before it was repointed here;
+ *     kept as-is (the value doesn't change) alongside the new one:
+ *       x-og-webhook-secret: <same value as before, now also stored as
+ *                              the OG_GENERATOR_WEBHOOK_SECRET Worker
+ *                              secret, forwarded by this route below>
+ *       x-sanity-webhook-secret: <SANITY_WEBHOOK_SECRET>
  *
  * Same shared-secret-header pattern as app/api/revalidate/route.ts —
  * not Sanity's own HMAC webhook signing, for consistency with that
@@ -37,7 +74,7 @@ import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
 
 interface WebhookPayload {
   _id: string;
-  _type: "majorEvent" | "regularEvent";
+  _type: "majorEvent" | "regularEvent" | string;
   title: string;
   tagline?: string;
   startDate?: string;
@@ -49,6 +86,10 @@ interface WebhookPayload {
   publishToEventbrite?: boolean;
   discordEventId?: string;
   eventbriteEventId?: string;
+  // Not read by this route directly — forwarded verbatim to the OG
+  // generator, which is what actually uses these.
+  slug?: string;
+  photoUrl?: string;
 }
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -57,6 +98,32 @@ const DEFAULT_TICKET_QUANTITY = 100;
 
 function resolveEndTime(startDate: string, endDate?: string) {
   return endDate ?? new Date(new Date(startDate).getTime() + FOUR_HOURS_MS).toISOString();
+}
+
+/** Job (1) — see file comment. Fire-and-forget isn't safe on a Worker
+ * (the runtime can freeze the request once the response is sent), so
+ * this is awaited like everything else here; a failure here is logged
+ * but doesn't block job (2) below — an OG-image regen failing shouldn't
+ * stop a Discord/Eventbrite publish from happening. */
+async function forwardToOgGenerator(env: CloudflareEnv, body: WebhookPayload) {
+  try {
+    const response = await fetch(env.OG_GENERATOR_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // This Worker's own separate auth check, pre-existing before
+        // this webhook was repointed here — not the same secret as
+        // SANITY_WEBHOOK_SECRET below, which only guards THIS route.
+        "x-og-webhook-secret": env.OG_GENERATOR_WEBHOOK_SECRET,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      console.error("OG generator forward failed", response.status, await response.text());
+    }
+  } catch (err) {
+    console.error("OG generator forward threw", err);
+  }
 }
 
 async function createDiscordEvent(
@@ -167,9 +234,9 @@ async function createEventbriteEvent(
 
 export async function POST(request: Request) {
   const { env } = await getCloudflareContext({ async: true });
-  const secret = request.headers.get("x-publish-event-secret");
+  const secret = request.headers.get("x-sanity-webhook-secret");
 
-  if (!secret || secret !== env.PUBLISH_EVENT_WEBHOOK_SECRET) {
+  if (!secret || secret !== env.SANITY_WEBHOOK_SECRET) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -181,23 +248,34 @@ export async function POST(request: Request) {
     );
   }
 
+  // Job (1) — see file comment. Only majorEvent, matching the exact
+  // original webhook's job before it was repointed here.
+  if (body._type === "majorEvent") {
+    await forwardToOgGenerator(env, body);
+  }
+
+  // Job (2) — see file comment.
   const results: Record<string, unknown> = {};
   const patch: Record<string, string> = {};
 
   const wantsDiscord = body.publishToDiscord && !body.discordEventId;
   const wantsEventbrite = body.publishToEventbrite && !body.eventbriteEventId && !body.registrationUrl;
 
-  if ((wantsDiscord || wantsEventbrite) && !body.startDate) {
+  if (!wantsDiscord && !wantsEventbrite) {
+    return Response.json({ ogForwarded: body._type === "majorEvent", results });
+  }
+
+  if (!body.startDate) {
     // Silent skip, not an error — an editor can check Publish to
     // Discord/Eventbrite before filling in Start Date while drafting.
     // This route just tries again on their next save once it's set,
     // since the *EventId fields are still empty.
-    return Response.json({ skipped: "no startDate set yet" });
+    return Response.json({ ogForwarded: body._type === "majorEvent", skipped: "no startDate set yet" });
   }
 
-  const scheduledEndTime = body.startDate ? resolveEndTime(body.startDate, body.endDate) : undefined;
+  const scheduledEndTime = resolveEndTime(body.startDate, body.endDate);
 
-  if (wantsDiscord && scheduledEndTime) {
+  if (wantsDiscord) {
     const discordResult = await createDiscordEvent(env, body, scheduledEndTime);
     results.discord = discordResult;
     if ("id" in discordResult) patch.discordEventId = discordResult.id;
@@ -205,7 +283,7 @@ export async function POST(request: Request) {
     results.discord = { skipped: "discordEventId already set" };
   }
 
-  if (wantsEventbrite && scheduledEndTime) {
+  if (wantsEventbrite) {
     if (!env.EVENTBRITE_PRIVATE_TOKEN || !env.EVENTBRITE_ORG_ID) {
       // Not configured yet — skip cleanly rather than error, so this
       // can ship ahead of Eventbrite prep being finished and just start
@@ -234,5 +312,5 @@ export async function POST(request: Request) {
     await writeClient.patch(body._id).set(patch).commit();
   }
 
-  return Response.json({ results, patched: patch });
+  return Response.json({ ogForwarded: body._type === "majorEvent", results, patched: patch });
 }
