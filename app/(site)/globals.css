@@ -77,38 +77,53 @@
 /* Fixed text colours for the always-dark bg-forest panels (Hero's right
    panel, PhilosophyStrip, Footer's CTA band, About's Discord CTA) —
    intentionally the same in both themes, so declared once outside the
-   .dark/.light blocks. Values match dark mode's --text-color/--text-muted,
-   so dark mode renders byte-for-byte identical to before this fix. */
+   .dark/.light blocks. Values match dark mode's --text-color/--text-muted. */
 :root {
-  --on-forest: #f0eae0;
-  --on-forest-muted: #666666;
+  --on-forest: #e5e7eb;
+  --on-forest-muted: #9ca3af;
 }
 
-/* Dark mode (Concept A) — default */
+/* 2026-09-15: recoloured to the celestial design system — approved via
+ * /celestial (see docs/design-system.md), now the sitewide default
+ * rather than a separate preview scope. --emerald/--amber/--magenta
+ * are kept as the token NAMES (every component already reads colour
+ * through these three, ~67 files at last count — renaming would mean
+ * re-touching every one for no functional reason) but now hold
+ * celestial's actual hues: --emerald is gold, celestial's primary
+ * accent (filling the same "the one colour most links/hovers/borders
+ * use" role emerald used to), --amber is a second, slightly brighter
+ * gold shade kept distinct for treatments that want to stand out from
+ * the plain emerald accent, --magenta is celestial's real magenta/pink.
+ * The three-colour brand title convention this repo previously
+ * documented (Criticals=emerald, &=amber, Fumbles=magenta) is
+ * RETIRED as of this change — decided explicitly, not an oversight —
+ * see Hero.tsx/not-found.tsx, both now use a single gold treatment
+ * instead, matching /celestial's own nav wordmark. */
 :root,
 .dark {
-  --bg: #111111;
-  --bg-forest: #0c1a10;
-  --surface: #1a1a1a;
+  --bg: #020509;
+  --bg-forest: #03080c;
+  --surface: #0d141d;
   --border-color: #2a2a2a;
-  --text-color: #f0eae0;
-  --text-muted: #666666;
-  --emerald: #2ec56b;
-  --amber: #c8893a;
-  --magenta: #d946a8;
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+  --emerald: #d4af37;
+  --amber: #eab308;
+  --magenta: #f9a8d4;
 }
 
-/* Light mode (Concept B) — toggled */
+/* Light mode — --bg-forest stays the SAME dark value as .dark, same
+   "intentionally dark in both themes" contract this token always had. */
 .light {
-  --bg: #fbf0e0;
-  --bg-forest: #1a1208;
-  --surface: #f0e8d8;
-  --border-color: #e0d4c0;
-  --text-color: #1a1208;
-  --text-muted: #8a7055;
-  --emerald: #1a7a45;
-  --amber: #b36a1a;
-  --magenta: #c4306a;
+  --bg: #f7f2e6;
+  --bg-forest: #03080c;
+  --surface: #fdf9f0;
+  --border-color: #d8c69a;
+  --text-color: #2b2416;
+  --text-muted: #6b6152;
+  --emerald: #92721f;
+  --amber: #a67c00;
+  --magenta: #be185d;
 }
 
 /* Celestial theme scope (2026-09 alternative homepage preview, /celestial
@@ -281,17 +296,17 @@ html {
 body {
   background: var(--bg);
   color: var(--text-color);
-  font-family: var(--font-crimson-pro), serif;
+  font-family: var(--font-crimson-pro), sans-serif;
   font-size: 1.125rem;
 }
 
 .font-display {
-  font-family: var(--font-bebas-neue), sans-serif;
+  font-family: var(--font-bebas-neue), serif;
   letter-spacing: 0.02em;
 }
 
 .font-ui {
-  font-family: var(--font-space-mono), monospace;
+  font-family: var(--font-space-mono), serif;
 }
 
 /* Applied to components/portable-text/Renderer.tsx's wrapper — long-form

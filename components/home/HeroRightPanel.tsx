@@ -19,7 +19,7 @@ const typeConfig: Record<
   RssFeedItem["_type"],
   { icon: string; label: string; colour: string }
 > = {
-  article: { icon: "✍️", label: "Article", colour: "var(--color-emerald)" },
+  article: { icon: "✍️", label: "Chronicle", colour: "var(--color-emerald)" },
   majorEvent: { icon: "🏆", label: "Event", colour: "var(--color-magenta)" },
   regularEvent: { icon: "🎲", label: "Event", colour: "var(--color-amber)" },
   loreEntry: { icon: "📖", label: "Lore", colour: "#8B2FC9" },

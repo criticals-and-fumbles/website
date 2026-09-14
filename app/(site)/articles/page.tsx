@@ -11,7 +11,7 @@ import { buildMetadata } from "@/lib/metadata";
 export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
-  title: "Articles",
+  title: "Chronicles",
   description:
     "Campaign craft, DM advice, reviews, and community writing from Singapore's tabletop RPG scene.",
   path: "/articles",
@@ -30,8 +30,8 @@ export default async function ArticlesPage({
   return (
     <>
     <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
-      <h1 className="font-display text-5xl text-text">Articles</h1>
-      <h2 className="sr-only">All Articles</h2>
+      <h1 className="font-display text-5xl text-text">Chronicles</h1>
+      <h2 className="sr-only">All Chronicles</h2>
       <p className="mt-2 max-w-prose text-text-muted">
         Campaign craft, DM advice, reviews, and everything in between.
       </p>

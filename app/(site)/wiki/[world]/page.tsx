@@ -144,7 +144,7 @@ export default async function WorldHomePage({
                   {world.relatedArticles && world.relatedArticles.length > 0 && (
                     <div>
                       <span className="font-ui text-xs uppercase tracking-wider text-text-muted">
-                        Articles
+                        Chronicles
                       </span>
                       <ul className="mt-1.5 flex flex-col gap-1.5">
                         {world.relatedArticles.map((article) => (

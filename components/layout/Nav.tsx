@@ -101,8 +101,8 @@ export function Nav({
   }, [drawerOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
+    <header className="sticky top-3 z-50 mx-3 rounded-full border border-emerald/40 bg-bg/90 shadow-lg backdrop-blur sm:mx-6 lg:mx-auto lg:max-w-[1460px]">
+      <nav className="flex h-16 items-center justify-between gap-6 px-6 md:px-8">
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/logo.png"
@@ -112,7 +112,7 @@ export function Nav({
             className="h-9 w-auto"
             priority
           />
-          <span className="hidden font-ui text-sm text-text md:inline">
+          <span className="hidden font-ui text-sm uppercase tracking-[0.18em] text-emerald md:inline">
             Criticals &amp; Fumbles
           </span>
         </Link>
@@ -123,7 +123,7 @@ export function Nav({
               <a
                 key={link.href}
                 href={link.href}
-                className="font-ui text-base text-text-muted transition-colors hover:text-emerald"
+                className="font-ui text-xs uppercase tracking-[0.14em] text-text-muted transition-colors hover:text-emerald"
               >
                 {link.label}
               </a>
@@ -131,7 +131,7 @@ export function Nav({
               <Link
                 key={link.href}
                 href={link.href}
-                className="font-ui text-base text-text-muted transition-colors hover:text-emerald"
+                className="font-ui text-xs uppercase tracking-[0.14em] text-text-muted transition-colors hover:text-emerald"
               >
                 {link.label}
               </Link>
