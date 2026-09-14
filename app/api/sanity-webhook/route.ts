@@ -226,6 +226,8 @@ async function postChannelAnnouncement(env: CloudflareEnv, body: WebhookPayload)
     );
     if (!response.ok) {
       console.error("Discord channel announcement failed", response.status, await response.text());
+    } else {
+      console.log("Discord channel announcement posted successfully");
     }
   } catch (err) {
     console.error("Discord channel announcement threw", err);
@@ -352,12 +354,14 @@ export async function POST(request: Request) {
     if ("id" in discordResult) {
       patch.discordEventId = discordResult.id;
       if (env.DISCORD_EVENTS_CHANNEL_ID) {
+        console.log("Posting channel announcement to", env.DISCORD_EVENTS_CHANNEL_ID);
         await postChannelAnnouncement(env, body);
         results.channelAnnouncement = { posted: true };
       } else {
         // Not configured yet — same "skip cleanly" pattern as
         // Eventbrite below, so this ships ahead of that being set up
         // and just starts working once it is.
+        console.log("Skipping channel announcement: DISCORD_EVENTS_CHANNEL_ID not configured");
         results.channelAnnouncement = { skipped: "DISCORD_EVENTS_CHANNEL_ID not configured" };
       }
     }
