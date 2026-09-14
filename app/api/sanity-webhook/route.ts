@@ -25,7 +25,15 @@ import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
  *    discordEventId/eventbriteEventId (and registrationUrl, for
  *    Eventbrite) back so later edits don't create duplicates. The two
  *    integrations are independent — either flag alone, both, or
- *    neither.
+ *    neither. A successful Discord create also posts an announcement
+ *    to #events-and-happenings (postChannelAnnouncement) using the bot
+ *    itself — it was granted Send Messages alongside its existing
+ *    Manage Events/Create Events permissions specifically for this.
+ *    The scheduled event's own "location" (what Discord renders as the
+ *    clickable link on the event card) is set to the event's real URL
+ *    — a registration link if one exists, otherwise the site's own
+ *    /events/[slug] page — not the physical venue address, which moves
+ *    into the description instead so it isn't lost.
  *
  * Both jobs run off the SAME webhook delivery — there was no free
  * webhook slot on the Sanity plan to give (2) its own dedicated
@@ -95,9 +103,20 @@ interface WebhookPayload {
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 const EVENTBRITE_TIMEZONE = "Asia/Singapore";
 const DEFAULT_TICKET_QUANTITY = 100;
+// Same fallback lib/metadata.ts uses — not exported from there, so
+// duplicated here rather than adding an export just for this one use.
+const SITE_URL = "https://www.criticalsandfumbles.com";
 
 function resolveEndTime(startDate: string, endDate?: string) {
   return endDate ?? new Date(new Date(startDate).getTime() + FOUR_HOURS_MS).toISOString();
+}
+
+/** The link a click on the Discord event should land on — prefer a real
+ * registration link (e.g. an Eventbrite ticket page) if one exists,
+ * otherwise the event's own page on the site. Both majorEvent and
+ * regularEvent resolve through the same /events/[slug] route. */
+function resolveEventUrl(body: WebhookPayload): string {
+  return body.registrationUrl || `${SITE_URL}/events/${body.slug}`;
 }
 
 /** Job (1) — see file comment. Fire-and-forget isn't safe on a Worker
@@ -131,6 +150,16 @@ async function createDiscordEvent(
   body: WebhookPayload,
   scheduledEndTime: string,
 ): Promise<{ id: string } | { error: string }> {
+  const eventUrl = resolveEventUrl(body);
+  // Discord's "location" field for an EXTERNAL scheduled event is what
+  // the client renders as the clickable link on the event card — set to
+  // the event's own URL (not the physical address) so clicking through
+  // takes people straight to registration/details. The physical
+  // location text isn't lost, just moved into the description instead.
+  const description = [body.tagline, body.location ? `📍 ${body.location}` : null]
+    .filter(Boolean)
+    .join("\n\n");
+
   const response = await fetch(
     `https://discord.com/api/v10/guilds/${env.DISCORD_SERVER_ID}/scheduled-events`,
     {
@@ -141,12 +170,12 @@ async function createDiscordEvent(
       },
       body: JSON.stringify({
         name: body.title,
-        description: body.tagline ?? "",
+        description,
         scheduled_start_time: body.startDate,
         scheduled_end_time: scheduledEndTime,
         privacy_level: 2, // GUILD_ONLY — the only value Discord currently accepts
         entity_type: 3, // EXTERNAL — a real-world event, not a Discord voice/stage channel
-        entity_metadata: { location: body.location || "TBA" },
+        entity_metadata: { location: eventUrl },
       }),
     },
   );
@@ -159,6 +188,48 @@ async function createDiscordEvent(
 
   const event = (await response.json()) as { id: string };
   return { id: event.id };
+}
+
+/** Posts an announcement to #events-and-happenings using the bot itself
+ * (DISCORD_BOT_TOKEN), now that it's been granted Send Messages
+ * alongside its existing Manage Events/Create Events permissions.
+ * Optional in practice: skips cleanly (see the call site) if
+ * DISCORD_EVENTS_CHANNEL_ID isn't configured yet, same pattern as
+ * Eventbrite below. */
+async function postChannelAnnouncement(env: CloudflareEnv, body: WebhookPayload) {
+  try {
+    const response = await fetch(
+      `https://discord.com/api/v10/channels/${env.DISCORD_EVENTS_CHANNEL_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          embeds: [
+            {
+              title: body.title,
+              description: body.tagline || undefined,
+              url: resolveEventUrl(body),
+              fields: [
+                body.startDate
+                  ? { name: "When", value: `<t:${Math.floor(new Date(body.startDate).getTime() / 1000)}:F>`, inline: true }
+                  : undefined,
+                body.location ? { name: "Where", value: body.location, inline: true } : undefined,
+              ].filter(Boolean),
+              color: 0xd4af37, // celestial gold, matching the site's accent colour
+            },
+          ],
+        }),
+      },
+    );
+    if (!response.ok) {
+      console.error("Discord channel announcement failed", response.status, await response.text());
+    }
+  } catch (err) {
+    console.error("Discord channel announcement threw", err);
+  }
 }
 
 async function createEventbriteEvent(
@@ -278,7 +349,18 @@ export async function POST(request: Request) {
   if (wantsDiscord) {
     const discordResult = await createDiscordEvent(env, body, scheduledEndTime);
     results.discord = discordResult;
-    if ("id" in discordResult) patch.discordEventId = discordResult.id;
+    if ("id" in discordResult) {
+      patch.discordEventId = discordResult.id;
+      if (env.DISCORD_EVENTS_CHANNEL_ID) {
+        await postChannelAnnouncement(env, body);
+        results.channelAnnouncement = { posted: true };
+      } else {
+        // Not configured yet — same "skip cleanly" pattern as
+        // Eventbrite below, so this ships ahead of that being set up
+        // and just starts working once it is.
+        results.channelAnnouncement = { skipped: "DISCORD_EVENTS_CHANNEL_ID not configured" };
+      }
+    }
   } else if (body.publishToDiscord) {
     results.discord = { skipped: "discordEventId already set" };
   }

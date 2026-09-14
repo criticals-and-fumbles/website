@@ -13,6 +13,7 @@ binding = "ASSETS"
 [vars]
 DISCORD_APP_ID = "1548996339751325830"
 DISCORD_SERVER_ID = "981513650533695498"
+DISCORD_EVENTS_CHANNEL_ID = "981528922476929125"
 OG_GENERATOR_URL = "https://cnf-og-generator.criticalsandfumbles.workers.dev/generate/event"
 
 [[r2_buckets]]

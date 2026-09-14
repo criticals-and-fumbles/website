@@ -42,6 +42,14 @@ declare global {
      * pointing directly at this URL (before that webhook's slot was
      * repurposed — see that route's file comment). */
     OG_GENERATOR_URL: string;
+    /** Plain var, not a secret — the channel ID for
+     * #events-and-happenings. app/api/sanity-webhook/route.ts posts an
+     * announcement there (via DISCORD_BOT_TOKEN, which was granted Send
+     * Messages alongside its existing Manage Events/Create Events
+     * permissions specifically for this) whenever a Discord scheduled
+     * event is successfully created. Optional in practice: skips
+     * cleanly if unset. */
+    DISCORD_EVENTS_CHANNEL_ID?: string;
     /** Secret — the OG-image-generator Worker's own separate auth
      * check (a pre-existing header it required before this webhook was
      * repointed at app/api/sanity-webhook/route.ts — NOT the same
