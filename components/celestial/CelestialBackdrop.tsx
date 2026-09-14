@@ -32,8 +32,21 @@
 export function CelestialBackdrop() {
   return (
     <>
-      {/* Ambient backdrop — nebula/celestial lighting only, no night-sky wash */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* Ambient backdrop — nebula/celestial lighting only, no night-sky wash.
+          -z-10 (not z-0): on /celestial itself z-0 was fine because that
+          route's own layout wraps all real content in one relative z-10
+          div, guaranteeing it outranks this. Reused sitewide via
+          PageBackdrop.tsx, this renders as a plain sibling inside each
+          page's own JSX instead, where most content sections have no
+          position of their own — and a position:fixed z-0 element still
+          paints ABOVE plain non-positioned siblings, so the backdrop was
+          bleeding straight through "opaque" card backgrounds (confirmed:
+          Team/Events/Wiki/the homepage's EventStrip/WorldStrip). Negative
+          z-index paints behind ALL non-negative content regardless of
+          whether that content is positioned — the fix that doesn't
+          depend on every page/component happening to declare `relative`
+          somewhere. */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         {/* Ambient nebula clouds — same soft radial washes as the original,
             already low-opacity enough (max ~22%) to read as a gentle colour
             tint rather than a "glow" either way, so kept unchanged. Dropped
@@ -151,14 +164,19 @@ export function CelestialBackdrop() {
           <CornerCompass className="-translate-x-1 -translate-y-1" ticks="M4 4 L22 4 M4 4 L4 22 M10 10 L28 10 M10 10 L10 28" />
           <CornerCompass className="translate-x-1 -translate-y-1" ticks="M56 4 L38 4 M56 4 L56 22 M50 10 L32 10 M50 10 L50 28" />
         </div>
+        {/* Side rails — the center diamond on each (at the vertical
+            midpoint) is deliberately magenta (#f9a8d4, the same hue
+            "Fumbles" uses in the brand title), not gold like the rest of
+            the frame — a 2026-09-15 request. The two small dots flanking
+            it stay gold, unchanged. */}
         <div className="w-full flex-1 flex justify-between pointer-events-none relative px-1">
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[var(--bg)]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -left-[4px] w-2.5 h-2.5 rotate-45 border border-[#f9a8d4] bg-[var(--bg)]" />
             <div className="absolute top-1/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -left-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>
           <div className="h-full w-[1px] bg-gradient-to-b from-[#d4af37]/80 via-[#d4af37]/30 to-[#d4af37]/80 relative">
-            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#d4af37] bg-[var(--bg)]" />
+            <div className="absolute top-1/2 -translate-y-1/2 -right-[4px] w-2.5 h-2.5 rotate-45 border border-[#f9a8d4] bg-[var(--bg)]" />
             <div className="absolute top-1/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
             <div className="absolute top-3/4 -translate-y-1/2 -right-[2px] w-1.5 h-1.5 rounded-full bg-[#eab308]" />
           </div>

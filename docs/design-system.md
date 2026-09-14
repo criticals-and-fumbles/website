@@ -101,14 +101,22 @@ Tailwind arbitrary-bracket syntax referencing a custom property
 directly, e.g. `bg-[var(--x)]` — not to the named-token `@theme inline`
 indirection this sitewide system uses throughout).
 
-**Brand title treatment — RETIRED as of the 2026-09-15 recolour.** The
-three-word/three-colour split (Criticals=emerald, &=amber,
-Fumbles=magenta) is no longer used; both of its previous call sites
-(`components/home/Hero.tsx`, `app/(site)/not-found.tsx`) now render the
-full "Criticals & Fumbles" as a single `text-emerald` (gold) heading,
-matching `/celestial`'s own nav wordmark treatment. This was an
-explicit decision, not an oversight — don't reintroduce the three-span
-pattern without checking first.
+**Brand title treatment — the three-word/three-colour split is back**
+(retired briefly during the 2026-09-15 recolour in favour of a single
+`text-emerald` heading matching `/celestial`'s nav wordmark; reverted
+the same day per explicit request). "Criticals" / "&" / "Fumbles" render
+as three separate spans — `text-emerald` / `text-amber` / `text-magenta`
+respectively (gold / brighter gold / magenta, per the recoloured token
+values above) — in `components/layout/Nav.tsx` (the wordmark, the one
+place this is actually visible sitewide day-to-day) and
+`app/(site)/not-found.tsx`.
+
+`components/home/Hero.tsx` also has this three-span treatment (kept in
+sync rather than left to drift), but is currently **dead code, not
+rendered anywhere** — the homepage swapped to `CelestialHero` (see
+"full-effect pages" below), whose own headline is "Every Roll Tells a
+Story", not the brand name. Don't assume editing Hero.tsx affects the
+live homepage without checking `app/(site)/page.tsx` first.
 
 ## `.celestial` theme scope (added 2026-09-12, `/celestial` preview route only)
 
