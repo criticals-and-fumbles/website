@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 import { ArticleStructuredData } from "@/components/seo/ArticleStructuredData";
+import { ShareButtons } from "@/components/ui/ShareButtons";
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "");
 
 export const revalidate = 300;
 
@@ -79,6 +82,10 @@ export default async function ArticlePage({
             <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
           )}
           {article.readTimeMinutes && <span>{article.readTimeMinutes} min read</span>}
+        </div>
+
+        <div className="mt-4">
+          <ShareButtons url={`${SITE_URL}/articles/${slug}`} title={article.title} />
         </div>
 
         {coverUrl && (

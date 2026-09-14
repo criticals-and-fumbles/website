@@ -24,6 +24,9 @@ import { CountdownTimer } from "@/components/events/CountdownTimer";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 import { EventStructuredData } from "@/components/seo/EventStructuredData";
+import { ShareButtons } from "@/components/ui/ShareButtons";
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "");
 
 export const revalidate = 300;
 
@@ -148,6 +151,10 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
             <h1 className="mt-3 font-display text-5xl text-text">{event.title}</h1>
             <h2 className="sr-only">Event Details</h2>
             {event.tagline && <p className="mt-2 text-text-muted">{event.tagline}</p>}
+
+            <div className="mt-4">
+              <ShareButtons url={`${SITE_URL}/events/${event.slug}`} title={event.title} />
+            </div>
 
             {event.startDate && event.status === "registration-open" && (
               <div className="mt-6">
@@ -318,6 +325,13 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
             {event.campaignName ?? event.title}
           </h1>
           <h2 className="sr-only">Event Details</h2>
+
+          <div className="mt-4">
+            <ShareButtons
+              url={`${SITE_URL}/events/${event.slug}`}
+              title={event.campaignName ?? event.title}
+            />
+          </div>
 
           <dl className="mt-8 grid grid-cols-2 gap-4 border-y border-border py-6 font-ui text-xs sm:grid-cols-4">
             {event.schedule && (
