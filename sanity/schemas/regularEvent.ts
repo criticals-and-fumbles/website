@@ -101,6 +101,73 @@ export default defineType({
       type: "date",
     }),
     defineField({
+      name: "startDate",
+      title: "Next Session Start Date",
+      type: "datetime",
+      description:
+        "The specific date/time of the upcoming session to promote — " +
+        "not a recurrence rule (Discord/Eventbrite don't support " +
+        "'every Tuesday' the way Schedule above reads to a person). " +
+        "Optional for display, required once Publish to Discord and/or " +
+        "Publish to Eventbrite is checked below.",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const doc = context.document as
+            | { publishToDiscord?: boolean; publishToEventbrite?: boolean }
+            | undefined;
+          if ((doc?.publishToDiscord || doc?.publishToEventbrite) && !value) {
+            return "Required when Publish to Discord/Eventbrite is checked.";
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: "endDate",
+      title: "Next Session End Date",
+      type: "datetime",
+      description:
+        "Optional — used by the Discord/Eventbrite integrations below. " +
+        "If left blank, they default to Start Date + 4 hours.",
+    }),
+    defineField({
+      name: "publishToDiscord",
+      title: "Publish to Discord",
+      type: "boolean",
+      initialValue: false,
+      description:
+        "Check this and Publish to create a Discord scheduled event " +
+        "for the upcoming session above (app/api/publish-event/" +
+        "route.ts). Fires once — see Discord Event ID below.",
+    }),
+    defineField({
+      name: "publishToEventbrite",
+      title: "Publish to Eventbrite",
+      type: "boolean",
+      initialValue: false,
+      description:
+        "Check this and Publish to create an Eventbrite listing for " +
+        "the upcoming session above and fill in Registration URL " +
+        "automatically. Fires once — see Eventbrite Event ID below.",
+    }),
+    defineField({
+      name: "discordEventId",
+      title: "Discord Event ID",
+      type: "string",
+      readOnly: true,
+      description:
+        "Set automatically the first time Publish to Discord is " +
+        "checked with a Start Date set. Don't set this by hand.",
+    }),
+    defineField({
+      name: "eventbriteEventId",
+      title: "Eventbrite Event ID",
+      type: "string",
+      readOnly: true,
+      description:
+        "Set automatically the first time Publish to Eventbrite is " +
+        "checked with a Start Date set. Don't set this by hand.",
+    }),
+    defineField({
       name: "sessionCount",
       title: "Session Count",
       type: "number",

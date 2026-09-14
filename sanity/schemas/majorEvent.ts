@@ -68,7 +68,20 @@ export default defineType({
       name: "startDate",
       title: "Start Date (for countdown)",
       type: "datetime",
-      description: "Optional — only needed if you want a live countdown",
+      description:
+        "Optional for display purposes (the live countdown). Required " +
+        "once Publish to Discord and/or Publish to Eventbrite is " +
+        "checked below, since both integrations need a real start time.",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const doc = context.document as
+            | { publishToDiscord?: boolean; publishToEventbrite?: boolean }
+            | undefined;
+          if ((doc?.publishToDiscord || doc?.publishToEventbrite) && !value) {
+            return "Required when Publish to Discord/Eventbrite is checked.";
+          }
+          return true;
+        }),
     }),
     defineField({ name: "location", title: "Location", type: "string" }),
     defineField({ name: "capacity", title: "Capacity", type: "number" }),
@@ -105,6 +118,58 @@ export default defineType({
       name: "registrationUrl",
       title: "Registration URL",
       type: "url",
+    }),
+    defineField({
+      name: "endDate",
+      title: "End Date",
+      type: "datetime",
+      description:
+        "Optional — used by the Discord/Eventbrite integrations below. " +
+        "If left blank, they default to Start Date + 4 hours rather " +
+        "than blocking on this being filled in.",
+    }),
+    defineField({
+      name: "publishToDiscord",
+      title: "Publish to Discord",
+      type: "boolean",
+      initialValue: false,
+      description:
+        "Check this and Publish to create a Discord scheduled event " +
+        "for this event (app/api/publish-event/route.ts). Fires once — " +
+        "later edits won't create a duplicate as long as this stays " +
+        "checked (see Discord Event ID below).",
+    }),
+    defineField({
+      name: "publishToEventbrite",
+      title: "Publish to Eventbrite",
+      type: "boolean",
+      initialValue: false,
+      description:
+        "Check this and Publish to create an Eventbrite listing for " +
+        "this event and fill in Registration URL automatically. Fires " +
+        "once — see Eventbrite Event ID below.",
+    }),
+    defineField({
+      name: "discordEventId",
+      title: "Discord Event ID",
+      type: "string",
+      readOnly: true,
+      description:
+        "Set automatically by app/api/publish-event/route.ts the first " +
+        "time Publish to Discord is checked with a Start Date set — " +
+        "its presence is what stops that integration from creating a " +
+        "duplicate Discord event on every later edit. Don't set this " +
+        "by hand.",
+    }),
+    defineField({
+      name: "eventbriteEventId",
+      title: "Eventbrite Event ID",
+      type: "string",
+      readOnly: true,
+      description:
+        "Set automatically by app/api/publish-event/route.ts the first " +
+        "time Publish to Eventbrite is checked with a Start Date set. " +
+        "Don't set this by hand.",
     }),
     defineField({
       name: "coverImage",

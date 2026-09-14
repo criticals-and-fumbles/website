@@ -7,6 +7,13 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+# Not secrets — public identifiers (not credentials) for the
+# app/api/publish-event/route.ts Discord integration. The actual bot
+# token is a secret (wrangler secret put DISCORD_BOT_TOKEN), separate.
+[vars]
+DISCORD_APP_ID = "1548996339751325830"
+DISCORD_SERVER_ID = "981513650533695498"
+
 [[r2_buckets]]
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "cnf-website-cache"
