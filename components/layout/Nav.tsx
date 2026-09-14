@@ -113,7 +113,7 @@ export function Nav({
             priority
           />
           <span className="hidden font-ui text-sm uppercase tracking-[0.18em] md:inline">
-            <span className="text-emerald">Criticals</span>{" "}
+            <span className="text-criticals-emerald">Criticals</span>{" "}
             <span className="text-amber">&amp;</span>{" "}
             <span className="text-magenta">Fumbles</span>
           </span>

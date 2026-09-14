@@ -16,6 +16,7 @@
   --color-emerald: var(--emerald);
   --color-amber: var(--amber);
   --color-magenta: var(--magenta);
+  --color-criticals-emerald: var(--criticals-emerald);
 
   /* /celestial preview only — a real Tailwind colour SCALE (not just a
      single custom property) so mockup-faithful utilities like
@@ -114,6 +115,14 @@
   --emerald: #d4af37;
   --amber: #eab308;
   --magenta: #f9a8d4;
+  /* Real green — NOT the same value as --emerald above (that token now
+     means gold everywhere else sitewide, post-recolour). Exists only
+     for the "Criticals" word in the brand-title tri-colour split, which
+     needs actual emerald green, not gold. Values are the site's
+     original pre-recolour --emerald (see git history/globals.css blame
+     before 2026-09-15) — reused rather than invented, since that's
+     literally what "emerald" meant on this site before. */
+  --criticals-emerald: #2ec56b;
 }
 
 /* Light mode — --bg-forest stays the SAME dark value as .dark, same
@@ -128,6 +137,7 @@
   --emerald: #92721f;
   --amber: #a67c00;
   --magenta: #be185d;
+  --criticals-emerald: #1a7a45;
 }
 
 /* Celestial theme scope (2026-09 alternative homepage preview, /celestial

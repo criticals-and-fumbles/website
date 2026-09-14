@@ -6,7 +6,7 @@ export default function NotFound() {
     <>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-24 text-center">
         <h1 className="font-display uppercase tracking-wide text-5xl md:text-6xl">
-          <span className="text-emerald">Criticals</span>{" "}
+          <span className="text-criticals-emerald">Criticals</span>{" "}
           <span className="text-amber">&amp;</span>{" "}
           <span className="text-magenta">Fumbles</span>
         </h1>
