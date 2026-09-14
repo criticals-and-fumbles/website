@@ -14,6 +14,8 @@ import { buildMetadata } from "@/lib/metadata";
 import { MajorEventCard } from "@/components/events/MajorEventCard";
 import { EventCard } from "@/components/events/EventCard";
 import { Footer } from "@/components/layout/Footer";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
 
 export const revalidate = 300;
 
@@ -43,7 +45,10 @@ export default async function EventsPage() {
 
   return (
     <>
+      <PageBackdrop tier="full" />
+
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+        <SectionCrest label="The Calendar" />
         <h1 className="font-display text-5xl text-text">Events</h1>
 
         <section className="mt-12">

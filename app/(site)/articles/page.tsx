@@ -7,6 +7,8 @@ import type { ArticleCard } from "@/sanity/lib/types";
 import { ArticleGrid } from "@/components/content/ArticleGrid";
 import { Footer } from "@/components/layout/Footer";
 import { buildMetadata } from "@/lib/metadata";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
 
 export const revalidate = 300;
 
@@ -29,7 +31,10 @@ export default async function ArticlesPage({
 
   return (
     <>
+    <PageBackdrop tier="full" />
+
     <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <SectionCrest label="Tales from the Archives" />
       <h1 className="font-display text-5xl text-text">Chronicles</h1>
       <h2 className="sr-only">All Chronicles</h2>
       <p className="mt-2 max-w-prose text-text-muted">

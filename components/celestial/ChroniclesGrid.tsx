@@ -1,13 +1,16 @@
 import Link from "next/link";
 import type { ArticleCard } from "@/sanity/lib/types";
+import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import { ScrollReveal } from "@/components/celestial/ScrollReveal";
 
 /** "Chronicles & Lore" — reuses HOME_LATEST_ARTICLES_QUERY exactly (3
- * latest published articles), no new query. Category filter pills are
- * presentational only (the mockup's own filtering isn't backed by real
- * client-side logic here, matching this project's discipline of not
- * inventing a new capability the query doesn't support) — flagged as a
- * future enhancement if real per-category filtering is wanted here. */
+ * latest published articles), no new query. Category pills link to the
+ * real /articles?category=X filter (2026-09-15: swapped from the
+ * mockup's presentational-only fake buttons to real links, reusing
+ * ARTICLE_CATEGORIES, once this became the actual homepage's Chronicles
+ * section rather than just the /celestial preview — the pre-existing
+ * homepage section this replaced already had working category links,
+ * so this keeps that real behaviour rather than regressing it). */
 export function ChroniclesGrid({ articles }: { articles: ArticleCard[] }) {
   return (
     <section className="relative w-full py-20 border-t border-[var(--celestial-gold-500-20)] max-w-[1500px] mx-auto" id="chronicles">
@@ -20,16 +23,20 @@ export function ChroniclesGrid({ articles }: { articles: ArticleCard[] }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 mb-12">
-        <button className="px-4 py-1.5 rounded-full text-xs font-cinzel tracking-[0.16em] uppercase bg-[var(--celestial-gold-500-20)] text-gold-300 border border-[var(--celestial-gold-400-80)] shadow-[0_0_12px_rgba(212,175,55,0.3)]">
-          All Articles
-        </button>
-        {["DM Guides", "Worldbuilding", "Rule Systems"].map((label) => (
-          <button
-            key={label}
-            className="px-4 py-1.5 rounded-full text-xs font-cinzel tracking-[0.16em] uppercase bg-[var(--celestial-card-80)] text-[var(--celestial-ink-muted)] border border-[var(--celestial-gold-500-25)]"
+        <Link
+          href="/articles"
+          className="px-4 py-1.5 rounded-full text-xs font-cinzel tracking-[0.16em] uppercase bg-[var(--celestial-gold-500-20)] text-gold-300 border border-[var(--celestial-gold-400-80)] shadow-[0_0_12px_rgba(212,175,55,0.3)] transition-colors"
+        >
+          All Chronicles
+        </Link>
+        {ARTICLE_CATEGORIES.map((category) => (
+          <Link
+            key={category}
+            href={`/articles?category=${encodeURIComponent(category)}`}
+            className="px-4 py-1.5 rounded-full text-xs font-cinzel tracking-[0.16em] uppercase bg-[var(--celestial-card-80)] text-[var(--celestial-ink-muted)] border border-[var(--celestial-gold-500-25)] transition-colors hover:text-gold-300 hover:border-[var(--celestial-gold-400-80)]"
           >
-            {label}
-          </button>
+            {category}
+          </Link>
         ))}
       </div>
 
@@ -81,12 +88,12 @@ export function ChroniclesGrid({ articles }: { articles: ArticleCard[] }) {
 
 export function SectionCrest({ label }: { label: string }) {
   return (
-    <div className="flex items-center justify-center gap-4 mb-4 text-gold-400">
-      <span className="w-16 h-[1px] bg-gradient-to-r from-transparent to-gold-400/80" />
-      <span className="font-cinzel text-xs tracking-[0.3em] uppercase text-[var(--celestial-gold-300-90)] flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mb-4 text-gold-400">
+      <span className="hidden w-10 h-[1px] bg-gradient-to-r from-transparent to-gold-400/80 sm:inline-block sm:w-16" />
+      <span className="font-cinzel text-xs tracking-[0.15em] sm:tracking-[0.3em] uppercase text-[var(--celestial-gold-300-90)] flex items-center gap-2 text-center">
         <span className="text-gold-400">◆</span> {label} <span className="text-gold-400">◆</span>
       </span>
-      <span className="w-16 h-[1px] bg-gradient-to-l from-transparent to-gold-400/80" />
+      <span className="hidden w-10 h-[1px] bg-gradient-to-l from-transparent to-gold-400/80 sm:inline-block sm:w-16" />
     </div>
   );
 }

@@ -96,7 +96,7 @@ function plainTextFromBlocks(blocks?: PortableTextBlock[]): string | undefined {
   return text || undefined;
 }
 
-function PinnedEventCard({ event }: { event: PinnedEvent }) {
+export function PinnedEventCard({ event }: { event: PinnedEvent }) {
   const teaser = event.tagline ?? plainTextFromBlocks(event.watchThisSpaceTeaser);
 
   return (

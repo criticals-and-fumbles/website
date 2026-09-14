@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { client } from "@/sanity/lib/client";
 import {
@@ -10,7 +9,6 @@ import {
   PHILOSOPHY_QUERY,
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
-import { ARTICLE_CATEGORIES } from "@/sanity/schemas/constants";
 import type {
   ArticleCard,
   HomeUpcomingEvent,
@@ -22,8 +20,10 @@ import type {
   World,
 } from "@/sanity/lib/types";
 import { buildMetadata } from "@/lib/metadata";
-import { Hero } from "@/components/home/Hero";
-import { ArticleStrip } from "@/components/home/ArticleStrip";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { CelestialHero } from "@/components/celestial/CelestialHero";
+import { ChroniclesGrid } from "@/components/celestial/ChroniclesGrid";
+import { LivingGrimoireFeed } from "@/components/celestial/LivingGrimoireFeed";
 import { EventStrip } from "@/components/home/EventStrip";
 import { WorldStrip } from "@/components/home/WorldStrip";
 import { PhilosophyStrip } from "@/components/home/PhilosophyStrip";
@@ -76,27 +76,29 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero
-        pinnedEvent={pinnedEvent}
-        rssFeed={allUpdates}
-        discordUrl={siteSettings?.discordUrl}
-      />
+      {/* 2026-09-15: homepage now matches /celestial's look (the user's
+          explicit reference) — astrolabe backdrop + ornate-card panels
+          sitewide-available since globals.css/PageBackdrop.tsx exposed
+          them beyond that one route. See docs/design-system.md for the
+          full/subtle page tiering this implements. */}
+      <PageBackdrop tier="full" />
 
-      <ArticleStrip articles={latestArticles} />
+      {/* /celestial's own layout (app/celestial/layout.tsx) supplies this
+          same px-5/sm:px-10/md:px-16 + max-w-[1720px] wrapper around
+          everything for that route — CelestialHero/ChroniclesGrid/
+          LivingGrimoireFeed all assume it's already there and don't add
+          their own horizontal padding, so it has to be reproduced here. */}
+      <div className="mx-auto max-w-[1720px] px-5 sm:px-10 md:px-16">
+        <CelestialHero
+          siteSettings={siteSettings}
+          rssFeed={allUpdates}
+          pinnedEvent={pinnedEvent}
+        />
 
-      <section className="border-y border-border bg-surface px-4 py-6 md:px-8">
-        <div className="mx-auto flex max-w-7xl gap-3 overflow-x-auto">
-          {ARTICLE_CATEGORIES.map((category) => (
-            <Link
-              key={category}
-              href={`/articles?category=${encodeURIComponent(category)}`}
-              className="shrink-0 rounded-full border border-border px-4 py-2 font-ui text-xs text-text-muted transition-colors hover:border-emerald hover:text-emerald"
-            >
-              {category}
-            </Link>
-          ))}
-        </div>
-      </section>
+        <ChroniclesGrid articles={latestArticles} />
+
+        <LivingGrimoireFeed items={allUpdates} />
+      </div>
 
       <EventStrip events={upcomingEvents} />
 

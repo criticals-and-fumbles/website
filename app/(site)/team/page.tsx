@@ -5,6 +5,8 @@ import type { TeamMember } from "@/sanity/lib/types";
 import { CharacterCard } from "@/components/team/CharacterCard";
 import { Footer } from "@/components/layout/Footer";
 import { buildMetadata } from "@/lib/metadata";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
 
 export const revalidate = 300;
 
@@ -25,7 +27,10 @@ export default async function TeamPage() {
 
   return (
     <>
+      <PageBackdrop tier="full" />
+
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+        <SectionCrest label="The Roster" />
         <h1 className="font-display text-5xl text-text">Team</h1>
         <p className="mt-4 max-w-2xl text-text-muted">
           Every member of C&amp;F is a guardian of this space — Your Seat, Your

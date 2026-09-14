@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { Cinzel, EB_Garamond, Plus_Jakarta_Sans } from "next/font/google";
+import { Cinzel, EB_Garamond, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { client } from "@/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
@@ -47,6 +47,17 @@ const cinzel = Cinzel({
   subsets: ["latin"],
 });
 
+// 2026-09-15: added for the sitewide celestial decorative rollout's
+// full-effect pages (see docs/design-system.md) — meta/timestamp/label
+// text on those pages uses font-mono, which globals.css now points at
+// --font-space-grotesk. Not reusing an existing variable name/role, this
+// is a genuinely new font family sitewide.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
@@ -81,7 +92,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${ebGaramond.variable} ${plusJakartaSans.variable} ${cinzel.variable} dark h-full antialiased`}
+      className={`${ebGaramond.variable} ${plusJakartaSans.variable} ${cinzel.variable} ${spaceGrotesk.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

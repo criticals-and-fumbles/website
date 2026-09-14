@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { RssFeedItem, SiteSettings } from "@/sanity/lib/types";
+import type { PinnedEvent, RssFeedItem, SiteSettings } from "@/sanity/lib/types";
 import { itemHref, timeAgo, TYPE_BADGE } from "@/components/celestial/feedHelpers";
+import { PinnedEventCard } from "@/components/home/HeroRightPanel";
 
 /**
  * Part D-equivalent for this preview — left column identity/CTA block +
@@ -20,13 +21,21 @@ import { itemHref, timeAgo, TYPE_BADGE } from "@/components/celestial/feedHelper
  * also hardcoded, same as the headline — add a siteSettings.heroEyebrow
  * (or similar) field so this is editable from Studio without a code
  * change, per the 2026-09-13 request. Not added this session.
+ *
+ * 2026-09-15: gained an optional `pinnedEvent` prop when this became the
+ * real homepage's hero (not just the /celestial preview) — reuses
+ * HeroRightPanel's existing PinnedEventCard unchanged (it already reads
+ * colour through sitewide tokens, not celestial-only ones, so it drops
+ * in above the Live Realm Dispatches panel with no restyling needed).
  */
 export function CelestialHero({
   siteSettings,
   rssFeed,
+  pinnedEvent,
 }: {
   siteSettings: SiteSettings | null;
   rssFeed: RssFeedItem[];
+  pinnedEvent?: PinnedEvent | null;
 }) {
 
   return (
@@ -107,7 +116,12 @@ export function CelestialHero({
               </div>
             </div>
 
-            <div className="relative z-30 w-full max-w-[340px] xl:max-w-[360px] pointer-events-auto">
+            <div className="relative z-30 w-full max-w-[340px] xl:max-w-[360px] pointer-events-auto flex flex-col gap-4">
+              {pinnedEvent && (
+                <div className="ornate-card corner-notch rounded-lg bg-[var(--celestial-surface-95)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+                  <PinnedEventCard event={pinnedEvent} />
+                </div>
+              )}
               <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface-95)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
                 <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[var(--celestial-gold-500-20)]">
                   <div className="flex items-center gap-2">

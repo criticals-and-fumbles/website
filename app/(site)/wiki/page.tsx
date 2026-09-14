@@ -6,6 +6,8 @@ import { WorldCard } from "@/components/wiki/WorldCard";
 import { GlobalWikiSearch } from "@/components/wiki/GlobalWikiSearch";
 import { Footer } from "@/components/layout/Footer";
 import { buildMetadata } from "@/lib/metadata";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
 
 export const revalidate = 300;
 
@@ -29,7 +31,10 @@ export default async function WikiPage() {
 
   return (
     <>
+      <PageBackdrop tier="full" />
+
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
+        <SectionCrest label="The Worldbook" />
         <h1 className="text-center font-display text-5xl text-text">Wiki</h1>
         <h2 className="sr-only">All Worlds</h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-text-muted">
