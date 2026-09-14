@@ -118,11 +118,11 @@ export function CelestialHero({
 
             <div className="relative z-30 w-full max-w-[340px] xl:max-w-[360px] pointer-events-auto flex flex-col gap-4">
               {pinnedEvent && (
-                <div className="ornate-card corner-notch rounded-lg bg-[var(--celestial-surface-95)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+                <div className="ornate-card corner-notch rounded-lg bg-[var(--celestial-surface)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
                   <PinnedEventCard event={pinnedEvent} />
                 </div>
               )}
-              <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface-95)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+              <div className="ornate-card corner-notch rounded-lg p-4 bg-[var(--celestial-surface)] backdrop-blur-md border border-[var(--celestial-gold-500-30)] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
                 <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[var(--celestial-gold-500-20)]">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
@@ -147,7 +147,7 @@ export function CelestialHero({
                       <Link
                         key={`${item._type}-${item._id}`}
                         href={href}
-                        className="group block p-2 rounded bg-[var(--celestial-card-70)] hover:bg-[var(--celestial-card)] border border-[var(--celestial-gold-500-15)] hover:border-[var(--celestial-gold-400-60)] transition-all"
+                        className="group block p-2 rounded bg-[var(--celestial-card)] border border-[var(--celestial-gold-500-15)] hover:border-[var(--celestial-gold-400-60)] transition-all"
                       >
                         <div className="flex items-center justify-between text-[10px] font-mono mb-1">
                           <span className={`px-1.5 py-0.5 rounded border text-[9px] font-cinzel font-semibold uppercase tracking-wider ${badge.classes}`}>

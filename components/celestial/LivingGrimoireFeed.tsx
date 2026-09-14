@@ -51,7 +51,7 @@ export function LivingGrimoireFeed({ items }: { items: RssFeedItem[] }) {
             <Link
               key={`${item._type}-${item._id}`}
               href={href}
-              className="ornate-card rounded-md p-5 bg-[var(--celestial-card-85)] backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="ornate-card rounded-md p-5 bg-[var(--celestial-card)] backdrop-blur-md hover:border-gold-400 transition-all duration-200 group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${badge.classes}`}>

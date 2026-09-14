@@ -29,6 +29,16 @@ import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
  * tier="subtle" is a placeholder — no subtler background exists yet
  * (the user is supplying one separately for detail/slug pages); it
  * renders nothing for now rather than guessing at a design.
+ *
+ * No page-wide "mute the backdrop" option here (tried once, reverted):
+ * a fixed scrim sitting in the same stacking layer as the backdrop
+ * washed out ordinary page text along with it, since regular in-flow
+ * content on these pages has no z-index of its own to guarantee it
+ * paints above such a scrim. Muting a specific section of a page (e.g.
+ * About's tab content, below its tab bar) is done locally instead —a
+ * plain background colour on that section's own wrapper, which
+ * naturally sits between the fixed backdrop and that section's text
+ * without needing a sitewide stacking fix. See AboutTabs.tsx.
  */
 export function PageBackdrop({ tier }: { tier: "full" | "subtle" }) {
   const { theme } = useTheme();

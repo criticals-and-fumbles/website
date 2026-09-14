@@ -45,7 +45,7 @@ export function ChroniclesGrid({ articles }: { articles: ArticleCard[] }) {
           <Link
             key={a._id}
             href={`/articles/${a.slug}`}
-            className="ornate-card corner-notch rounded-lg p-6 sm:p-7 bg-[var(--celestial-surface-85)] backdrop-blur-md flex flex-col justify-between group hover:border-gold-400 transition-all duration-300"
+            className="ornate-card corner-notch rounded-lg p-6 sm:p-7 bg-[var(--celestial-surface)] backdrop-blur-md flex flex-col justify-between group hover:border-gold-400 transition-all duration-300"
           >
             <div>
               <div className="flex items-center justify-between text-xs font-mono tracking-wider text-gold-400 mb-4 pb-3 border-b border-[var(--celestial-gold-500-20)]">
