@@ -33,8 +33,8 @@ export function Hero({
               Singapore&apos;s Tabletop RPG Community
             </span>
           </div>
-          <h1 className="font-display text-6xl leading-none md:text-7xl lg:text-8xl">
-            <span className="text-emerald">Criticals</span>{" "}
+          <h1 className="font-display text-4xl uppercase tracking-wide leading-none sm:text-5xl md:text-7xl lg:text-8xl">
+            <span className="text-criticals-emerald">Criticals</span>{" "}
             <span className="text-amber">&amp;</span>{" "}
             <span className="text-magenta">Fumbles</span>
           </h1>

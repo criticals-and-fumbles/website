@@ -16,10 +16,53 @@
   --color-emerald: var(--emerald);
   --color-amber: var(--amber);
   --color-magenta: var(--magenta);
+  --color-criticals-emerald: var(--criticals-emerald);
+
+  /* /celestial preview only — a real Tailwind colour SCALE (not just a
+     single custom property) so mockup-faithful utilities like
+     `bg-gold-500/20`/`text-gold-300` work as Tailwind utilities, matching
+     code.html's own JS tailwind.config `colors.gold` scale exactly. Purely
+     additive: nothing outside /celestial references `gold-*` today.
+     Each step is one level of indirection into a --celestial-gold-*
+     custom property (below), rather than a literal hex — added
+     2026-09-14 for the light/dark toggle: the ORIGINAL code.html values
+     (gold-300 #fde047, gold-400 #eab308) are bright, near-white yellows
+     tuned to pop against a near-black page, which is genuinely too
+     low-contrast against the off-white variant. Since Tailwind utility
+     classes are static CSS (can't react to a runtime class toggle on
+     their own), the gold-* scale has to point at a variable that
+     itself changes per scope — .celestial (dark) and
+     .celestial.celestial-light (light) define different values for
+     these same --celestial-gold-* names below. */
+  --color-gold-200: var(--celestial-gold-200);
+  --color-gold-300: var(--celestial-gold-300);
+  --color-gold-400: var(--celestial-gold-400);
+  --color-gold-500: var(--celestial-gold-500);
+  --color-gold-600: var(--celestial-gold-600);
+  --color-gold-700: var(--celestial-gold-700);
+  --color-gold-900: var(--celestial-gold-900);
 
   --font-display: var(--font-bebas-neue);
   --font-body: var(--font-crimson-pro);
   --font-ui: var(--font-space-mono);
+
+  /* 2026-09-15: font-serif/font-sans/font-cinzel now resolve sitewide,
+     not just on /celestial — pointed at the SAME font instances already
+     loaded in app/(site)/layout.tsx (font-serif -> the EB Garamond
+     instance living under --font-bebas-neue, font-sans -> the Plus
+     Jakarta Sans instance under --font-crimson-pro, font-cinzel -> the
+     Cinzel instance under --font-space-mono) rather than loading any of
+     these three a second time. font-mono is the one exception: nothing
+     sitewide needed a mono/label face before, so --font-space-grotesk is
+     a genuinely new next/font/google load (see layout.tsx), used the
+     same way the campaigns directory uses Space Grotesk for meta/
+     timestamp text. /celestial's own route keeps its separate
+     next/font/local instances (app/celestial/layout.tsx) — this override
+     only affects the shared (site) route tree, not /celestial's <html>. */
+  --font-cinzel: var(--font-space-mono);
+  --font-serif: var(--font-bebas-neue);
+  --font-sans: var(--font-crimson-pro);
+  --font-mono: var(--font-space-grotesk);
 
   /* Custom body text scale (4K-display tuning). This project uses Tailwind
      v4's CSS-based theme config — there is no tailwind.config.ts — so these
@@ -39,38 +82,336 @@
 /* Fixed text colours for the always-dark bg-forest panels (Hero's right
    panel, PhilosophyStrip, Footer's CTA band, About's Discord CTA) —
    intentionally the same in both themes, so declared once outside the
-   .dark/.light blocks. Values match dark mode's --text-color/--text-muted,
-   so dark mode renders byte-for-byte identical to before this fix. */
+   .dark/.light blocks. Values match dark mode's --text-color/--text-muted. */
 :root {
-  --on-forest: #f0eae0;
-  --on-forest-muted: #666666;
+  --on-forest: #e5e7eb;
+  --on-forest-muted: #9ca3af;
 }
 
-/* Dark mode (Concept A) — default */
+/* 2026-09-15: recoloured to the celestial design system — approved via
+ * /celestial (see docs/design-system.md), now the sitewide default
+ * rather than a separate preview scope. --emerald/--amber/--magenta
+ * are kept as the token NAMES (every component already reads colour
+ * through these three, ~67 files at last count — renaming would mean
+ * re-touching every one for no functional reason) but now hold
+ * celestial's actual hues: --emerald is gold, celestial's primary
+ * accent (filling the same "the one colour most links/hovers/borders
+ * use" role emerald used to), --amber is a second, slightly brighter
+ * gold shade kept distinct for treatments that want to stand out from
+ * the plain emerald accent, --magenta is celestial's real magenta/pink.
+ * The three-colour brand title convention this repo previously
+ * documented (Criticals=emerald, &=amber, Fumbles=magenta) is
+ * RETIRED as of this change — decided explicitly, not an oversight —
+ * see Hero.tsx/not-found.tsx, both now use a single gold treatment
+ * instead, matching /celestial's own nav wordmark. */
 :root,
 .dark {
-  --bg: #111111;
-  --bg-forest: #0c1a10;
-  --surface: #1a1a1a;
+  --bg: #020509;
+  --bg-forest: #03080c;
+  --surface: #0d141d;
   --border-color: #2a2a2a;
-  --text-color: #f0eae0;
-  --text-muted: #666666;
-  --emerald: #2ec56b;
-  --amber: #c8893a;
-  --magenta: #d946a8;
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+  --emerald: #d4af37;
+  --amber: #eab308;
+  --magenta: #f9a8d4;
+  /* Real green — NOT the same value as --emerald above (that token now
+     means gold everywhere else sitewide, post-recolour). Exists only
+     for the "Criticals" word in the brand-title tri-colour split, which
+     needs actual emerald green, not gold. Values are the site's
+     original pre-recolour --emerald (see git history/globals.css blame
+     before 2026-09-15) — reused rather than invented, since that's
+     literally what "emerald" meant on this site before. */
+  --criticals-emerald: #2ec56b;
 }
 
-/* Light mode (Concept B) — toggled */
+/* Light mode — --bg-forest stays the SAME dark value as .dark, same
+   "intentionally dark in both themes" contract this token always had. */
 .light {
-  --bg: #fbf0e0;
-  --bg-forest: #1a1208;
-  --surface: #f0e8d8;
-  --border-color: #e0d4c0;
-  --text-color: #1a1208;
-  --text-muted: #8a7055;
-  --emerald: #1a7a45;
-  --amber: #b36a1a;
-  --magenta: #c4306a;
+  --bg: #f7f2e6;
+  --bg-forest: #03080c;
+  --surface: #fdf9f0;
+  --border-color: #d8c69a;
+  --text-color: #2b2416;
+  --text-muted: #6b6152;
+  --emerald: #92721f;
+  --amber: #a67c00;
+  --magenta: #be185d;
+  --criticals-emerald: #1a7a45;
+}
+
+/* Celestial theme scope (2026-09 alternative homepage preview, /celestial
+ * route only) — ported from an approved static mockup (code.html), a
+ * different and more ornate direction than the earlier /lobby preview
+ * (which has been scrapped entirely). None of these values are close
+ * enough to the site's existing --emerald/--amber/--magenta to reuse —
+ * the mockup's "gold" (#d4af37) and "magenta" (#f43f5e, closer to rose)
+ * are genuinely different hues from this site's amber/magenta — so
+ * everything here is a new, standalone token rather than an override of
+ * dark/light's tokens. Applied only within the /celestial route's own
+ * layout, never sitewide. The gold-* SCALE itself lives in the @theme
+ * inline block above (as real Tailwind utilities, pointing back at the
+ * --celestial-gold-* names defined here) — what's left here is
+ * everything that isn't a Tailwind-default-palette match.
+ *
+ * 2026-09-14: this route got a light/dark TOGGLE (a `celestial-light`
+ * class, added/removed client-side by the nav button — see
+ * components/celestial/CelestialThemeToggle.tsx). .celestial alone is
+ * the dark palette (the original code.html values) and doubles as the
+ * default/fallback; .celestial.celestial-light overrides every token
+ * below with light-tuned values. Every celestial component reads
+ * colour through one of these custom properties rather than a literal
+ * hex specifically so this toggle works without per-component JS —
+ * see docs/design-system.md for the full token table.
+ *
+ * 2026-09-15: also exposed under the sitewide `.dark` class (added to
+ * this selector below) so the celestial-* components (CelestialHero,
+ * CelestialBackdrop, ChroniclesGrid, LivingGrimoireFeed, ornate-card)
+ * can be reused directly on regular site pages, not just /celestial —
+ * see docs/design-system.md's "full-effect pages" note. Safe to double
+ * up: the values duplicated here (--bg/--border-color/--text-color/
+ * --text-muted) are identical to what .dark already defines elsewhere
+ * in this file, since the whole site was recoloured to this same
+ * palette — this isn't introducing a second, different dark theme. */
+.celestial,
+.dark {
+  --bg: #020509;
+  --celestial-deep: #03080c;
+  --celestial-surface: #0d141d;
+  --celestial-card: #151c26;
+  --celestial-ink: #e5e7eb;
+  --celestial-ink-muted: #9ca3af;
+  --border-color: #2a2a2a;
+  --text-color: #e5e7eb;
+  --text-muted: #9ca3af;
+
+  /* Pre-mixed translucent variants of the tokens above, at the exact
+     opacity levels the celestial components actually use — added
+     2026-09-14 alongside the toggle. Tailwind's own `/NN` opacity
+     MODIFIER on an arbitrary `var(...)` value compiles to
+     `color-mix(in oklab, var(--x) NN%, transparent)`; that's normally
+     fine, but empirically (tested in headless Chromium) it does NOT
+     get repainted when `--x` changes from a LIVE class toggle the way
+     every other var()-based utility here does — it only picks up the
+     new value after a full page reload. Root cause looks like a
+     browser-level invalidation gap specific to a custom property used
+     only inside color-mix(), not anything about this component
+     architecture. Referencing one of these pre-mixed tokens directly
+     (no Tailwind opacity modifier at all) sidesteps color-mix()
+     entirely, so it repaints correctly on toggle like everything else. */
+  --celestial-surface-95: rgba(13, 20, 29, 0.95);
+  --celestial-surface-90: rgba(13, 20, 29, 0.9);
+  --celestial-surface-85: rgba(13, 20, 29, 0.85);
+  --celestial-card-85: rgba(21, 28, 38, 0.85);
+  --celestial-card-80: rgba(21, 28, 38, 0.8);
+  --celestial-card-70: rgba(21, 28, 38, 0.7);
+  --celestial-ink-muted-90: rgba(156, 163, 175, 0.9);
+  --celestial-ink-muted-85: rgba(156, 163, 175, 0.85);
+  --celestial-ink-muted-80: rgba(156, 163, 175, 0.8);
+
+  /* Badge/accent text colours (feedHelpers.ts's TYPE_BADGE, the Feed
+     link, footer's Discord dot, etc.) — Tailwind's stock -300 shades,
+     bright enough to read against this dark background. */
+  --celestial-teal: #5eead4;
+  --celestial-teal-90: rgba(94, 234, 212, 0.9);
+  --celestial-teal-hi: #99f6e4;
+  --celestial-cyan: #67e8f9;
+  --celestial-magenta: #f9a8d4;
+  --celestial-purple: #d8b4fe;
+  --celestial-emerald: #6ee7b7;
+
+  --celestial-gold-200: #fef3c7;
+  --celestial-gold-300: #fde047;
+  --celestial-gold-400: #eab308;
+  --celestial-gold-500: #d4af37;
+  --celestial-gold-600: #b89324;
+  --celestial-gold-700: #8c6d17;
+  --celestial-gold-900: #3e2e05;
+
+  /* Pre-mixed gold-at-opacity tokens — same "avoid Tailwind's opacity
+     modifier on a live-toggle-reactive colour" reasoning as the
+     --celestial-surface-95-style tokens above (see that comment).
+     gold-* IS the toggle-reactive colour here (defined via indirection
+     in the @theme inline block), so any `border-gold-400/70`-style
+     class anywhere in this route has the same stale-on-toggle bug —
+     these cover every (step, opacity) pair actually used. */
+  --celestial-gold-200-70: rgba(254, 243, 199, 0.7);
+  --celestial-gold-300-90: rgba(253, 224, 71, 0.9);
+  --celestial-gold-400-25: rgba(234, 179, 8, 0.25);
+  --celestial-gold-400-60: rgba(234, 179, 8, 0.6);
+  --celestial-gold-400-70: rgba(234, 179, 8, 0.7);
+  --celestial-gold-400-80: rgba(234, 179, 8, 0.8);
+  --celestial-gold-400-90: rgba(234, 179, 8, 0.9);
+  --celestial-gold-500-15: rgba(212, 175, 55, 0.15);
+  --celestial-gold-500-20: rgba(212, 175, 55, 0.2);
+  --celestial-gold-500-25: rgba(212, 175, 55, 0.25);
+  --celestial-gold-500-30: rgba(212, 175, 55, 0.3);
+  --celestial-gold-500-40: rgba(212, 175, 55, 0.4);
+  --celestial-gold-500-60: rgba(212, 175, 55, 0.6);
+}
+
+.celestial.celestial-light,
+.light {
+  --bg: #f7f2e6;
+  --celestial-deep: #ece0c5;
+  --celestial-surface: #fdf9f0;
+  --celestial-card: #f1e8d3;
+  --celestial-ink: #2b2416;
+  --celestial-ink-muted: #6b6152;
+  --border-color: #d8c69a;
+  --text-color: #2b2416;
+  --text-muted: #6b6152;
+
+  --celestial-surface-95: rgba(253, 249, 240, 0.95);
+  --celestial-surface-90: rgba(253, 249, 240, 0.9);
+  --celestial-surface-85: rgba(253, 249, 240, 0.85);
+  --celestial-card-85: rgba(241, 232, 211, 0.85);
+  --celestial-card-80: rgba(241, 232, 211, 0.8);
+  --celestial-card-70: rgba(241, 232, 211, 0.7);
+  --celestial-ink-muted-90: rgba(107, 97, 82, 0.9);
+  --celestial-ink-muted-85: rgba(107, 97, 82, 0.85);
+  --celestial-ink-muted-80: rgba(107, 97, 82, 0.8);
+
+  /* Same accent roles, darkened (Tailwind's stock -700 shades) so they
+     don't wash out against the lighter chips/panels those same
+     variables now sit on — see components/celestial/feedHelpers.ts's
+     comment for why a straight light/dark swap of the SAME Tailwind
+     step wouldn't have worked here. */
+  --celestial-teal: #0f766e;
+  --celestial-teal-90: rgba(15, 118, 110, 0.9);
+  --celestial-teal-hi: #115e59;
+  --celestial-cyan: #0e7490;
+  --celestial-magenta: #be185d;
+  --celestial-purple: #7e22ce;
+  --celestial-emerald: #047857;
+
+  --celestial-gold-200: #d9c48a;
+  --celestial-gold-300: #b8860b;
+  --celestial-gold-400: #a67c00;
+  --celestial-gold-500: #92721f;
+  --celestial-gold-600: #7a5f1a;
+  --celestial-gold-700: #5c470f;
+  --celestial-gold-900: #2b1f08;
+
+  --celestial-gold-200-70: rgba(217, 196, 138, 0.7);
+  --celestial-gold-300-90: rgba(184, 134, 11, 0.9);
+  --celestial-gold-400-25: rgba(166, 124, 0, 0.25);
+  --celestial-gold-400-60: rgba(166, 124, 0, 0.6);
+  --celestial-gold-400-70: rgba(166, 124, 0, 0.7);
+  --celestial-gold-400-80: rgba(166, 124, 0, 0.8);
+  --celestial-gold-400-90: rgba(166, 124, 0, 0.9);
+  --celestial-gold-500-15: rgba(146, 114, 31, 0.15);
+  --celestial-gold-500-20: rgba(146, 114, 31, 0.2);
+  --celestial-gold-500-25: rgba(146, 114, 31, 0.25);
+  --celestial-gold-500-30: rgba(146, 114, 31, 0.3);
+  --celestial-gold-500-40: rgba(146, 114, 31, 0.4);
+  --celestial-gold-500-60: rgba(146, 114, 31, 0.6);
+}
+
+.bg-celestial-deep { background: var(--celestial-deep); }
+.bg-celestial-surface { background: var(--celestial-surface); }
+.bg-celestial-card { background: var(--celestial-card); }
+
+/* 2026-09-15: decorative classes promoted from /celestial's own
+ * app/celestial/celestial.css to sitewide, for the "full effect" pages
+ * (home, about, events index, wiki index, team index, chronicles index —
+ * see docs/design-system.md). /celestial's own copy of these stays in
+ * celestial.css too (harmless duplicate rule, not worth a cross-import
+ * for), these are the sitewide-available originals now. */
+.ornate-card {
+  position: relative;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.9);
+  transition: all 0.3s ease;
+}
+.ornate-card::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  pointer-events: none;
+}
+.ornate-card:hover {
+  border-color: rgba(212, 175, 55, 0.8);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.7), 0 0 25px rgba(212, 175, 55, 0.15);
+}
+
+.corner-notch {
+  position: relative;
+}
+.corner-notch::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid #d4af37;
+  border-bottom: 1px solid #d4af37;
+  bottom: 2px;
+  right: 2px;
+}
+.corner-notch::before {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-left: 1px solid #d4af37;
+  border-top: 1px solid #d4af37;
+  top: 2px;
+  left: 2px;
+}
+
+@keyframes celestial-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes celestial-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes celestial-pulse-glow {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+.spin-slow { animation: celestial-spin-slow 180s linear infinite; }
+.spin-reverse { animation: celestial-spin-reverse 240s linear infinite; }
+.pulse-star { animation: celestial-pulse-glow 4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .spin-slow,
+  .spin-reverse,
+  .pulse-star,
+  .animate-ping {
+    animation: none;
+  }
+}
+
+/* Reveal-once-on-scroll wrapper (ScrollReveal.tsx) — promoted sitewide
+ * alongside the other celestial.css classes above, same reasoning. */
+.celestial-scene-inner {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.celestial-scene-inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Section-header divider ("eyebrow" flanking lines), matching
+ * /celestial's SectionCrest — used on full-effect pages' page headers. */
+.celestial-crest {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--celestial-gold-400, #eab308);
+}
+.celestial-crest .line {
+  width: 4rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, currentColor);
+}
+.celestial-crest .line:last-child {
+  background: linear-gradient(to left, transparent, currentColor);
 }
 
 /* Base rem size — 18px instead of the browser default 16px, tuned for 4K
@@ -83,17 +424,17 @@ html {
 body {
   background: var(--bg);
   color: var(--text-color);
-  font-family: var(--font-crimson-pro), serif;
+  font-family: var(--font-crimson-pro), sans-serif;
   font-size: 1.125rem;
 }
 
 .font-display {
-  font-family: var(--font-bebas-neue), sans-serif;
+  font-family: var(--font-bebas-neue), serif;
   letter-spacing: 0.02em;
 }
 
 .font-ui {
-  font-family: var(--font-space-mono), monospace;
+  font-family: var(--font-space-mono), serif;
 }
 
 /* Applied to components/portable-text/Renderer.tsx's wrapper — long-form

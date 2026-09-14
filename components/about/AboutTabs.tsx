@@ -61,19 +61,30 @@ export function AboutTabs({ sections }: { sections: AboutTabSection[] }) {
         </div>
       </div>
 
-      {sections.map((section) => (
-        <div
-          key={section.id}
-          id={section.id}
-          className={
-            activeTab === section.id
-              ? "px-4 py-16 md:px-8"
-              : "hidden px-4 py-16 md:px-8"
-          }
-        >
-          {section.content}
-        </div>
-      ))}
+      {/* 2026-09-15 revision: mute the astrolabe backdrop specifically
+          below the tab bar — the tab content is long-form reading
+          (Vision/Mission/History/Philosophy tiers/Code of Conduct etc.)
+          where the full-strength backdrop hurt legibility. A plain
+          background colour on this wrapper (not a fixed overlay) sits
+          naturally between the fixed backdrop and this section's own
+          text, so it dims what's behind it without needing any special
+          z-index handling — and it only covers this section, not the
+          hero/tab-bar above it. */}
+      <div className="relative bg-bg/85">
+        {sections.map((section) => (
+          <div
+            key={section.id}
+            id={section.id}
+            className={
+              activeTab === section.id
+                ? "px-4 py-16 md:px-8"
+                : "hidden px-4 py-16 md:px-8"
+            }
+          >
+            {section.content}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

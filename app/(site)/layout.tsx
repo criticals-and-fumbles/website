@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { Bebas_Neue, Crimson_Pro, Space_Mono } from "next/font/google";
+import { Cinzel, EB_Garamond, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { client } from "@/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
@@ -11,20 +11,50 @@ import { Nav } from "@/components/layout/Nav";
 import { ToastHost } from "@/components/ui/Toast";
 import { OrganizationStructuredData } from "@/components/seo/OrganizationStructuredData";
 
-const bebasNeue = Bebas_Neue({
+// 2026-09-15: switched from Bebas Neue/Crimson Pro/Space Mono to the
+// celestial design system's fonts (see docs/design-system.md) — this
+// is now the sitewide default, not just /celestial's own preview
+// route. next/font/google bakes these into the build output at build
+// time (no runtime request to fonts.googleapis.com), so this needs no
+// self-hosting workaround despite the CSP that blocks a direct Google
+// Fonts <link> — same reason the previous 3 fonts never needed one
+// either. --font-bebas-neue/--font-crimson-pro/--font-space-mono are
+// kept as the CSS variable NAMES (globals.css's @theme inline block
+// still maps font-display/font-body/font-ui through these) to avoid
+// touching that indirection for no functional reason; only the actual
+// font loaded into each variable — and which role it fills — changed.
+// Role mapping matches /celestial's own usage: EB Garamond for
+// headings (font-display), Plus Jakarta Sans for body copy (the
+// default body font), Cinzel for nav links/badges/buttons/small UI
+// labels (font-ui) — NOT the reverse; Cinzel is a decorative caps
+// face suited to short label text, not paragraph headings.
+const ebGaramond = EB_Garamond({
   variable: "--font-bebas-neue",
-  weight: "400",
+  weight: ["400", "600"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
 });
 
-const crimsonPro = Crimson_Pro({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-crimson-pro",
+  weight: ["300", "400", "500"],
   subsets: ["latin"],
 });
 
-const spaceMono = Space_Mono({
+const cinzel = Cinzel({
   variable: "--font-space-mono",
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+
+// 2026-09-15: added for the sitewide celestial decorative rollout's
+// full-effect pages (see docs/design-system.md) — meta/timestamp/label
+// text on those pages uses font-mono, which globals.css now points at
+// --font-space-grotesk. Not reusing an existing variable name/role, this
+// is a genuinely new font family sitewide.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
@@ -62,7 +92,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bebasNeue.variable} ${crimsonPro.variable} ${spaceMono.variable} dark h-full antialiased`}
+      className={`${ebGaramond.variable} ${plusJakartaSans.variable} ${cinzel.variable} ${spaceGrotesk.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

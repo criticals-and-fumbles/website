@@ -139,7 +139,7 @@ export default async function TeamMemberPage({
         {articles.length > 0 && (
           <section className="mt-16 border-t border-border pt-10">
             <h2 className="mb-6 font-display text-3xl text-text">
-              Articles by {member.handle}
+              Chronicles by {member.handle}
             </h2>
             <ArticleGrid articles={articles} />
           </section>

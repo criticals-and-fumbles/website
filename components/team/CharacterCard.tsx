@@ -46,7 +46,7 @@ export function CharacterCard({
   return (
     <Link
       href={`/team/${member.slug}`}
-      className={`flex flex-col items-center gap-3 rounded-lg border ${tierBorderClass(member.tier)} bg-surface p-5 text-center transition-colors hover:border-emerald`}
+      className={`flex flex-col items-center gap-3 rounded-lg border ${tierBorderClass(member.tier)} bg-surface/75 p-5 text-center transition-colors hover:border-emerald`}
     >
       <div
         className={`relative h-20 w-20 overflow-hidden rounded-full bg-bg-forest ring-2 ${alignmentRingClass(member.alignment)}`}

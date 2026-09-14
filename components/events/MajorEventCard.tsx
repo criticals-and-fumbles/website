@@ -44,7 +44,7 @@ export function MajorEventCard({ event }: { event: MajorEventCardData }) {
     // highest-priority items on this page and should read as a list of
     // headline items, not compete for space in a grid the way Regular
     // Events (EventCard) do.
-    <div className="group overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-emerald sm:flex sm:flex-row">
+    <div className="group overflow-hidden rounded-xl border border-border bg-surface/75 transition-colors hover:border-emerald sm:flex sm:flex-row">
       <Link
         href={detailHref}
         className="relative block aspect-[16/9] w-full overflow-hidden bg-bg-forest sm:aspect-auto sm:w-1/4 sm:max-w-xs sm:flex-shrink-0"

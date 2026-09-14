@@ -9,7 +9,7 @@ export function EventCard({ event }: { event: RegularEvent }) {
   const ctaLabel = event.registrationUrl ? "Register" : "View Details";
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-emerald">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface/75 p-5 transition-colors hover:border-emerald">
       <Link href={detailHref} className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-display text-xl text-text">

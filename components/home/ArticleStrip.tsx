@@ -9,7 +9,7 @@ export function ArticleStrip({ articles }: { articles: ArticleCardData[] }) {
         <div className="mb-8 flex items-center justify-between">
           <h2 className="font-display text-4xl text-text">Latest Rolls</h2>
           <LinkButton href="/articles" variant="ghost">
-            All Articles →
+            All Chronicles →
           </LinkButton>
         </div>
         <ArticleGrid articles={articles} />

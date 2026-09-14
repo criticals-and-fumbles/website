@@ -14,7 +14,7 @@ export function WorldCard({ world }: { world: World }) {
   return (
     <Link
       href={`/wiki/${world.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border-2 bg-surface transition-transform hover:-translate-y-1"
+      className="group flex flex-col overflow-hidden rounded-xl border-2 bg-surface/75 transition-transform hover:-translate-y-1"
       style={{ borderColor: accent }}
     >
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-bg-forest">

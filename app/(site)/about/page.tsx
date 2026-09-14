@@ -28,6 +28,8 @@ import { CodeOfConduct } from "@/components/about/CodeOfConduct";
 import { AiCharter } from "@/components/about/AiCharter";
 import { Footer } from "@/components/layout/Footer";
 import { LinkButton } from "@/components/ui/Button";
+import { PageBackdrop } from "@/components/layout/PageBackdrop";
+import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
 
 export const revalidate = 300;
 
@@ -134,7 +136,10 @@ export default async function AboutPage() {
 
   return (
     <>
+      <PageBackdrop tier="full" />
+
       <section className="px-4 py-20 text-center md:px-8">
+        <SectionCrest label="The Guild" />
         <h1 className="font-display text-6xl text-text">About</h1>
         <p className="mt-4">{settings?.tagline}</p>
         <p className="mx-auto mt-2 max-w-2xl text-text-muted">
