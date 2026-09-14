@@ -111,6 +111,15 @@ function resolveEndTime(startDate: string, endDate?: string) {
   return endDate ?? new Date(new Date(startDate).getTime() + FOUR_HOURS_MS).toISOString();
 }
 
+/** Eventbrite's API rejects Sanity's datetime format outright — Sanity's
+ * datetime fields serialize with milliseconds (2026-09-19T11:48:00.000Z),
+ * Eventbrite's start.utc/end.utc want exactly YYYY-MM-DDThh:mm:ssZ, no
+ * fractional seconds (confirmed via a real 400 ARGUMENTS_ERROR). Discord
+ * accepts the millisecond form fine, so this is only needed here. */
+function toEventbriteUtc(iso: string): string {
+  return new Date(iso).toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 /** The link a click on the Discord event should land on — prefer a real
  * registration link (e.g. an Eventbrite ticket page) if one exists,
  * otherwise the event's own page on the site. Both majorEvent and
@@ -253,8 +262,8 @@ async function createEventbriteEvent(
         event: {
           name: { html: body.title },
           description: { html: body.tagline ?? "" },
-          start: { timezone: EVENTBRITE_TIMEZONE, utc: body.startDate },
-          end: { timezone: EVENTBRITE_TIMEZONE, utc: scheduledEndTime },
+          start: { timezone: EVENTBRITE_TIMEZONE, utc: toEventbriteUtc(body.startDate!) },
+          end: { timezone: EVENTBRITE_TIMEZONE, utc: toEventbriteUtc(scheduledEndTime) },
           currency: "SGD",
         },
       }),
