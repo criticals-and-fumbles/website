@@ -49,13 +49,19 @@ import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
  *   - Projection (GROQ) — the webhook's ORIGINAL projection only sent
  *     { slug, title, photoUrl } for the OG generator's own use; this is
  *     that exact same expression, kept verbatim, with everything job
- *     (2) needs added alongside it:
+ *     (2) needs added alongside it. descriptionText (pt::text() — GROQ's
+ *     own portable-text-to-plain-text function, no parsing needed in
+ *     this route) was added 2026-09 after Eventbrite's Trust & Safety
+ *     flagged and unpublished a test listing for having an empty
+ *     description — the tagline field alone isn't always populated, but
+ *     the real description almost always is:
  *       {
  *         _id, _type, title, tagline, startDate, endDate, location,
  *         capacity, registrationUrl, publishToDiscord,
  *         publishToEventbrite, discordEventId, eventbriteEventId,
  *         "slug": slug.current,
- *         "photoUrl": splashImage.asset->url
+ *         "photoUrl": splashImage.asset->url,
+ *         "descriptionText": pt::text(description)
  *       }
  *   - URL: https://www.criticalsandfumbles.com/api/sanity-webhook
  *     (was: https://cnf-og-generator.criticalsandfumbles.workers.dev/generate/event)
@@ -78,6 +84,14 @@ import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
  * enough to drive a real paid ticket class from automatically, and this
  * account's payout/banking wasn't confirmed set up at the time this was
  * written). Revisit once real paid ticketing is actually needed.
+ *
+ * Eventbrite events are created as DRAFTS, not auto-published (changed
+ * 2026-09 after Trust & Safety unpublished a test listing as spam — see
+ * createEventbriteEvent's own comment). A human reviews and publishes
+ * for real from the Eventbrite dashboard; this route never does that
+ * step itself. If neither descriptionText nor tagline has real content,
+ * Eventbrite creation is skipped entirely rather than submitting an
+ * empty description that would very likely get flagged again.
  */
 
 interface WebhookPayload {
@@ -85,6 +99,10 @@ interface WebhookPayload {
   _type: "majorEvent" | "regularEvent" | string;
   title: string;
   tagline?: string;
+  // Plain text, converted from the rich-text description field by
+  // Sanity's own pt::text() in the webhook projection — see the
+  // Projection note in the file comment for why (Eventbrite spam flag).
+  descriptionText?: string;
   startDate?: string;
   endDate?: string;
   location?: string;
@@ -94,8 +112,10 @@ interface WebhookPayload {
   publishToEventbrite?: boolean;
   discordEventId?: string;
   eventbriteEventId?: string;
-  // Not read by this route directly — forwarded verbatim to the OG
-  // generator, which is what actually uses these.
+  // slug is forwarded verbatim to the OG generator, which is what
+  // actually uses it, and also used here in resolveEventUrl(). photoUrl
+  // is forwarded to the OG generator AND used directly here as the
+  // channel announcement embed's image.
   slug?: string;
   photoUrl?: string;
 }
@@ -199,6 +219,21 @@ async function createDiscordEvent(
   return { id: event.id };
 }
 
+const DESCRIPTION_PREVIEW_LENGTH = 280;
+
+/** A short, chat-friendly preview — the full descriptionText can be long
+ * (it's the whole rich-text body, converted to plain text), which reads
+ * as a wall of text in an announcement message rather than an inviting
+ * one. Falls back to tagline, then a plain "tap through for details"
+ * line rather than leaving the embed with no description at all. */
+function previewDescription(body: WebhookPayload): string {
+  const text = body.descriptionText || body.tagline;
+  if (!text) return "Tap the title above for the full details →";
+  return text.length > DESCRIPTION_PREVIEW_LENGTH
+    ? `${text.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd()}…`
+    : text;
+}
+
 /** Posts an announcement to #events-and-happenings using the bot itself
  * (DISCORD_BOT_TOKEN), now that it's been granted Send Messages
  * alongside its existing Manage Events/Create Events permissions.
@@ -219,13 +254,20 @@ async function postChannelAnnouncement(env: CloudflareEnv, body: WebhookPayload)
           embeds: [
             {
               title: body.title,
-              description: body.tagline || undefined,
+              description: previewDescription(body),
               url: resolveEventUrl(body),
+              // The event's own cover image, if it has one — was
+              // completely missing before (request: "ensure any image
+              // that is attached to event is also posted").
+              image: body.photoUrl ? { url: body.photoUrl } : undefined,
+              thumbnail: { url: `${SITE_URL}/logo.png` },
+              footer: { text: "Criticals & Fumbles", icon_url: `${SITE_URL}/logo.png` },
               fields: [
                 body.startDate
-                  ? { name: "When", value: `<t:${Math.floor(new Date(body.startDate).getTime() / 1000)}:F>`, inline: true }
+                  ? { name: "📅 When", value: `<t:${Math.floor(new Date(body.startDate).getTime() / 1000)}:F>`, inline: true }
                   : undefined,
-                body.location ? { name: "Where", value: body.location, inline: true } : undefined,
+                body.location ? { name: "📍 Where", value: body.location, inline: true } : undefined,
+                body.capacity ? { name: "🎟️ Spots", value: String(body.capacity), inline: true } : undefined,
               ].filter(Boolean),
               color: 0xd4af37, // celestial gold, matching the site's accent colour
             },
@@ -247,7 +289,19 @@ async function createEventbriteEvent(
   env: CloudflareEnv,
   body: WebhookPayload,
   scheduledEndTime: string,
-): Promise<{ id: string; url: string } | { error: string }> {
+): Promise<{ id: string; url: string } | { error: string } | { skipped: string }> {
+  // Eventbrite's Trust & Safety flagged and unpublished a real test
+  // listing here for "empty description and no concrete event details,
+  // resembling placeholder/gibberish" — reads as spam to their
+  // detection, understandably. Prefer the real long-form description
+  // over the short tagline; if NEITHER has content, don't submit an
+  // empty one and risk the same flag again — skip and let the editor
+  // add real content first.
+  const descriptionText = body.descriptionText || body.tagline;
+  if (!descriptionText) {
+    return { skipped: "no description or tagline — Eventbrite requires real event details" };
+  }
+
   const headers = {
     Authorization: `Bearer ${env.EVENTBRITE_PRIVATE_TOKEN}`,
     "Content-Type": "application/json",
@@ -261,10 +315,17 @@ async function createEventbriteEvent(
       body: JSON.stringify({
         event: {
           name: { html: body.title },
-          description: { html: body.tagline ?? "" },
+          description: { html: descriptionText },
           start: { timezone: EVENTBRITE_TIMEZONE, utc: toEventbriteUtc(body.startDate!) },
           end: { timezone: EVENTBRITE_TIMEZONE, utc: toEventbriteUtc(scheduledEndTime) },
           currency: "SGD",
+          // Hidden from Eventbrite's public search/browse even once
+          // published — direct-link only. Extra safety layer alongside
+          // never auto-publishing below; if this ever DOES get manually
+          // published from the dashboard without changing this, it
+          // still won't surface to Eventbrite's spam-review surface the
+          // same way a fully public listing does.
+          listed: false,
         },
       }),
     },
@@ -300,17 +361,12 @@ async function createEventbriteEvent(
     return { error: `Eventbrite ticket class ${ticketResponse.status}: ${errorBody}` };
   }
 
-  const publishResponse = await fetch(
-    `https://www.eventbriteapi.com/v3/events/${event.id}/publish/`,
-    { method: "POST", headers },
-  );
-
-  if (!publishResponse.ok) {
-    const errorBody = await publishResponse.text();
-    console.error("Eventbrite publish failed", publishResponse.status, errorBody);
-    return { error: `Eventbrite publish ${publishResponse.status}: ${errorBody}` };
-  }
-
+  // Deliberately NOT calling /publish/ — left as a draft so a human
+  // reviews and publishes for real from the Eventbrite dashboard. This
+  // used to auto-publish immediately; that's exactly what got a test
+  // listing flagged and unpublished by Trust & Safety. registrationUrl
+  // still gets filled in below so the site's Register button points at
+  // the right page once it IS published.
   return { id: event.id, url: event.url };
 }
 
