@@ -17,6 +17,8 @@ export function UnitLoreCard({
   const imageUrl = urlForImage(entry.coverImage)
     ?.width(500)
     .height(300)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
 

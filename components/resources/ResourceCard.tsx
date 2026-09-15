@@ -23,6 +23,8 @@ export function ResourceCard({ resource }: { resource: Resource }) {
   const imageUrl = urlForImage(resource.thumbnail)
     ?.width(500)
     .height(300)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
 

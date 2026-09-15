@@ -1,5 +1,5 @@
 import { defineField, defineType } from "sanity";
-import { ARTICLE_CATEGORIES } from "./constants";
+import { ARTICLE_CATEGORIES, RECOMMENDED_FOR } from "./constants";
 
 export default defineType({
   name: "article",
@@ -54,6 +54,18 @@ export default defineType({
       title: "Tags",
       type: "array",
       of: [{ type: "string" }],
+    }),
+    defineField({
+      name: "recommendedFor",
+      title: "Recommended For",
+      type: "array",
+      of: [{ type: "string" }],
+      options: {
+        list: RECOMMENDED_FOR.map((v) => ({ title: v, value: v })),
+      },
+      description:
+        "Who this article is aimed at — shown as tags on the article " +
+        "card. Fine to pick more than one.",
     }),
     defineField({
       name: "coverImage",

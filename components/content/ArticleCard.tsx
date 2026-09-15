@@ -8,6 +8,8 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
   const imageUrl = urlForImage(article.coverImage)
     ?.width(600)
     .height(340)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
 
@@ -21,7 +23,21 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
           was cropping a meaningful chunk off anything that didn't
           already match that ratio; contain scales the whole image down
           to fit instead, letterboxed against bg-bg-forest rather than
-          cropped (same fix as campaigns' directory card-image). */}
+          cropped (same fix as campaigns' directory card-image).
+          Also needs two chained calls on the urlForImage() builder above,
+          not just fit("max"):
+          - @sanity/image-url auto-computes a centered crop rect matching
+            the requested width/height aspect ratio whenever BOTH are set
+            — this happens regardless of fit mode, so fit("max") alone
+            still scales-to-fit an already-cropped rect, not the original
+            image (confirmed by reading the builder's own source: see the
+            internal `fit()` helper in @sanity/image-url, which only skips
+            this when spec.ignoreImageParams is set).
+          - .ignoreImageParams() is what actually disables that
+            auto-crop, so the full original image is sent to the CDN;
+            fit("max") then scale-to-fits THAT within the box instead of
+            stretching/cropping it, which is what finally lets
+            object-contain letterbox the whole image correctly. */}
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-bg-forest">
         {imageUrl && (
           <Image
@@ -33,7 +49,14 @@ export function ArticleCard({ article }: { article: ArticleCardData }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
-        {article.category && <Badge variant="emerald">{article.category}</Badge>}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {article.category && <Badge variant="emerald">{article.category}</Badge>}
+          {article.recommendedFor?.map((tag) => (
+            <Badge key={tag} variant="surface">
+              {tag}
+            </Badge>
+          ))}
+        </div>
         <h3 className="font-display text-2xl leading-tight text-text">
           {article.title}
         </h3>

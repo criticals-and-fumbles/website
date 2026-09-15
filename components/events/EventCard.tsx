@@ -17,6 +17,15 @@ export function EventCard({ event }: { event: RegularEvent }) {
           </h3>
           {event.status && <Badge variant="emerald">{event.status}</Badge>}
         </div>
+        {event.recommendedFor && event.recommendedFor.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {event.recommendedFor.map((tag) => (
+              <Badge key={tag} variant="surface">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 font-ui text-xs text-text-muted">
           {event.dm && (
             <>

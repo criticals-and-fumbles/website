@@ -24,9 +24,9 @@ import { CelestialThemeToggle } from "@/components/celestial/CelestialThemeToggl
  * navigation would be a real regression, not a faithful port of a gap
  * the mockup never addressed.
  */
-const NAV_LINKS = [
+const NAV_LINKS: { label: string; href: string; external?: boolean }[] = [
   { label: "Home", href: "/celestial" },
-  { label: "Campaigns", href: "https://campaigns.criticalsandfumbles.com", external: true },
+  { label: "Campaigns", href: "/campaigns" },
   { label: "Events", href: "/events" },
   { label: "Chronicles", href: "/articles" },
   { label: "Feed", href: "#living-grimoire" },

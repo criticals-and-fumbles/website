@@ -15,8 +15,25 @@ export const ARTICLE_CATEGORIES = [
   "Player Tips",
   "DM Advice",
   "Lore & Theory",
-  "Indie TTRPGs",
+  "Homebrew RPG",
   "Community",
+];
+
+// Multi-select — an event/article can honestly fit more than one (a DM
+// workshop can be both "New Players" and "Aspiring Game Masters", for
+// instance), so this is an array field wherever it's used, not a single
+// select. "Returning Players" and "Aspiring Game Masters" are additions
+// beyond the original four (New Players/Experienced Players/All Levels
+// Welcome/Game Masters) — genuinely different audiences with different
+// needs from their nearest neighbour (a returning player isn't quite a
+// beginner; someone who wants to learn to DM isn't quite a player).
+export const RECOMMENDED_FOR = [
+  "New Players",
+  "Returning Players",
+  "Experienced Players",
+  "All Levels Welcome",
+  "Game Masters",
+  "Aspiring Game Masters",
 ];
 
 export const LORE_CATEGORIES = [

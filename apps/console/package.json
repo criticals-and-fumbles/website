@@ -1,0 +1,21 @@
+{
+  "name": "console-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker serving console.criticalsandfumbles.com — the GM-facing campaign/dossier/wiki editing console. Split out of the old \"campaigns\" Worker, 2026-09-15 (see that repo's dossier.jsx and CLAUDE.md), so console (writes, uploads, Cloudflare Access) and the public dossier pages (reads, no auth) don't share a deploy or a bundle budget.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "fast-xml-parser": "^4.5.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.86.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

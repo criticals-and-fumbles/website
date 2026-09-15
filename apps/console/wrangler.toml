@@ -1,0 +1,32 @@
+name = "console"
+main = "src/worker.js"
+compatibility_date = "2026-05-03"
+compatibility_flags = ["nodejs_compat"]
+
+# Custom domain (console.criticalsandfumbles.com) is attached manually via
+# the Cloudflare dashboard (Workers & Pages -> Settings -> Domains & Routes),
+# same pattern the campaigns Worker's own custom domain already uses — no
+# [[routes]] or custom_domain block needed here.
+
+# No [[r2_buckets]] / [[kv_namespaces]] / [[d1_databases]] — same as the
+# campaigns Worker this split out of: all media goes through Sanity's
+# asset pipeline, nothing here needs its own storage.
+
+# Non-secret Sanity identifiers — pinned here (not dashboard-only), same
+# reasoning as the campaigns Worker's wrangler.toml: a routine Git-
+# triggered redeploy can silently drop dashboard-set "Runtime" plain-text
+# variables, since they aren't tied to a wrangler config and nothing
+# recreates them on a new version. None of these three values are
+# sensitive.
+[vars]
+NEXT_PUBLIC_SANITY_PROJECT_ID = "grfq47ig"
+NEXT_PUBLIC_SANITY_DATASET = "production"
+NEXT_PUBLIC_SANITY_API_VERSION = "2026-06-01"
+
+# Secrets only — set via `wrangler secret put <NAME>` (run in your own
+# terminal, never pasted through an assistant), never declared here:
+#   SANITY_API_READ_TOKEN    (Viewer role — every query)
+#   SANITY_API_WRITE_TOKEN   (Editor role — every mutation/upload)
+# Same two secrets the campaigns Worker already has — this Worker needs
+# its OWN copies set (Worker secrets aren't shared across Workers even
+# when the values are identical).

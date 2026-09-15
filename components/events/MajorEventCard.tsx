@@ -31,6 +31,8 @@ export function MajorEventCard({ event }: { event: MajorEventCardData }) {
   const imageUrl = urlForImage(event.splashImage ?? event.coverImage)
     ?.width(900)
     .height(500)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
   const detailHref = `/events/${event.slug}`;
@@ -62,9 +64,16 @@ export function MajorEventCard({ event }: { event: MajorEventCardData }) {
       </Link>
       <div className="flex flex-1 flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
         <Link href={detailHref} className="flex flex-1 flex-col gap-3">
-          <Badge variant={STATUS_VARIANTS[event.status]}>
-            {STATUS_LABELS[event.status]}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={STATUS_VARIANTS[event.status]}>
+              {STATUS_LABELS[event.status]}
+            </Badge>
+            {event.recommendedFor?.map((tag) => (
+              <Badge key={tag} variant="surface">
+                {tag}
+              </Badge>
+            ))}
+          </div>
           <h3 className="font-display text-3xl text-text">{event.title}</h3>
           {event.tagline && <p className="text-text-muted">{event.tagline}</p>}
           <div className="flex flex-wrap items-center gap-4 font-ui text-xs text-text-muted">

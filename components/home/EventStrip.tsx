@@ -31,6 +31,8 @@ export function EventStrip({ events }: { events: HomeUpcomingEvent[] }) {
               const imageUrl = urlForImage(event.coverImage)
                 ?.width(500)
                 .height(300)
+                .fit("max")
+                .ignoreImageParams()
                 .auto("format")
                 .url();
               const detailHref = `/events/${event.slug}`;
@@ -76,14 +78,20 @@ export function EventStrip({ events }: { events: HomeUpcomingEvent[] }) {
                           )}
                         </>
                       )}
-                      <Badge
-                        variant={isMajor ? "amber" : "emerald"}
-                        className="mt-auto self-start"
-                      >
-                        {isMajor
-                          ? (STATUS_LABELS[event.status ?? ""] ?? event.status)
-                          : "Regular Session"}
-                      </Badge>
+                      <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                        <Badge variant={isMajor ? "amber" : "emerald"}>
+                          {isMajor
+                            ? (STATUS_LABELS[event.status ?? ""] ?? event.status)
+                            : "Regular Session"}
+                        </Badge>
+                        {/* Capped to 1 here — this card is a compact grid
+                            tile, unlike the full-width event-page cards,
+                            so only the single most useful tag is shown to
+                            avoid crowding the status badge. */}
+                        {event.recommendedFor?.[0] && (
+                          <Badge variant="surface">{event.recommendedFor[0]}</Badge>
+                        )}
+                      </div>
                     </div>
                   </Link>
                   <div className="p-4 pt-3">

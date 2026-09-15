@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { RECOMMENDED_FOR } from "./constants";
 
 export default defineType({
   name: "regularEvent",
@@ -58,6 +59,18 @@ export default defineType({
       description: 'e.g. "Every Tuesday 7:30pm"',
     }),
     defineField({ name: "location", title: "Location", type: "string" }),
+    defineField({
+      name: "recommendedFor",
+      title: "Recommended For",
+      type: "array",
+      of: [{ type: "string" }],
+      options: {
+        list: RECOMMENDED_FOR.map((v) => ({ title: v, value: v })),
+      },
+      description:
+        "Who this event is aimed at — shown as tags on the event card. " +
+        "Fine to pick more than one.",
+    }),
     defineField({
       name: "dm",
       title: "DM",

@@ -7,6 +7,8 @@ export function WorldCard({ world }: { world: World }) {
   const imageUrl = urlForImage(world.coverImage)
     ?.width(800)
     .height(450)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
   const accent = world.colourAccent ?? "var(--emerald)";
