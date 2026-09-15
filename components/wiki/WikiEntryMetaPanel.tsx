@@ -86,7 +86,7 @@ export function WikiEntryMetaPanel({
 }: WikiEntryMetaPanelProps) {
   const owner = firstName(ownerHandle);
   const lastEditor = firstName(lastEditedByHandle);
-  const imageUrl = urlForImage(image)?.width(480).height(360).auto("format").url();
+  const imageUrl = urlForImage(image)?.width(480).height(360).fit("max").ignoreImageParams().auto("format").url();
   const totalChildren = childGroups?.reduce((sum, g) => sum + g.items.length, 0) ?? 0;
 
   return (

@@ -232,7 +232,7 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
                     rel="noreferrer"
                     className="font-ui text-sm text-emerald hover:underline"
                   >
-                    Questions? Ask us on Discord →
+                    No question too small — ask us on Discord →
                   </a>
                 )}
               </div>
@@ -240,7 +240,7 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
               siteSettings?.discordUrl && (
                 <div className="mt-10">
                   <LinkButton href={siteSettings.discordUrl} external variant="primary">
-                    Questions? Ask us on Discord →
+                    No question too small — ask us on Discord →
                   </LinkButton>
                 </div>
               )
@@ -400,7 +400,7 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
                   rel="noreferrer"
                   className="font-ui text-sm text-emerald hover:underline"
                 >
-                  Questions? Ask us on Discord →
+                  No question too small — ask us on Discord →
                 </a>
               )}
             </div>
@@ -408,7 +408,7 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
             siteSettings?.discordUrl && (
               <div className="mt-10">
                 <LinkButton href={siteSettings.discordUrl} external variant="primary">
-                  Questions? Ask us on Discord →
+                  No question too small — ask us on Discord →
                 </LinkButton>
               </div>
             )

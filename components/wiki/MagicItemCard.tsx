@@ -25,6 +25,8 @@ export function MagicItemCard({
   const imageUrl = urlForImage(item.itemArt)
     ?.width(500)
     .height(300)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
   const href = unitSlug

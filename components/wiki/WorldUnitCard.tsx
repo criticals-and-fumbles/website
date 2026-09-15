@@ -25,6 +25,8 @@ export function WorldUnitCard({
   const imageUrl = urlForImage(unit.coverImage)
     ?.width(600)
     .height(400)
+    .fit("max")
+    .ignoreImageParams()
     .auto("format")
     .url();
   const accent = unit.colourAccent ?? "var(--emerald)";
