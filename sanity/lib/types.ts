@@ -46,6 +46,7 @@ export interface Article extends ArticleCard {
   status?: "draft" | "published";
   worlds?: WorldRef[];
   pageFooterCTA?: PortableTextBlock[];
+  metaDescription?: string;
 }
 
 export interface MajorEventCardData {

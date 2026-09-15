@@ -96,7 +96,8 @@ function convertBlocksToMarkdown(docs, fields) {
 }
 
 const MY_ARTICLES_QUERY = `*[_type == "article" && author._ref == $authorId] | order(_createdAt desc){
-  _id, title, slug, excerpt, category, tags, coverImage, body, status, publishedAt, readTimeMinutes,
+  _id, title, "slug": slug.current, excerpt, metaDescription, category, tags, coverImage, body,
+  status, publishedAt, readTimeMinutes,
   "worlds": worlds[]._ref
 }`;
 
