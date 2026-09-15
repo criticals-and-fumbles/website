@@ -6,7 +6,7 @@ import { groq } from "next-sanity";
 
 const articleCardFields = groq`
   _id, title, "slug": slug.current, excerpt, category,
-  publishedAt, readTimeMinutes,
+  publishedAt, readTimeMinutes, recommendedFor,
   coverImage,
   "author": author->{ handle, "slug": slug.current, avatar }
 `;
@@ -225,13 +225,13 @@ export const HOME_UPCOMING_EVENTS_QUERY = groq`{
   "major": *[_type == "majorEvent" && status != "cancelled" && status != "completed"]
     | order(coalesce(startDate, _createdAt) asc)[0...5] {
     _id, title, "slug": slug.current, eventType, eventDate, startDate,
-    location, status, coverImage, registrationUrl,
+    location, status, coverImage, registrationUrl, recommendedFor,
     "sortDate": coalesce(startDate, _createdAt)
   },
   "regular": *[_type == "regularEvent" && status != "Ended"]
     | order(coalesce(startedDate, _createdAt) asc)[0...5] {
     _id, title, "slug": slug.current, campaignName, schedule, status,
-    coverImage, registrationUrl,
+    coverImage, registrationUrl, recommendedFor,
     "sortDate": coalesce(startedDate, _createdAt)
   }
 }`;
@@ -279,7 +279,7 @@ export const MAJOR_EVENTS_UPCOMING_QUERY = groq`
   *[_type == "majorEvent" && status != "completed" && status != "cancelled"]
     | order(startDate asc) {
     _id, title, "slug": slug.current, tagline, eventType, status,
-    eventDate, startDate, location, coverImage, registrationUrl
+    eventDate, startDate, location, coverImage, registrationUrl, recommendedFor
   }
 `;
 
@@ -292,7 +292,7 @@ export const MAJOR_EVENTS_PAST_QUERY = groq`
 export const REGULAR_EVENTS_QUERY = groq`
   *[_type == "regularEvent" && status != "Ended"] | order(title asc) {
     _id, title, "slug": slug.current, campaignName, schedule, system,
-    playerCount, status, registrationUrl,
+    playerCount, status, registrationUrl, recommendedFor,
     "dm": dm->{ ${teamMemberRefFields} },
     "world": world->{ _id, name, "slug": slug.current, colourAccent }
   }
@@ -807,4 +807,31 @@ export const DIVISIONS_QUERY = groq`
 
 export const DIVISIONS_SYNERGY_QUERY = groq`
   *[_type == "divisionsSynergy"][0] { heading, body }
+`;
+
+/* ---------------------------------------------------------------------- */
+/* Campaigns directory (read-only port from the campaigns Worker — see    */
+/* that repo's src/routes/dossier.jsx for the original queries this was   */
+/* ported from, and sanity/lib/types.ts's CampaignCardData doc comment    */
+/* for why this app only ever reads these types, never writes them)       */
+/* ---------------------------------------------------------------------- */
+
+// visible === true is a real access gate on the campaigns Worker side too
+// (a direct link to a non-visible campaign's dossier 404s there), not
+// just a listing filter — mirrored here for the same reason.
+export const ALL_CAMPAIGNS_QUERY = groq`
+  *[_type == "campaign" && visible == true]{
+    _id, title, "slug": slug.current, genre, system, status, hook, heroImage,
+    "lastActivity": coalesce(
+      *[_type == "dossier" && references(^._id)] | order(_updatedAt desc)[0]._updatedAt,
+      _updatedAt
+    )
+  } | order(lastActivity desc)
+`;
+
+export const CAMPAIGN_RECENT_ACTIVITY_QUERY = groq`
+  *[_type == "dossier" && campaign->visible == true] | order(_updatedAt desc)[0...10]{
+    code, title, sessionLabel, _updatedAt,
+    "campaignSlug": campaign->slug.current, "campaignTitle": campaign->title
+  }
 `;

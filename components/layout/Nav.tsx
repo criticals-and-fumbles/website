@@ -6,14 +6,18 @@ import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { FacebookIcon, InstagramIcon, DiscordIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
 
-const NAV_LINKS = [
+const NAV_LINKS: { label: string; href: string; external?: boolean }[] = [
   { label: "About", href: "/about" },
   { label: "Events", href: "/events" },
-  // Separate Worker/subsite (campaigns.criticalsandfumbles.com), not a
-  // route in this app — external:true so it renders a plain <a> instead
-  // of next/link (no client-side prefetch/routing across domains). See
-  // that repo's CLAUDE.md for why it's a separate app at all.
-  { label: "Campaigns", href: "https://campaigns.criticalsandfumbles.com", external: true },
+  // The directory listing itself lives here now, not on the campaigns
+  // Worker — 2026-09-15, see app/(site)/campaigns/page.tsx's doc comment.
+  // campaigns.criticalsandfumbles.com/ redirects to this route for
+  // anyone with the old URL; internal nav goes straight here instead of
+  // round-tripping through that redirect. Individual dossiers (a
+  // specific campaign's session pages) still live on that separate
+  // Worker, genre-themed and deliberately not sharing this app's chrome
+  // — see CampaignCard's link target for those.
+  { label: "Campaigns", href: "/campaigns" },
   { label: "Wiki", href: "/wiki" },
   { label: "Team", href: "/team" },
   { label: "Resources", href: "/resources" },

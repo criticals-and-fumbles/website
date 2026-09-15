@@ -34,6 +34,7 @@ export interface ArticleCard {
   category?: string;
   publishedAt?: string;
   readTimeMinutes?: number;
+  recommendedFor?: string[];
   coverImage?: SanityImage;
   author?: TeamMemberRef;
 }
@@ -66,6 +67,7 @@ export interface MajorEventCardData {
   coverImage?: SanityImage;
   splashImage?: SanityImage;
   registrationUrl?: string;
+  recommendedFor?: string[];
 }
 
 /** Hero right panel — pinned event banner. See HOME_PINNED_EVENT_QUERY. */
@@ -157,6 +159,7 @@ export interface RegularEvent {
   dm?: TeamMemberRef;
   world?: WorldRef;
   registrationUrl?: string;
+  recommendedFor?: string[];
   /** Detail-page-only fields — undefined on the card-query shape above. */
   eventType?: string;
   frequency?: string;
@@ -183,6 +186,7 @@ export interface HomeUpcomingEvent {
   status?: string;
   coverImage?: SanityImage;
   registrationUrl?: string;
+  recommendedFor?: string[];
   /** majorEvent only */
   eventDate?: string;
   location?: string;
@@ -193,7 +197,7 @@ export interface HomeUpcomingEvent {
 
 export interface HomeUpcomingEventsResult {
   major: (MajorEventCardData & { sortDate: string })[];
-  regular: (Pick<RegularEvent, "_id" | "title" | "slug" | "campaignName" | "schedule" | "status" | "coverImage" | "registrationUrl"> & {
+  regular: (Pick<RegularEvent, "_id" | "title" | "slug" | "campaignName" | "schedule" | "status" | "coverImage" | "registrationUrl" | "recommendedFor"> & {
     sortDate: string;
   })[];
 }
@@ -633,4 +637,39 @@ export interface AiCharter {
   intro?: PortableTextBlock[];
   principles?: AiCharterPrinciple[];
   closingStatement?: PortableTextBlock[];
+}
+
+/**
+ * Campaigns directory (`/campaigns`) — read-only here. These document
+ * types (`campaign`, `dossier`, `genreTheme`) are authored exclusively
+ * through the separate campaigns Worker's GM console
+ * (campaigns.criticalsandfumbles.com/console), never through this
+ * site's Studio — this app only ever queries them, never mutates them.
+ * Field names/shapes are the authoritative ones from that repo's
+ * schema/campaign.js — kept in sync by hand, same as the rest of this
+ * cross-repo relationship (see campaigns/CLAUDE.md).
+ */
+export interface CampaignCardData {
+  _id: string;
+  title: string;
+  slug: string;
+  genre?: string;
+  system?: string;
+  status?: "active" | "recruiting" | "hiatus" | "concluded";
+  hook?: string;
+  heroImage?: SanityImage;
+  /** Newest of any of this campaign's dossiers' _updatedAt, or the
+   * campaign's own _updatedAt if it has none yet — see the query. */
+  lastActivity?: string;
+}
+
+/** Sidebar "Recent Updates" feed item — a dossier, flattened with its
+ * parent campaign's slug/title for linking, newest-updated first. */
+export interface CampaignActivityItem {
+  code: string;
+  title?: string;
+  sessionLabel?: string;
+  _updatedAt: string;
+  campaignSlug: string;
+  campaignTitle: string;
 }
