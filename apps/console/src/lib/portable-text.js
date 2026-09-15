@@ -18,6 +18,28 @@
  * recognize rather than throwing, so opening the edit panel never fails.
  */
 
+/**
+ * Portable Text block array -> plain text, whitespace-joined (no markdown
+ * syntax re-inserted, unlike blocksToMarkdown() below) — used only for
+ * word-count estimation (see api-me-articles.js's estimateReadTime), not
+ * for display or re-editing. Added alongside the WYSIWYG editor
+ * (2026-09-15): article.body/loreEntry.body now arrive as real blocks
+ * (built client-side from a Quill Delta), not markdown text, so read-
+ * time estimation needs its own text-extraction step rather than just
+ * counting words in a markdown string.
+ */
+export function plainTextFromBlocks(blocks) {
+  if (!Array.isArray(blocks)) return "";
+  const words = [];
+  for (const block of blocks) {
+    if (block._type !== "block" || !Array.isArray(block.children)) continue;
+    for (const child of block.children) {
+      if (child._type === "span" && child.text) words.push(child.text);
+    }
+  }
+  return words.join(" ");
+}
+
 function makeSpan(text, marks) {
   return { _type: "span", _key: crypto.randomUUID(), text, marks };
 }

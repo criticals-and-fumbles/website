@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
 import { resolveMyTeamMember } from "../lib/identity.js";
-import { markdownToBlocks } from "../lib/portable-text.js";
+import { plainTextFromBlocks } from "../lib/portable-text.js";
 
 const app = new Hono();
 
@@ -16,8 +16,8 @@ function slugify(s) {
 
 // ~200 words/minute, same rough convention the schema's own field
 // description implies ("Auto-calculated hint — override if needed").
-function estimateReadTime(markdown) {
-  const words = String(markdown || "").trim().split(/\s+/).filter(Boolean).length;
+function estimateReadTime(plainText) {
+  const words = String(plainText || "").trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 }
 
@@ -103,8 +103,12 @@ app.post("/", async (c) => {
     coverImage: payload.coverImageAssetId
       ? { _type: "image", asset: { _type: "reference", _ref: payload.coverImageAssetId } }
       : undefined,
-    body: markdownToBlocks(payload.body),
-    readTimeMinutes: estimateReadTime(payload.body),
+    // body arrives as a real Portable Text block array now (the WYSIWYG
+    // editor added 2026-09-15 converts Quill's Delta to blocks entirely
+    // client-side — see templates/console.js's deltaToBlocks) — not
+    // markdown text, so no server-side markdownToBlocks conversion.
+    body: Array.isArray(payload.body) && payload.body.length ? payload.body : undefined,
+    readTimeMinutes: estimateReadTime(plainTextFromBlocks(payload.body)),
     worlds: Array.isArray(payload.worlds) && payload.worlds.length
       ? payload.worlds.map((id) => ({ _type: "reference", _ref: id }))
       : undefined,
@@ -149,14 +153,14 @@ app.patch("/:id", async (c) => {
     return c.json({ error: `"${field}" is not self-editable — ask an admin to change it` }, 400);
   }
 
-  // "body" arrives as markdown from the console's textarea, same
-  // markdown->blocks conversion as creation, not raw Portable Text.
+  // "body" arrives as a real Portable Text block array (see the POST
+  // handler's identical comment) — validated, not converted.
   // "worlds" arrives as a plain array of world _ids from the console's
   // multiSelect, same reference-object wrapping POST already does for
   // it — sending plain strings into a reference-array field would
   // silently store the wrong shape.
   let finalValue = value;
-  if (field === "body") finalValue = markdownToBlocks(value) ?? [];
+  if (field === "body") finalValue = Array.isArray(value) ? value : [];
   else if (field === "worlds") {
     finalValue = Array.isArray(value) ? value.map((wid) => ({ _type: "reference", _ref: wid })) : [];
   }

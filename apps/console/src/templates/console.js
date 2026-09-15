@@ -45,6 +45,13 @@ export function renderConsolePage({
 <title>Criticals and Fumbles Campaign Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Quill (WYSIWYG editor, article/loreEntry body + dossier overview,
+     2026-09-15) — CDN, not bundled, same reasoning as the Google Fonts
+     link above: this is a client-side-only dependency, so loading it
+     via <link>/<script> keeps it entirely out of this Worker's own
+     bundle. Pinned to 1.3.7 (last of the actively-used 1.x line,
+     stable, small toolbar footprint) rather than floating to latest. -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <style>${CONSOLE_CSS}</style>
 </head>
 <body>
@@ -542,6 +549,7 @@ export function renderConsolePage({
   <option value="CLIMATE"><option value="NOTABLE NPCS"><option value="DEFENSES">
 </datalist>
 
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <script>
   const INITIAL_CAMPAIGNS = ${initialCampaigns};
   const INITIAL_DOSSIERS = ${initialDossiers};
@@ -609,9 +617,8 @@ function articleFieldsBlock(prefix) {
       <div class="field"><label>Worlds</label><select id="${prefix}Worlds" multiple size="4"></select></div>
       ${heroImageFieldBlock(prefix, "Cover Image")}
       <div class="field">
-        <p class="field-tip">Blank line between paragraphs. **bold** and *italic* are supported; headings and lists aren't (they'll save as plain text) — same conversion the Wiki import uses.</p>
         <label>Body</label>
-        <textarea id="${prefix}Body" rows="12"></textarea>
+        <div id="${prefix}Body" class="richtext" data-richtext="blocks"></div>
       </div>
   `;
 }
@@ -657,7 +664,7 @@ function dossierFieldsBlock(prefix) {
       <div class="field">
         <p class="field-tip">The main recap — what actually happened this session, in a paragraph or two. This is what most players will read first.</p>
         <label>Overview</label>
-        <textarea id="${prefix}Overview" rows="3"></textarea>
+        <div id="${prefix}Overview" class="richtext" data-richtext="html"></div>
       </div>
       <p class="field-tip">Banner shown right below the page's nav tabs, before Overview — separate from the Hero Image below (which appears in the Evidence section further down the page).</p>
       ${heroImageFieldBlock(prefix + "Header", "Header Image")}
@@ -864,7 +871,7 @@ function loreEntryFieldsBlock(prefix) {
         </select>
       </div>
       <div class="field"><label>Summary (max 300 chars)</label><textarea id="${prefix}Summary" rows="2" maxlength="300"></textarea></div>
-      <div class="field"><label>Body</label><textarea id="${prefix}Body" rows="5" placeholder="Markdown"></textarea></div>
+      <div class="field"><label>Body</label><div id="${prefix}Body" class="richtext" data-richtext="blocks"></div></div>
       <div class="field">
         <label>Canon Status</label>
         <select id="${prefix}CanonStatus">
@@ -970,6 +977,17 @@ const CONSOLE_CSS = `
   .field [contenteditable="true"]:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   .field input[type=text], .field input[type=number], .field input[type=email], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none; box-sizing:border-box;}
   .field input[type=text]:focus, .field input[type=number]:focus, .field input[type=email]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
+  /* Quill (WYSIWYG editor, 2026-09-15) — its "snow" theme is light by
+     default; these overrides are the minimum to make it read correctly
+     against this console's dark panels, not a full re-skin. */
+  .field .richtext{width:100%; max-width:640px;}
+  .field .richtext .ql-toolbar{background:var(--panel-2); border:1px solid var(--line); border-bottom:none;}
+  .field .richtext .ql-container{background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:var(--font-body); font-size:.92rem; min-height:140px;}
+  .field .richtext .ql-editor.ql-blank::before{color:var(--text-faint); font-style:normal;}
+  .field .richtext .ql-stroke{stroke:var(--text-dim);}
+  .field .richtext .ql-fill{fill:var(--text-dim);}
+  .field .richtext .ql-picker-label{color:var(--text-dim);}
+  .field .richtext:focus-within .ql-toolbar, .field .richtext:focus-within .ql-container{border-color:var(--pink);}
   .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
   .back-link{display:inline-block; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); text-decoration:none; margin-bottom:6px;}
   .back-link:hover{color:var(--emerald);}
@@ -1456,7 +1474,7 @@ const CONSOLE_JS = `
       distribution: document.getElementById('cdDistribution').value.trim(),
       sessionLabel: document.getElementById('cdSessionLabel').value.trim(),
       location: document.getElementById('cdLocation').value.trim(),
-      overview: document.getElementById('cdOverview').value.trim(),
+      overview: getRichTextHtml('cdOverview'),
       quickFacts: collectRepeaterRows('cdQuickFacts'),
       locationFacts: collectRepeaterRows('cdLocationFacts'),
       statTiles: collectRepeaterRows('cdStatTiles'),
@@ -1487,7 +1505,8 @@ const CONSOLE_JS = `
       dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, headerImage: body.headerImage, objectives: body.objectives, media: body.media, campaignId: body.campaign });
       flag.textContent = '✓ Created.';
       flag.className = 'savedflag show';
-      ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
+      ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation'].forEach(id=>document.getElementById(id).value='');
+      setRichTextHtml('cdOverview', '');
       ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdMedia','cdLog'].forEach(clearRepeater);
       cdHeroImageAsset = null;
       cdHeaderImageAsset = null;
@@ -1526,7 +1545,7 @@ const CONSOLE_JS = `
     { field: 'distribution', id: 'edDistribution', kind: 'text' },
     { field: 'sessionLabel', id: 'edSessionLabel', kind: 'text' },
     { field: 'location', id: 'edLocation', kind: 'text' },
-    { field: 'overview', id: 'edOverview', kind: 'text' },
+    { field: 'overview', id: 'edOverview', kind: 'richtext-html' },
     { field: 'quickFacts', id: 'edQuickFacts', kind: 'factRow' },
     { field: 'locationFacts', id: 'edLocationFacts', kind: 'factRow' },
     { field: 'statTiles', id: 'edStatTiles', kind: 'statTile' },
@@ -1548,6 +1567,8 @@ const CONSOLE_JS = `
     DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
       if(kind === 'text'){
         document.getElementById(id).value = d[field] || '';
+      } else if(kind === 'richtext-html'){
+        setRichTextHtml(id, d[field] || '');
       } else {
         populateRepeater(id, kind, d[field]);
       }
@@ -1574,7 +1595,9 @@ const CONSOLE_JS = `
     const flag = document.getElementById('savedFlag');
     const updates = {};
     DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
-      updates[field] = kind === 'text' ? document.getElementById(id).value.trim() : collectRepeaterRows(id);
+      updates[field] = kind === 'text' ? document.getElementById(id).value.trim()
+        : kind === 'richtext-html' ? getRichTextHtml(id)
+        : collectRepeaterRows(id);
     });
     updates.media = collectMediaRows('edMedia');
     flag.textContent = 'Saving…';
@@ -2026,7 +2049,7 @@ const CONSOLE_JS = `
     { field: 'category', idSuffix: 'Category', kind: 'select' },
     { field: 'tags', idSuffix: 'Tags', kind: 'commaList' },
     { field: 'worlds', idSuffix: 'Worlds', kind: 'multiSelect' },
-    { field: 'body', idSuffix: 'Body', kind: 'markdown' },
+    { field: 'body', idSuffix: 'Body', kind: 'richtext-blocks' },
   ];
 
   function renderMyArticleGrid(){
@@ -2076,7 +2099,8 @@ const CONSOLE_JS = `
       myArticles.unshift({ _id: result.id, title: body.title, category: body.category, status: 'draft', readTimeMinutes: null });
       flag.textContent = '✓ Saved as draft.';
       flag.className = 'savedflag show';
-      ['caTitle','caExcerpt','caTags','caBody'].forEach(id=>document.getElementById(id).value='');
+      ['caTitle','caExcerpt','caTags'].forEach(id=>document.getElementById(id).value='');
+      setRichTextBlocks('caBody', []);
       document.getElementById('caCategory').value = '';
       Array.from(document.getElementById('caWorlds').options).forEach(o=>o.selected=false);
       caCoverImageAsset = null;
@@ -2279,7 +2303,148 @@ const CONSOLE_JS = `
     sel.innerHTML = (allowEmpty ? '<option value="">—</option>' : '') + opts.join('');
   }
 
+  // ---------- RICH TEXT (Quill) — article.body/loreEntry.body (Portable
+  // Text blocks) + dossier.overview (HTML string), added 2026-09-15.
+  // Every richtext container is a plain <div id="..." data-richtext="...">
+  // in the static markup (articleFieldsBlock/dossierFieldsBlock/
+  // loreEntryFieldsBlock) rather than a <textarea> — Quill takes over
+  // that div and turns it into a toolbar + editable area. One instance
+  // per container, created once (initRichTextEditors(), called below)
+  // and reused across every open/close of that panel — same "static
+  // panel, repopulated per edit" model this console already uses for
+  // every other field.
+  const richTextEditors = new Map();
+
+  const QUILL_TOOLBAR = [
+    [{ header: [2, 3, false] }],
+    ['bold', 'italic'],
+    ['blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link'],
+    ['clean'],
+  ];
+
+  function initRichTextEditors(){
+    document.querySelectorAll('[data-richtext]').forEach(el=>{
+      if(richTextEditors.has(el.id)) return;
+      richTextEditors.set(el.id, new Quill('#' + el.id, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } }));
+    });
+  }
+
+  // Portable Text <-> Quill Delta. Quill's Delta model already matches
+  // Portable Text's block/mark shape closely enough to convert directly
+  // — no HTML round-trip needed. Each Delta op is either an insert of
+  // plain text (optionally carrying inline attributes: bold/italic/
+  // link) or an insert of "\n" carrying BLOCK-level attributes (header/
+  // list) — that "\n" is exactly where Quill marks one block ending and
+  // the next beginning, which is what flushBlock() below keys off of.
+  function deltaToBlocks(delta){
+    const blocks = [];
+    let spans = [];
+    let markDefs = [];
+    let blockAttrs = {};
+
+    function flushBlock(){
+      if(spans.length === 0 && Object.keys(blockAttrs).length === 0){
+        spans = []; markDefs = []; blockAttrs = {};
+        return;
+      }
+      if(spans.length === 0) spans.push({ _type: 'span', _key: crypto.randomUUID(), text: '', marks: [] });
+      const listItem = blockAttrs.list === 'bullet' ? 'bullet' : blockAttrs.list === 'ordered' ? 'number' : undefined;
+      blocks.push({
+        _type: 'block',
+        _key: crypto.randomUUID(),
+        style: blockAttrs.header ? 'h' + blockAttrs.header : blockAttrs.blockquote ? 'blockquote' : 'normal',
+        listItem,
+        level: listItem ? 1 : undefined,
+        markDefs,
+        children: spans,
+      });
+      spans = []; markDefs = []; blockAttrs = {};
+    }
+
+    (delta.ops || []).forEach(op=>{
+      if(typeof op.insert !== 'string') return; // images/embeds — not offered by this toolbar
+      const attrs = op.attributes || {};
+      const parts = op.insert.split('\n');
+      parts.forEach((part, i)=>{
+        if(part){
+          const marks = [];
+          if(attrs.bold) marks.push('strong');
+          if(attrs.italic) marks.push('em');
+          if(attrs.link){
+            const key = crypto.randomUUID();
+            markDefs.push({ _type: 'link', _key: key, href: attrs.link });
+            marks.push(key);
+          }
+          spans.push({ _type: 'span', _key: crypto.randomUUID(), text: part, marks });
+        }
+        if(i < parts.length - 1){
+          blockAttrs = attrs;
+          flushBlock();
+        }
+      });
+    });
+    flushBlock();
+    return blocks;
+  }
+
+  function blocksToDelta(blocks){
+    const ops = [];
+    (blocks || []).forEach(block=>{
+      if(block._type !== 'block' || !Array.isArray(block.children)) return;
+      const markDefs = block.markDefs || [];
+      block.children.forEach(child=>{
+        if(child._type !== 'span') return;
+        const attrs = {};
+        (child.marks || []).forEach(mark=>{
+          if(mark === 'strong') attrs.bold = true;
+          else if(mark === 'em') attrs.italic = true;
+          else {
+            const def = markDefs.find(d=>d._key === mark);
+            if(def && def._type === 'link') attrs.link = def.href;
+          }
+        });
+        ops.push(Object.keys(attrs).length ? { insert: child.text || '', attributes: attrs } : { insert: child.text || '' });
+      });
+      const blockAttrs = {};
+      if(block.style === 'h2') blockAttrs.header = 2;
+      else if(block.style === 'h3') blockAttrs.header = 3;
+      else if(block.style === 'blockquote') blockAttrs.blockquote = true;
+      if(block.listItem === 'bullet') blockAttrs.list = 'bullet';
+      else if(block.listItem === 'number') blockAttrs.list = 'ordered';
+      ops.push(Object.keys(blockAttrs).length ? { insert: '\n', attributes: blockAttrs } : { insert: '\n' });
+    });
+    return { ops };
+  }
+
+  function getRichTextBlocks(id){
+    const q = richTextEditors.get(id);
+    return q ? deltaToBlocks(q.getContents()) : [];
+  }
+  function setRichTextBlocks(id, blocks){
+    const q = richTextEditors.get(id);
+    if(q) q.setContents(blocksToDelta(blocks || []));
+  }
+  // dossier.overview — plain HTML string, not Portable Text (see
+  // api-dossier.js's sanitizeHtml comment for why). No conversion
+  // needed in either direction; Quill's own innerHTML IS the value.
+  function getRichTextHtml(id){
+    const q = richTextEditors.get(id);
+    return q ? q.root.innerHTML : '';
+  }
+  function setRichTextHtml(id, html){
+    const q = richTextEditors.get(id);
+    if(!q) return;
+    q.setContents([]);
+    if(html) q.clipboard.dangerouslyPasteHTML(html);
+  }
+
+  initRichTextEditors();
+
   function getFieldValue(kind, id){
+    if(kind === 'richtext-blocks') return getRichTextBlocks(id);
+    if(kind === 'richtext-html') return getRichTextHtml(id);
     const el = document.getElementById(id);
     if(!el) return undefined;
     if(kind === 'text' || kind === 'markdown') return el.value.trim();
@@ -2297,6 +2462,8 @@ const CONSOLE_JS = `
   }
 
   function setFieldValue(kind, id, value){
+    if(kind === 'richtext-blocks'){ setRichTextBlocks(id, value); return; }
+    if(kind === 'richtext-html'){ setRichTextHtml(id, value); return; }
     const el = document.getElementById(id);
     if(!el) return;
     if(kind === 'multiSelect'){
@@ -2708,7 +2875,7 @@ const CONSOLE_JS = `
     { field: 'alsoKnownAs', idSuffix: 'AlsoKnownAs', kind: 'text' },
     { field: 'category', idSuffix: 'Category', kind: 'select' },
     { field: 'summary', idSuffix: 'Summary', kind: 'text' },
-    { field: 'body', idSuffix: 'Body', kind: 'markdown' },
+    { field: 'body', idSuffix: 'Body', kind: 'richtext-blocks' },
     { field: 'canonStatus', idSuffix: 'CanonStatus', kind: 'select' },
     { field: 'firstAppeared', idSuffix: 'FirstAppeared', kind: 'text' },
     { field: 'relatedEntries', idSuffix: 'RelatedEntries', kind: 'multiSelect' },
@@ -2990,7 +3157,8 @@ const CONSOLE_JS = `
     if(view === 'myArticles') renderMyArticleGrid();
     if(view === 'createArticle'){
       populateSelect('caWorlds', worlds, 'name');
-      ['caTitle','caExcerpt','caTags','caBody'].forEach(id=>document.getElementById(id).value='');
+      ['caTitle','caExcerpt','caTags'].forEach(id=>document.getElementById(id).value='');
+      setRichTextBlocks('caBody', []);
       document.getElementById('caCategory').value = '';
       caCoverImageAsset = null;
       renderExistingThumb('ca', null);

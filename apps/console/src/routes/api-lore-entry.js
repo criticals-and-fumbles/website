@@ -1,18 +1,20 @@
 import { Hono } from "hono";
 import { query, mutate, createOrReplace } from "../lib/sanity.js";
 import { wikiDocId } from "../lib/slug.js";
-import { markdownToBlocks } from "../lib/portable-text.js";
 import { rejectServerManagedField, stampAudit } from "../lib/wiki-audit.js";
 import { requireWorldCollaborator } from "../lib/world-access.js";
 
 const app = new Hono();
 
 // POST /api/lore-entry — body: { world, unit?, title, alsoKnownAs?,
-// category?, summary?, body? (markdown -> Portable Text; named "body"
-// in the schema, kept as `input.body` here to avoid clashing with the
-// request payload variable), canonStatus?, firstAppeared?,
-// relatedEntries? (array of loreEntry _ids), tags?, submittedBy?
-// (teamMember _id). world is required per schema/loreEntry.ts.
+// category?, summary?, body? (real Portable Text block array — the
+// WYSIWYG editor added 2026-09-15 converts Quill's Delta to blocks
+// client-side, see templates/console.js's deltaToBlocks, no server-
+// side markdown conversion for this field anymore; named "body" in the
+// schema, kept as `input.body` here to avoid clashing with the request
+// payload variable), canonStatus?, firstAppeared?, relatedEntries?
+// (array of loreEntry _ids), tags?, submittedBy? (teamMember _id).
+// world is required per schema/loreEntry.ts.
 app.post("/", async (c) => {
   const input = await c.req.json();
   if (!input.world) return c.json({ error: "world is required" }, 400);
@@ -32,7 +34,7 @@ app.post("/", async (c) => {
     category: input.category || undefined,
     // summary is schema type "text" (plain string, max 300) — not Portable Text.
     summary: input.summary || undefined,
-    body: markdownToBlocks(input.body),
+    body: Array.isArray(input.body) && input.body.length ? input.body : undefined,
     canonStatus: input.canonStatus || undefined,
     firstAppeared: input.firstAppeared || undefined,
     relatedEntries: Array.isArray(input.relatedEntries) && input.relatedEntries.length
@@ -70,7 +72,7 @@ app.patch("/:id", async (c) => {
   if (error) return error;
 
   let setValue = value;
-  if (field === "body") setValue = markdownToBlocks(value);
+  if (field === "body") setValue = Array.isArray(value) ? value : [];
   if (field === "relatedEntries") {
     setValue = Array.isArray(value)
       ? value.map((refId) => ({ _type: "reference", _ref: refId, _key: crypto.randomUUID() }))
