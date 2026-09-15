@@ -2370,9 +2370,25 @@ const CONSOLE_JS = `
   // Portable Text's block/mark shape closely enough to convert directly
   // — no HTML round-trip needed. Each Delta op is either an insert of
   // plain text (optionally carrying inline attributes: bold/italic/
-  // link) or an insert of "\n" carrying BLOCK-level attributes (header/
-  // list) — that "\n" is exactly where Quill marks one block ending and
-  // the next beginning, which is what flushBlock() below keys off of.
+  // link) or an insert of a newline carrying BLOCK-level attributes
+  // (header/list) — that newline is exactly where Quill marks one
+  // block ending and the next beginning, which is what flushBlock()
+  // below keys off of.
+  //
+  // CAUTION for future edits to this whole CONSOLE_JS section: this
+  // text is a string literal inside a server-side template literal
+  // (see this file's CONSOLE_JS constant definition above), not a real source
+  // file the browser parses directly. The newline ESCAPE SEQUENCE
+  // (backslash followed by the letter that means new line) is a
+  // recognized escape in a template literal, so writing it with a
+  // single backslash here gets resolved into an actual raw line break
+  // by the server before this code ever reaches the browser — silently
+  // splitting a line (comment or real code) in half with no comment
+  // marker on the continuation, which the browser then fails to parse.
+  // Always use a doubled backslash for that escape sequence anywhere
+  // in this block, in both code and comments — real incident, see this
+  // file's git history around 2026-09-15 ("console freezes after
+  // login") for the actual bug this caused.
   function deltaToBlocks(delta){
     const blocks = [];
     let spans = [];
@@ -2401,7 +2417,7 @@ const CONSOLE_JS = `
     (delta.ops || []).forEach(op=>{
       if(typeof op.insert !== 'string') return; // images/embeds — not offered by this toolbar
       const attrs = op.attributes || {};
-      const parts = op.insert.split('\n');
+      const parts = op.insert.split('\\n');
       parts.forEach((part, i)=>{
         if(part){
           const marks = [];
@@ -2448,7 +2464,7 @@ const CONSOLE_JS = `
       else if(block.style === 'blockquote') blockAttrs.blockquote = true;
       if(block.listItem === 'bullet') blockAttrs.list = 'bullet';
       else if(block.listItem === 'number') blockAttrs.list = 'ordered';
-      ops.push(Object.keys(blockAttrs).length ? { insert: '\n', attributes: blockAttrs } : { insert: '\n' });
+      ops.push(Object.keys(blockAttrs).length ? { insert: '\\n', attributes: blockAttrs } : { insert: '\\n' });
     });
     return { ops };
   }
