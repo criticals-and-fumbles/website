@@ -552,6 +552,10 @@ export function renderConsolePage({
   <option value="CLIMATE"><option value="NOTABLE NPCS"><option value="DEFENSES">
 </datalist>
 
+<!-- Shared image preview lightbox — see openImageLightbox() in
+     CONSOLE_JS. One instance, reused by every image thumbnail across
+     every form (article cover, dossier hero/header). -->
+<div class="img-lightbox" id="imgLightbox"><img id="imgLightboxImg" alt=""></div>
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <script>
   const INITIAL_CAMPAIGNS = ${initialCampaigns};
@@ -1018,9 +1022,19 @@ const CONSOLE_CSS = `
   .savebar .savedflag.show{opacity:1;}
   .savebar .savedflag.err{color:var(--danger);}
   .imgfield{display:flex; align-items:center; gap:12px;}
-  .imgfield .thumb{width:60px; height:60px; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:.65rem; color:var(--text-faint); flex-shrink:0; overflow:hidden;}
+  /* 60px was genuinely too small to tell what was actually uploaded —
+     bumped to a size that reads as a real preview, plus the thumb is
+     now clickable (see .thumb.has-image below and the lightbox further
+     down) for an even bigger look when that's still not enough. */
+  .imgfield .thumb{width:96px; height:96px; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:.65rem; color:var(--text-faint); flex-shrink:0; overflow:hidden;}
   .imgfield .thumb img{width:100%; height:100%; object-fit:cover;}
+  .imgfield .thumb.has-image{cursor:pointer;}
   .imgfield .sizewarn{font-family:var(--font-mono); font-size:9px; color:var(--danger);}
+  /* Image preview lightbox — click any uploaded thumbnail to see it at
+     full size instead of squinting at a 96px box. */
+  .img-lightbox{display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.85); align-items:center; justify-content:center; padding:40px; cursor:zoom-out;}
+  .img-lightbox.open{display:flex;}
+  .img-lightbox img{max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,.6);}
   .toggle{position:relative; display:inline-block; width:36px; height:20px;}
   .toggle input{opacity:0; width:0; height:0;}
   .toggle .slider{position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line-strong); border-radius:20px; cursor:pointer; transition:.2s;}
@@ -1652,14 +1666,34 @@ const CONSOLE_JS = `
   // can't import that module) — used only to preview an EXISTING
   // heroImage when opening an edit form; a freshly uploaded image is
   // previewed straight from the local blob instead (see wireImageUpload).
-  function sanityImageUrl(image, w, h){
+  function sanityImageUrl(image, w, h, fit){
     const ref = image && image.asset && image.asset._ref;
     if(!ref || !SANITY_PROJECT_ID) return null;
     const m = /^image-([a-f0-9]+)-(\d+x\d+)-(\w+)$/.exec(ref);
     if(!m) return null;
     const [, id, dims, format] = m;
-    return \`https://cdn.sanity.io/images/\${SANITY_PROJECT_ID}/\${SANITY_DATASET}/\${id}-\${dims}.\${format}?auto=format&w=\${w}&h=\${h}\`;
+    // fit=max only when explicitly asked for (the lightbox wants the
+    // whole uncropped image; the inline 96px thumb deliberately keeps
+    // the crop-to-square default, matching its own object-fit:cover) —
+    // see cnf-website's ArticleCard.tsx for the identical crop gotcha
+    // (Sanity's image API crops to exact w+h unless fit=max is set).
+    const fitParam = fit ? \`&fit=\${fit}\` : '';
+    return \`https://cdn.sanity.io/images/\${SANITY_PROJECT_ID}/\${SANITY_DATASET}/\${id}-\${dims}.\${format}?auto=format&w=\${w}&h=\${h}\${fitParam}\`;
   }
+
+  // ---------- IMAGE PREVIEW LIGHTBOX ----------
+  // One shared overlay (see .img-lightbox in CONSOLE_CSS) — click any
+  // uploaded thumbnail across any form (article cover, dossier hero/
+  // header) to see it at full size instead of squinting at a 96px box.
+  const imgLightbox = document.getElementById('imgLightbox');
+  const imgLightboxImg = document.getElementById('imgLightboxImg');
+  function openImageLightbox(url){
+    if(!url) return;
+    imgLightboxImg.src = url;
+    imgLightbox.classList.add('open');
+  }
+  imgLightbox.addEventListener('click', ()=> imgLightbox.classList.remove('open'));
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') imgLightbox.classList.remove('open'); });
 
   function setUploadBtnLabel(prefix, hasImage){
     const btn = document.getElementById(prefix + 'UploadImageBtn');
@@ -1671,7 +1705,12 @@ const CONSOLE_JS = `
     const thumb = document.getElementById(prefix + 'ThumbPreview');
     const url = sanityImageUrl(image, 120, 120);
     thumb.innerHTML = url ? \`<img src="\${url}" alt="">\` : '';
+    thumb.classList.toggle('has-image', !!url);
     if(!url) thumb.textContent = 'NONE';
+    else{
+      const fullUrl = sanityImageUrl(image, 1600, 1600, 'max');
+      thumb.onclick = ()=> openImageLightbox(fullUrl);
+    }
     setUploadBtnLabel(prefix, !!url);
   }
 
@@ -1726,7 +1765,13 @@ const CONSOLE_JS = `
       try{
         const { asset, webp } = await uploadImageAsset(file);
         await onUploaded(asset._id);
-        thumb.innerHTML = \`<img src="\${URL.createObjectURL(webp)}" alt="">\`;
+        const objectUrl = URL.createObjectURL(webp);
+        thumb.innerHTML = \`<img src="\${objectUrl}" alt="">\`;
+        thumb.classList.add('has-image');
+        // Same blob for both — no separate "full size" fetch needed
+        // here, unlike renderExistingThumb, since we already have the
+        // full-resolution just-uploaded image in memory.
+        thumb.onclick = ()=> openImageLightbox(objectUrl);
         setUploadBtnLabel(prefix, true);
         sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
       }catch(err){
