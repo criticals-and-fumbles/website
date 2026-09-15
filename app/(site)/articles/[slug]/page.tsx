@@ -27,6 +27,7 @@ export async function generateMetadata({
   return buildMetadata({
     title: article.title,
     description:
+      article.metaDescription ??
       article.excerpt ??
       `Read "${article.title}" on Criticals and Fumbles, Singapore's tabletop RPG community.`,
     path: `/articles/${slug}`,
@@ -56,7 +57,7 @@ export default async function ArticlePage({
       <ArticleStructuredData
         article={{
           title: article.title,
-          excerpt: article.excerpt,
+          excerpt: article.metaDescription ?? article.excerpt,
           publishedAt: article.publishedAt,
           author: article.author,
           image: coverUrl,

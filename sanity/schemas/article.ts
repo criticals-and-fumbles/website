@@ -31,6 +31,17 @@ export default defineType({
       validation: (rule) => rule.max(200),
     }),
     defineField({
+      name: "metaDescription",
+      title: "Meta Description (SEO)",
+      type: "text",
+      description:
+        "What shows up in Google search results and social share " +
+        "previews — different audience/job from Excerpt above (which " +
+        "is what a reader sees on the Chronicles listing page). " +
+        "Optional — falls back to Excerpt if left blank.",
+      validation: (rule) => rule.max(160),
+    }),
+    defineField({
       name: "author",
       title: "Author",
       type: "reference",

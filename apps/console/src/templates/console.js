@@ -605,7 +605,17 @@ const ARTICLE_CATEGORIES = [
 function articleFieldsBlock(prefix) {
   return `
       <div class="field"><label>Title *</label><input type="text" id="${prefix}Title"></div>
+      <div class="field">
+        <p class="field-tip">The article's URL (criticalsandfumbles.com/articles/<em>this</em>). Leave blank to auto-generate from Title. Changing this on an already-published article changes its public URL — anyone with the old link gets a 404.</p>
+        <label>Slug</label>
+        <input type="text" id="${prefix}Slug" placeholder="auto-generated from title if left blank">
+      </div>
       <div class="field"><label>Excerpt</label><textarea id="${prefix}Excerpt" rows="2" maxlength="200"></textarea></div>
+      <div class="field">
+        <p class="field-tip">What shows up in Google search results and social share previews — a different job from Excerpt above (which is what a reader sees on the Chronicles listing page, not what a Google searcher sees). Leave blank to reuse Excerpt.</p>
+        <label>Meta Description (SEO)</label>
+        <textarea id="${prefix}MetaDescription" rows="2" maxlength="160"></textarea>
+      </div>
       <div class="field">
         <label>Category</label>
         <select id="${prefix}Category">
@@ -2045,7 +2055,9 @@ const CONSOLE_JS = `
   // ---------- MY ARTICLES (list + create + edit) ----------
   const ARTICLE_FIELD_MAP = [
     { field: 'title', idSuffix: 'Title', kind: 'text' },
+    { field: 'slug', idSuffix: 'Slug', kind: 'text' },
     { field: 'excerpt', idSuffix: 'Excerpt', kind: 'text' },
+    { field: 'metaDescription', idSuffix: 'MetaDescription', kind: 'text' },
     { field: 'category', idSuffix: 'Category', kind: 'select' },
     { field: 'tags', idSuffix: 'Tags', kind: 'commaList' },
     { field: 'worlds', idSuffix: 'Worlds', kind: 'multiSelect' },

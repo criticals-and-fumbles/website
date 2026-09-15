@@ -66,11 +66,17 @@ app.post("/", async (c) => {
     return c.json({ error: "title is required" }, 400);
   }
 
-  const slug = slugify(payload.title);
+  // A contributor may set a custom SEO-friendly slug instead of the
+  // title-derived default — exposed in the console alongside
+  // metaDescription (2026-09-15, SEO push) since the two are the same
+  // kind of decision: what does a Google searcher see, not what the
+  // on-page title says. Still runs through slugify() either way, so a
+  // custom value can't produce an invalid/unsafe slug.
+  const slug = payload.slug && String(payload.slug).trim() ? slugify(payload.slug) : slugify(payload.title);
   if (!slug) return c.json({ error: "title must contain at least one letter/number" }, 400);
 
   const existing = await query(c.env, `*[_type == "article" && slug.current == $slug][0]._id`, { slug });
-  if (existing) return c.json({ error: `An article with slug "${slug}" already exists — try a different title` }, 409);
+  if (existing) return c.json({ error: `An article with slug "${slug}" already exists — try a different title or slug` }, 409);
 
   // Plain `create` with NO deterministic _id — unlike campaign/dossier,
   // article documents are read anonymously (no token) by cnf-website's
@@ -97,6 +103,13 @@ app.post("/", async (c) => {
     title: String(payload.title).trim(),
     slug: { _type: "slug", current: slug },
     excerpt: payload.excerpt ? String(payload.excerpt).trim().slice(0, 200) : undefined,
+    // Different job from excerpt above — what shows in Google/social
+    // previews, not what a reader sees on the Chronicles listing page.
+    // Optional; falls back to excerpt at render time if left blank (see
+    // app/(site)/articles/[slug]/page.tsx), not defaulted here.
+    metaDescription: payload.metaDescription
+      ? String(payload.metaDescription).trim().slice(0, 160)
+      : undefined,
     author: { _type: "reference", _ref: member._id },
     category: payload.category || undefined,
     tags: Array.isArray(payload.tags) ? payload.tags.filter(Boolean) : undefined,
@@ -134,7 +147,9 @@ app.post("/", async (c) => {
 // Studio's review step by design (see the article-status product
 // decision this route implements); a DM can revise their own draft's
 // content freely but can't publish it themselves.
-const SELF_EDITABLE_FIELDS = new Set(["title", "excerpt", "category", "tags", "coverImage", "body", "worlds"]);
+const SELF_EDITABLE_FIELDS = new Set([
+  "title", "excerpt", "metaDescription", "slug", "category", "tags", "coverImage", "body", "worlds",
+]);
 
 app.patch("/:id", async (c) => {
   const { member, error } = await requireMyTeamMember(c);
@@ -159,14 +174,38 @@ app.patch("/:id", async (c) => {
   // multiSelect, same reference-object wrapping POST already does for
   // it — sending plain strings into a reference-array field would
   // silently store the wrong shape.
+  // "slug" changes the article's public URL — re-slugified and
+  // uniqueness-checked (excluding this article itself) the same way
+  // the POST handler validates a fresh one, then wrapped in the
+  // {_type:"slug", current} shape the schema actually expects, not
+  // stored as a bare string.
   let finalValue = value;
   if (field === "body") finalValue = Array.isArray(value) ? value : [];
   else if (field === "worlds") {
     finalValue = Array.isArray(value) ? value.map((wid) => ({ _type: "reference", _ref: wid })) : [];
+  } else if (field === "slug") {
+    const newSlug = slugify(value);
+    if (!newSlug) return c.json({ error: "Slug must contain at least one letter/number" }, 400);
+    const clash = await query(
+      c.env,
+      `*[_type == "article" && slug.current == $slug && _id != $id][0]._id`,
+      { slug: newSlug, id },
+    );
+    if (clash) return c.json({ error: `Another article already uses slug "${newSlug}"` }, 409);
+    finalValue = { _type: "slug", current: newSlug };
+  } else if (field === "metaDescription") {
+    finalValue = value ? String(value).trim().slice(0, 160) : undefined;
   }
 
+  // A blank/undefined finalValue means "clear this field" — {set: {x:
+  // undefined}} silently does nothing (JSON.stringify drops the key
+  // entirely, so the mutation body ends up as an empty set), it does
+  // NOT unset it. Real clears need Sanity's unset action instead.
+  const mutation =
+    finalValue === undefined ? { patch: { id, unset: [field] } } : { patch: { id, set: { [field]: finalValue } } };
+
   try {
-    const result = await mutate(c.env, [{ patch: { id, set: { [field]: finalValue } } }]);
+    const result = await mutate(c.env, [mutation]);
     return c.json({ ok: true, result });
   } catch (err) {
     return c.json({ error: err.message }, 502);
