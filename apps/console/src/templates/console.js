@@ -1669,7 +1669,16 @@ const CONSOLE_JS = `
   function sanityImageUrl(image, w, h, fit){
     const ref = image && image.asset && image.asset._ref;
     if(!ref || !SANITY_PROJECT_ID) return null;
-    const m = /^image-([a-f0-9]+)-(\d+x\d+)-(\w+)$/.exec(ref);
+    // \\d/\\w, not \d/\w — same server-side template-literal escaping
+    // trap as the newline bug elsewhere in this file (see the CAUTION
+    // comment above deltaToBlocks): \d and \w aren't recognized escape
+    // sequences, so a single backslash gets silently dropped by the
+    // server before this ever reaches the browser, corrupting the
+    // regex into one that can never match a real asset ref — every
+    // existing-image preview always came back null/"NONE" as a result.
+    // Real bug, not hypothetical: confirmed live, a real article's
+    // saved coverImage never showed on reopening the edit form.
+    const m = /^image-([a-f0-9]+)-(\\d+x\\d+)-(\\w+)$/.exec(ref);
     if(!m) return null;
     const [, id, dims, format] = m;
     // fit=max only when explicitly asked for (the lightbox wants the
