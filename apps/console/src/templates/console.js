@@ -18,6 +18,8 @@
  * too (api-campaign.js / api-dossier.js) — client-side scoping here is a
  * UX convenience, not the security boundary.
  */
+import { FAVICON_DATA_URI } from "../lib/favicon.js";
+
 export function renderConsolePage({
   campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset,
   worlds, teamMembers, worldUnits, factions, keyFigures, magicItems, notablePlaces, loreEntries,
@@ -42,7 +44,8 @@ export function renderConsolePage({
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Criticals and Fumbles Campaign Log</title>
+<title>C&F Site Console</title>
+<link rel="icon" type="image/png" href="${FAVICON_DATA_URI}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <!-- Quill (WYSIWYG editor, article/loreEntry body + dossier overview,
@@ -2336,10 +2339,30 @@ const CONSOLE_JS = `
     ['clean'],
   ];
 
+  // Never let a Quill init failure (CDN blocked/slow/down, a browser
+  // quirk, anything) take down the rest of this script — this is one
+  // big synchronous <script> block, so an uncaught exception here would
+  // otherwise stop every line after it from ever running, including
+  // all data rendering and nav/button wiring. Real incident: exactly
+  // this, "console freezes after login, no data loads at all" (2026-
+  // 09-15) — root cause never fully pinned down (Quill's CDN URL
+  // checks out fine from a plain fetch), but the fix that actually
+  // matters regardless of cause is this: a client-side rich-text
+  // dependency must never be able to couple to "does the console work
+  // at all". Each container gets its own try/catch too, so one bad
+  // container can't take out the other five.
   function initRichTextEditors(){
+    if(typeof Quill === 'undefined'){
+      console.error('Quill failed to load (CDN blocked/unreachable?) — rich text fields will not be editable this session.');
+      return;
+    }
     document.querySelectorAll('[data-richtext]').forEach(el=>{
       if(richTextEditors.has(el.id)) return;
-      richTextEditors.set(el.id, new Quill('#' + el.id, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } }));
+      try{
+        richTextEditors.set(el.id, new Quill('#' + el.id, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } }));
+      }catch(err){
+        console.error('Quill init failed for #' + el.id + ':', err);
+      }
     });
   }
 
@@ -2452,7 +2475,7 @@ const CONSOLE_JS = `
     if(html) q.clipboard.dangerouslyPasteHTML(html);
   }
 
-  initRichTextEditors();
+  try{ initRichTextEditors(); }catch(err){ console.error('initRichTextEditors() failed:', err); }
 
   function getFieldValue(kind, id){
     if(kind === 'richtext-blocks') return getRichTextBlocks(id);
