@@ -143,8 +143,12 @@ app.get("/", async (c) => {
   convertBlocksToMarkdown(keyFigures, ["description", "dmNotes"]);
   convertBlocksToMarkdown(magicItems, ["lore", "dmNotes"]);
   convertBlocksToMarkdown(notablePlaces, ["description", "dmNotes"]);
-  convertBlocksToMarkdown(loreEntries, ["body"]);
-  convertBlocksToMarkdown(myArticles, ["body"]);
+  // loreEntries.body / myArticles.body are NOT converted to markdown —
+  // as of the WYSIWYG editor added 2026-09-15, these two ship as raw
+  // Portable Text block arrays instead, converted to/from a Quill Delta
+  // entirely client-side (see templates/console.js's deltaToBlocks/
+  // blocksToDelta) — no server-side conversion needed in either
+  // direction for these two fields specifically.
 
   const html = renderConsolePage({
     campaigns,

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
 import { hashEmail } from "../lib/identity.js";
+import { sanitizeHtml } from "../lib/html-sanitize.js";
 
 const app = new Hono();
 
@@ -63,10 +64,18 @@ app.patch("/:id", async (c) => {
     }
   }
 
+  // overview is a plain-string field storing raw HTML (the WYSIWYG
+  // editor added 2026-09-15 — see html-sanitize.js's doc comment for
+  // why this is a real security boundary, not defensive dressing) —
+  // sanitized here, the one place every write to this field passes
+  // through, before it's ever stored or rendered on the public
+  // campaigns Worker.
+  const setValue = field === "overview" ? await sanitizeHtml(value) : value;
+
   const patch = {
     id,
     set: {
-      [field]: value,
+      [field]: setValue,
       lastEditedBy: c.get("gmEmail"),
       lastEditedAt: new Date().toISOString(),
     },
@@ -124,6 +133,10 @@ app.post("/", async (c) => {
   doc.campaign = { _type: "reference", _ref: doc.campaign };
   doc.lastEditedBy = c.get("gmEmail");
   doc.lastEditedAt = new Date().toISOString();
+  // See the PATCH handler's identical comment — same sanitization,
+  // same reason, applied here too since a dossier can also be created
+  // with an overview already filled in.
+  if (doc.overview) doc.overview = await sanitizeHtml(doc.overview);
 
   try {
     const result = await mutate(c.env, [{ createIfNotExists: doc }]);
