@@ -68,6 +68,17 @@ export default defineType({
       title: "Image Gallery",
       type: "array",
       of: [{ type: "image" }],
+      description:
+        "Legacy plain image list — new uploads should use Gallery below " +
+        "instead, which supports captions/credit and the site-wide " +
+        "/gallery page. Left as-is, not migrated.",
+    }),
+    defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
     }),
     defineField({
       name: "keyFigures",

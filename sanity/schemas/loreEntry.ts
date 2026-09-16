@@ -95,6 +95,13 @@ export default defineType({
       of: [{ type: "string" }],
     }),
     defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
+    defineField({
       name: "lastEditedBy",
       title: "Last Edited By",
       type: "reference",

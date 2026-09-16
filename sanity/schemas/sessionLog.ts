@@ -125,6 +125,13 @@ export default defineType({
       to: [{ type: "teamMember" }],
       description: "Manually set by the editor when they save — not sourced from Sanity's history.",
     }),
+    defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
   ],
   preview: {
     select: { title: "title", subtitle: "sessionNumber" },

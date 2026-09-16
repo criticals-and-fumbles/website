@@ -199,6 +199,13 @@ export default defineType({
       options: { hotspot: true },
     }),
     defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
+    defineField({
       name: "pageFooterCTA",
       title: "Page Footer CTA",
       type: "array",

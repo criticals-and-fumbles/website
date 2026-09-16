@@ -2,16 +2,22 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
-import type { GalleryPhoto } from "@/sanity/lib/types";
+import Link from "next/link";
+import type { FlatGalleryItem } from "@/sanity/lib/types";
 import { urlForImage } from "@/sanity/lib/image";
 
-export function Lightbox({
-  photo,
+// Generalized from the original event-only Lightbox (2026-09-16) —
+// same shape, just reading from FlatGalleryItem's merged field names
+// instead of GalleryPhoto's event-specific ones. Only ever opened for
+// kind === "image" tiles (see MediaGrid) — audio/video render inline
+// in the grid instead, so this doesn't need its own audio/video path.
+export function MediaLightbox({
+  item,
   onClose,
   onPrev,
   onNext,
 }: {
-  photo: GalleryPhoto;
+  item: FlatGalleryItem;
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
@@ -30,7 +36,7 @@ export function Lightbox({
     };
   }, [onClose, onPrev, onNext]);
 
-  const url = urlForImage(photo.image)?.width(1600).auto("format").url();
+  const url = urlForImage(item.image)?.width(1600).fit("max").ignoreImageParams().auto("format").url();
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/90 p-4">
@@ -55,7 +61,7 @@ export function Lightbox({
       <button
         type="button"
         onClick={onPrev}
-        aria-label="Previous photo"
+        aria-label="Previous"
         className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-text md:left-6"
       >
         ‹
@@ -63,7 +69,7 @@ export function Lightbox({
       <button
         type="button"
         onClick={onNext}
-        aria-label="Next photo"
+        aria-label="Next"
         className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-text md:right-6"
       >
         ›
@@ -73,7 +79,7 @@ export function Lightbox({
         {url && (
           <Image
             src={url}
-            alt={photo.caption ?? ""}
+            alt={item.caption ?? ""}
             width={1600}
             height={1000}
             className="h-auto max-h-[75vh] w-full object-contain"
@@ -82,10 +88,13 @@ export function Lightbox({
       </div>
 
       <div className="mt-4 text-center font-ui text-xs text-text-muted">
-        {photo.caption && <p className="text-text">{photo.caption}</p>}
+        {item.caption && <p className="text-text">{item.caption}</p>}
         <p className="mt-1">
-          {[photo.photographer, photo.event?.title].filter(Boolean).join(" · ")}
+          {[item.credit, ...(item.sourceTitle ? [item.sourceTitle] : [])].filter(Boolean).join(" · ")}
         </p>
+        <Link href={item.sourceHref} className="mt-1 inline-block text-emerald hover:underline">
+          View source →
+        </Link>
       </div>
     </div>
   );

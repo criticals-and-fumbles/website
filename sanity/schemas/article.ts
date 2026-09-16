@@ -100,6 +100,13 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
+    defineField({
       name: "status",
       title: "Status",
       type: "string",

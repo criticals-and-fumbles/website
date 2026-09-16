@@ -788,6 +788,104 @@ export const GALLERY_EVENTS_QUERY = groq`
   }
 `;
 
+// Shared projection for one mediaGalleryItem entry — every gallery-
+// bearing schema uses the exact same object shape (see
+// sanity/schemas/objects/mediaGalleryItem.ts), so this fragment is
+// reused verbatim across every source type below. dossier.media has a
+// slightly different shape (no credit/takenAt — see that field's own
+// schema in campaigns' schema/dossier.js) and gets its own inline
+// projection instead of this fragment for that reason.
+const mediaGalleryItemFields = groq`
+  _key, kind, image, caption, credit, takenAt,
+  "fileUrl": file.asset->url
+`;
+
+/**
+ * Aggregates every gallery-bearing document type's `gallery[]` (or, for
+ * dossier, `media[]`) array into one response, one key per source type
+ * — same cross-type-merge shape HOME_RSS_FEED_QUERY already uses for
+ * the homepage feed. Flattened, tagged with source context, and merged
+ * into one sorted list client-side (see app/(site)/gallery/page.tsx) —
+ * GROQ has no clean way to flatten a nested array across many different
+ * parent document types in one query, so this returns nested (one
+ * entry per source DOCUMENT, each carrying its own `items` array) and
+ * the page does the actual flattening, same division of labour as the
+ * homepage feed.
+ *
+ * Deliberately does NOT include majorEvent — that type already has its
+ * own working multi-photo mechanism (galleryPhoto documents, see
+ * GALLERY_PHOTOS_QUERY above) and was NOT given a `gallery` field, to
+ * avoid two parallel photo-attachment mechanisms on the same document
+ * type. Event photos still show up in the gallery page — merged in
+ * from GALLERY_PHOTOS_QUERY's own result, not from here.
+ *
+ * Also includes "dossier" — a campaigns-Worker-authored document type
+ * (see that repo's schema/dossier.js), but it lives in this SAME Sanity
+ * project/dataset, so querying it directly from here needs no cross-
+ * repo API call, same as app/(site)/campaigns/page.tsx already does for
+ * "campaign"/"dossier". Scoped to `campaign->visible == true` since
+ * dossiers have no visibility flag of their own — they inherit it from
+ * their parent campaign (see campaigns/CLAUDE.md § ownership).
+ */
+export const GALLERY_MEDIA_QUERY = groq`{
+  "world": *[_type == "world" && defined(gallery)]{
+    "sourceType": "World", "sourceTitle": name, "sourceHref": "/wiki/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "worldUnit": *[_type == "worldUnit" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": name,
+    "sourceHref": "/wiki/" + world->slug.current + "/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "keyFigure": *[_type == "keyFigure" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": name,
+    "sourceHref": "/wiki/" + world->slug.current + "/figures/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "notablePlace": *[_type == "notablePlace" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": name,
+    "sourceHref": "/wiki/" + world->slug.current + "/places/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "magicItem": *[_type == "magicItem" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": name,
+    "sourceHref": "/wiki/" + world->slug.current + "/items/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "faction": *[_type == "faction" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": name,
+    "sourceHref": "/wiki/" + world->slug.current + "/factions/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "loreEntry": *[_type == "loreEntry" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": title,
+    "sourceHref": "/wiki/" + world->slug.current + "/lore/" + slug.current,
+    "sourceDate": _createdAt, "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "sessionLog": *[_type == "sessionLog" && defined(gallery)]{
+    "sourceType": "World Unit", "sourceTitle": title,
+    "sourceHref": "/wiki/" + world->slug.current + "/sessions/" + slug.current,
+    "sourceDate": coalesce(sessionDate, _createdAt), "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "article": *[_type == "article" && status == "published" && defined(gallery)]{
+    "sourceType": "Article", "sourceTitle": title, "sourceHref": "/articles/" + slug.current,
+    "sourceDate": coalesce(publishedAt, _createdAt), "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "resource": *[_type == "resource" && defined(gallery)]{
+    "sourceType": "Resource", "sourceTitle": title, "sourceHref": "/resources",
+    "sourceDate": coalesce(publishedAt, _createdAt), "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "regularEvent": *[_type == "regularEvent" && defined(gallery)]{
+    "sourceType": "Event", "sourceTitle": campaignName, "sourceHref": "/events/" + slug.current,
+    "sourceDate": coalesce(startedDate, _createdAt), "items": gallery[]{ ${mediaGalleryItemFields} }
+  },
+  "dossier": *[_type == "dossier" && campaign->visible == true && defined(media)]{
+    "sourceType": "Dossier", "sourceTitle": title,
+    "sourceHref": "https://campaigns.criticalsandfumbles.com/" + campaign->slug.current + "/" + code,
+    "sourceDate": _createdAt, "items": media[]{ _key, kind, image, caption, "fileUrl": file.asset->url }
+  }
+}`;
+
 /* ---------------------------------------------------------------------- */
 /* About                                                                     */
 /* ---------------------------------------------------------------------- */

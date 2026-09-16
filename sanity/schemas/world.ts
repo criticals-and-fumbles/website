@@ -90,6 +90,13 @@ export default defineType({
       options: { hotspot: true },
     }),
     defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
+    defineField({
       name: "activeCategories",
       title: "Active Lore Categories",
       type: "array",

@@ -78,6 +78,13 @@ export default defineType({
       of: [{ type: "block" }],
     }),
     defineField({ name: "itemArt", title: "Item Art", type: "image" }),
+    defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
 
     defineField({
       name: "hasMechanics",

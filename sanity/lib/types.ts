@@ -674,3 +674,71 @@ export interface CampaignActivityItem {
   campaignSlug: string;
   campaignTitle: string;
 }
+
+/**
+ * Site-wide /gallery page (2026-09-16) — see sanity/schemas/objects/
+ * mediaGalleryItem.ts and GALLERY_MEDIA_QUERY's doc comment for the
+ * full design (embedded arrays across many source types, merged and
+ * sorted client-side, no new document type / no document sprawl).
+ */
+export interface MediaGalleryItem {
+  _key: string;
+  kind: "image" | "audio" | "video";
+  image?: SanityImage;
+  /** Resolved server-side (file.asset->url) — audio/video only. */
+  fileUrl?: string;
+  caption?: string;
+  /** Not present on dossier-sourced items (that type's own media[]
+   * field has no credit field — see GALLERY_MEDIA_QUERY's comment). */
+  credit?: string;
+  /** Optional override — falls back to the source document's own
+   * sourceDate when unset. Not present on dossier-sourced items. */
+  takenAt?: string;
+}
+
+/** One source DOCUMENT's worth of gallery items, tagged with enough
+ * context to render/filter/link back to it — see GALLERY_MEDIA_QUERY.
+ * "sourceType" is deliberately the coarse, grouped-by-parent label
+ * (e.g. every wiki sub-document type reports "World Unit", not its own
+ * specific type) per the filter-grouping decision this feature shipped
+ * with — not every document type needs its own filter bucket. */
+export interface GallerySourceGroup {
+  sourceType: "World" | "World Unit" | "Article" | "Resource" | "Event" | "Dossier";
+  sourceTitle: string;
+  sourceHref: string;
+  sourceDate: string;
+  items: MediaGalleryItem[];
+}
+
+export interface GalleryMediaResult {
+  world: GallerySourceGroup[];
+  worldUnit: GallerySourceGroup[];
+  keyFigure: GallerySourceGroup[];
+  notablePlace: GallerySourceGroup[];
+  magicItem: GallerySourceGroup[];
+  faction: GallerySourceGroup[];
+  loreEntry: GallerySourceGroup[];
+  sessionLog: GallerySourceGroup[];
+  article: GallerySourceGroup[];
+  resource: GallerySourceGroup[];
+  regularEvent: GallerySourceGroup[];
+  dossier: GallerySourceGroup[];
+}
+
+/** Flattened, merge-ready shape GALLERY_MEDIA_QUERY's nested per-
+ * source-document result gets reduced to — one entry per actual media
+ * item, not per document — plus event photos from the pre-existing
+ * galleryPhoto flow mapped into the same shape. See
+ * app/(site)/gallery/page.tsx's flattenGalleryMedia(). */
+export interface FlatGalleryItem {
+  key: string;
+  kind: "image" | "audio" | "video";
+  image?: SanityImage;
+  fileUrl?: string;
+  caption?: string;
+  credit?: string;
+  date?: string;
+  sourceType: GallerySourceGroup["sourceType"];
+  sourceTitle: string;
+  sourceHref: string;
+}

@@ -109,6 +109,13 @@ export default defineType({
       type: "image",
       options: { hotspot: true },
     }),
+    defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
 
     // STAT BLOCK — field names map directly to the Fight Club 5e XML
     // compendium format for a future export (not built this session; see
