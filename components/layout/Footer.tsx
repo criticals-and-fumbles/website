@@ -5,11 +5,14 @@ import { client } from "@/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 import { Renderer } from "@/components/portable-text/Renderer";
 
-const QUICK_NAV = [
+const QUICK_NAV: { label: string; href: string; external?: boolean }[] = [
   { label: "About", href: "/about" },
   { label: "Events", href: "/events" },
-  { label: "Campaigns", href: "https://campaigns.criticalsandfumbles.com", external: true },
+  // Directory listing lives here now, not on the campaigns Worker — see
+  // components/layout/Nav.tsx's identical fix/comment (2026-09-15).
+  { label: "Campaigns", href: "/campaigns" },
   { label: "Wiki", href: "/wiki" },
+  { label: "Chronicles", href: "/articles" },
   { label: "Team", href: "/team" },
   { label: "Resources", href: "/resources" },
   { label: "Gallery", href: "/gallery" },
@@ -69,7 +72,7 @@ export async function Footer({
               {settings?.shortDescription}
             </p>
             <p className="mt-4 font-ui text-xs">
-              <span className="text-emerald">Community</span>
+              <span className="text-criticals-emerald">Community</span>
               {" · "}
               <span className="text-amber">Collaboration</span>
               {" · "}
@@ -111,16 +114,6 @@ export async function Footer({
                   </Link>
                 </li>
               ))}
-              <li>
-                <a
-                  href="https://cnf-website.sanity.studio"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-text-muted transition-colors hover:text-emerald"
-                >
-                  Studio
-                </a>
-              </li>
             </ul>
           </div>
 

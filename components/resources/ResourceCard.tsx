@@ -13,9 +13,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const DIVISION_LABELS: Record<string, string> = {
-  "dm-story": "DM & Story Group",
+  "dm-story": "Uncle's League",
   "project-wing": "Project Wing",
-  "art-house": "Art House",
+  "art-house": "The Workshop",
   general: "General",
 };
 

@@ -12,14 +12,14 @@ export const revalidate = 300;
 export const metadata: Metadata = buildMetadata({
   title: "Resources",
   description:
-    "Guides, tools, and shared materials from the DM & Story Group, Project Wing, and Art House divisions of Criticals and Fumbles.",
+    "Guides, tools, and shared materials from the Uncle's League, Project Wing, and The Workshop divisions of Criticals and Fumbles.",
   path: "/resources",
 });
 
 const DIVISION_FILTERS = [
-  { label: "DM & Story Group", value: "dm-story" },
+  { label: "Uncle's League", value: "dm-story" },
   { label: "Project Wing", value: "project-wing" },
-  { label: "Art House", value: "art-house" },
+  { label: "The Workshop", value: "art-house" },
 ];
 
 export default async function ResourcesPage({

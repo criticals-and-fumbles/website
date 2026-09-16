@@ -19,6 +19,7 @@ const NAV_LINKS: { label: string; href: string; external?: boolean }[] = [
   // — see CampaignCard's link target for those.
   { label: "Campaigns", href: "/campaigns" },
   { label: "Wiki", href: "/wiki" },
+  { label: "Chronicles", href: "/articles" },
   { label: "Team", href: "/team" },
   { label: "Resources", href: "/resources" },
 ];

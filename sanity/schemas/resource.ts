@@ -49,9 +49,9 @@ export default defineType({
       type: "string",
       options: {
         list: [
-          { title: "DM & Story Group", value: "dm-story" },
+          { title: "Uncle's League", value: "dm-story" },
           { title: "Project Wing", value: "project-wing" },
-          { title: "Art House", value: "art-house" },
+          { title: "The Workshop", value: "art-house" },
           { title: "General", value: "general" },
         ],
       },
@@ -64,6 +64,13 @@ export default defineType({
       description: "Gumroad or direct file URL",
     }),
     defineField({ name: "thumbnail", title: "Thumbnail", type: "image" }),
+    defineField({
+      name: "gallery",
+      title: "Gallery",
+      type: "array",
+      of: [{ type: "mediaGalleryItem" }],
+      description: "Photos/media shown on the site-wide /gallery page.",
+    }),
     defineField({
       name: "fileSize",
       title: "File Size",
