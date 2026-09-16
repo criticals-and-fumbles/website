@@ -826,6 +826,21 @@ const mediaGalleryItemFields = groq`
  * "campaign"/"dossier". Scoped to `campaign->visible == true` since
  * dossiers have no visibility flag of their own — they inherit it from
  * their parent campaign (see campaigns/CLAUDE.md § ownership).
+ *
+ * The dossier group's `items` folds in THREE sources, not just
+ * `media[]`: `heroImage` and `headerImage` are dossier's two other
+ * image slots (schema/dossier.js — heroImage shown in the Evidence/
+ * Media section, headerImage the banner below the nav tabs), each
+ * synthesized into a mediaGalleryItem-shaped object with a fixed _key
+ * so they merge into the same flat list `media[]` items do. `media[]`
+ * is wrapped in `coalesce(..., [])` specifically because GROQ's `+`
+ * concatenation operator returns null (silently dropping heroImage/
+ * headerImage too) when the left operand is null, which happens on
+ * every dossier that has hero/header images but no `media[]` entries —
+ * confirmed live before shipping this (many dossiers are exactly that
+ * shape). Also carries `campaignTitle`/`campaignSlug` at the group
+ * level, since the gallery page's Dossier filter offers a second,
+ * campaign-scoped sub-filter (see flattenGalleryMedia / page.tsx).
  */
 export const GALLERY_MEDIA_QUERY = groq`{
   "world": *[_type == "world" && defined(gallery)]{
@@ -879,10 +894,18 @@ export const GALLERY_MEDIA_QUERY = groq`{
     "sourceType": "Event", "sourceTitle": campaignName, "sourceHref": "/events/" + slug.current,
     "sourceDate": coalesce(startedDate, _createdAt), "items": gallery[]{ ${mediaGalleryItemFields} }
   },
-  "dossier": *[_type == "dossier" && campaign->visible == true && defined(media)]{
+  "dossier": *[
+    _type == "dossier" && campaign->visible == true &&
+    (defined(media) || defined(heroImage) || defined(headerImage))
+  ]{
     "sourceType": "Dossier", "sourceTitle": title,
     "sourceHref": "https://campaigns.criticalsandfumbles.com/" + campaign->slug.current + "/" + code,
-    "sourceDate": _createdAt, "items": media[]{ _key, kind, image, caption, "fileUrl": file.asset->url }
+    "sourceDate": _createdAt,
+    "campaignTitle": campaign->title,
+    "campaignSlug": campaign->slug.current,
+    "items": coalesce(media[]{ _key, kind, image, caption, "fileUrl": file.asset->url }, [])
+      + select(defined(heroImage) => [{ "_key": "hero-image", "kind": "image", "image": heroImage, "caption": "Hero Image" }], [])
+      + select(defined(headerImage) => [{ "_key": "header-image", "kind": "image", "image": headerImage, "caption": "Header Image" }], [])
   }
 }`;
 

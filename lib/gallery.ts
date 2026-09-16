@@ -32,6 +32,8 @@ function flattenGroup(groups: GallerySourceGroup[]): FlatGalleryItem[] {
       sourceType: group.sourceType,
       sourceTitle: group.sourceTitle,
       sourceHref: group.sourceHref,
+      campaignTitle: group.campaignTitle,
+      campaignSlug: group.campaignSlug,
     })),
   );
 }
@@ -85,4 +87,24 @@ export function flattenGalleryMedia(
     const dateB = b.date ? new Date(b.date).getTime() : 0;
     return dateB - dateA;
   });
+}
+
+/**
+ * Distinct campaigns present among a set of Dossier items, sorted
+ * alphabetically by title — powers the gallery page's campaign
+ * sub-filter (only rendered when sourceType === "Dossier" is active,
+ * since campaignSlug is the only other type that ever sets it).
+ */
+export function getDossierCampaigns(
+  items: FlatGalleryItem[],
+): { title: string; slug: string }[] {
+  const seen = new Map<string, string>();
+  for (const item of items) {
+    if (item.campaignSlug && item.campaignTitle && !seen.has(item.campaignSlug)) {
+      seen.set(item.campaignSlug, item.campaignTitle);
+    }
+  }
+  return [...seen.entries()]
+    .map(([slug, title]) => ({ slug, title }))
+    .sort((a, b) => a.title.localeCompare(b.title));
 }

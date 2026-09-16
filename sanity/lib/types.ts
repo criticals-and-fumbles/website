@@ -708,6 +708,10 @@ export interface GallerySourceGroup {
   sourceHref: string;
   sourceDate: string;
   items: MediaGalleryItem[];
+  // Only present on "Dossier" groups — the campaign the dossier belongs
+  // to, used for the gallery page's campaign sub-filter.
+  campaignTitle?: string;
+  campaignSlug?: string;
 }
 
 export interface GalleryMediaResult {
@@ -741,4 +745,7 @@ export interface FlatGalleryItem {
   sourceType: GallerySourceGroup["sourceType"];
   sourceTitle: string;
   sourceHref: string;
+  // Only set on Dossier items — see GallerySourceGroup.campaignTitle.
+  campaignTitle?: string;
+  campaignSlug?: string;
 }

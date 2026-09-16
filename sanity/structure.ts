@@ -110,7 +110,26 @@ export const structure: StructureResolver = (S) =>
             .title("Campaigns")
             .items([
               S.documentTypeListItem("campaign").title("Campaigns"),
-              S.documentTypeListItem("dossier").title("Dossiers"),
+              // Dossiers grouped by their parent campaign — one level
+              // in (campaign list, titled by the campaign's own title),
+              // then that campaign's dossiers. Pure desk-structure
+              // grouping, same as this file's other nested lists; no
+              // schema change, and the flat "all dossiers" list is
+              // still reachable by opening a campaign's own document
+              // and following its dossier references there if needed.
+              S.listItem()
+                .title("Dossiers by Campaign")
+                .child(
+                  S.documentTypeList("campaign")
+                    .title("Dossiers by Campaign")
+                    .child((campaignId) =>
+                      S.documentList()
+                        .title("Dossiers")
+                        .schemaType("dossier")
+                        .filter('_type == "dossier" && campaign._ref == $campaignId')
+                        .params({ campaignId }),
+                    ),
+                ),
               S.documentTypeListItem("genreTheme").title("Genre Themes"),
             ]),
         ),
