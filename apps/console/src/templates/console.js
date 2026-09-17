@@ -1024,6 +1024,7 @@ const CONSOLE_CSS = `
      standing out as a bolted-on group. */
   .ql-toolbar .richtext-btn{width:28px; height:24px; font-size:.85rem; line-height:1; color:var(--text-dim); background:transparent; border:none; cursor:pointer; font-family:var(--font-body);}
   .ql-toolbar .richtext-btn:hover{color:var(--pink);}
+  .richtext-source-tip{max-width:640px; margin:4px 0; font-size:.78rem; color:var(--text-faint);}
   .richtext-source{width:100%; max-width:640px; min-height:140px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:var(--font-mono, monospace); font-size:.85rem; padding:10px 12px; box-sizing:border-box; resize:vertical;}
   .richtext-source:focus{border-color:var(--pink); outline:none;}
   /* Expand mode — the editor (or its source textarea) grows into a
@@ -2500,21 +2501,38 @@ const CONSOLE_JS = `
     if(!quill || !container) return;
     let state = richTextSourceState.get(id);
     if(!state){
+      const tip = document.createElement('p');
+      tip.className = 'richtext-source-tip';
+      tip.style.display = 'none';
+      tip.textContent = 'Raw HTML — h2/h3, p, blockquote, ul/ol/li, strong/em/code, <a href>, and <table> (tables and callouts only edit here, not in the visual editor).';
+      container.insertAdjacentElement('afterend', tip);
       const textarea = document.createElement('textarea');
       textarea.className = 'richtext-source';
       textarea.style.display = 'none';
-      container.insertAdjacentElement('afterend', textarea);
-      state = { textarea, active: false };
+      tip.insertAdjacentElement('afterend', textarea);
+      state = { textarea, tip, active: false };
       richTextSourceState.set(id, state);
     }
     if(!state.active){
       state.textarea.value = quill.root.innerHTML;
       container.style.display = 'none';
       state.textarea.style.display = '';
+      state.tip.style.display = '';
       state.active = true;
     }else{
+      // Quill has no way to display a table or a callout (see the big
+      // comment above richTextBlocksToHtml) — switching back to the
+      // visual editor would silently flatten/drop either one the
+      // moment syncRichTextSourceToQuill runs. Block the switch instead
+      // of losing content; remove the table/callout from the HTML
+      // first (or just save directly from source view) to proceed.
+      if(richTextHtmlHasUnrepresentableContent(state.textarea.value)){
+        alert('This content has a table or callout that the visual editor can\\'t display. Remove it from the HTML first if you want to switch back, or just save directly from this source view.');
+        return;
+      }
       syncRichTextSourceToQuill(id);
       state.textarea.style.display = 'none';
+      state.tip.style.display = 'none';
       container.style.display = '';
       state.active = false;
     }
@@ -2587,6 +2605,7 @@ const CONSOLE_JS = `
       state.active = false;
       state.textarea.style.display = 'none';
       state.textarea.classList.remove('richtext-expanded');
+      state.tip.style.display = 'none';
     }
   }
 
@@ -2724,25 +2743,202 @@ const CONSOLE_JS = `
     return { ops };
   }
 
+  // ---------- tableBlock / calloutBlock <-> HTML ----------
+  // Quill's Delta model (deltaToBlocks/blocksToDelta above) has no way
+  // to represent a table or a callout — Quill 1.3.7 has no table
+  // plugin loaded, and a callout is a nested block array with no Delta
+  // equivalent either. Rather than silently dropping either one on
+  // load/save (blocksToDelta already ignores any block whose _type
+  // isn't 'block' — that WAS a latent data-loss bug for calloutBlock
+  // even before tables existed), any body containing one of these is
+  // routed entirely through this HTML-based converter instead — same
+  // field shapes as sanity/lib/portableTextHtml.ts's Studio-side
+  // version (tableBlock{hasHeaderRow,rows:[{cells}]}, calloutBlock
+  // {tone,text}), hand-ported to plain browser JS here since this file
+  // isn't a TS module and can't import that one directly.
+  function richTextTableToHtml(block){
+    const rows = block.rows || [];
+    const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const rowHtml = (row, tag) => '<tr>' + (row.cells||[]).map(c=>'<'+tag+'>'+esc(c)+'</'+tag+'>').join('') + '</tr>';
+    const headerRow = block.hasHeaderRow ? rows[0] : null;
+    const bodyRows = block.hasHeaderRow ? rows.slice(1) : rows;
+    const thead = headerRow ? '<thead>' + rowHtml(headerRow, 'th') + '</thead>' : '';
+    const tbody = '<tbody>' + bodyRows.map(r=>rowHtml(r,'td')).join('\\n') + '</tbody>';
+    return '<table>\\n' + thead + '\\n' + tbody + '\\n</table>';
+  }
+
+  function richTextBlocksToHtml(blocks){
+    const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function spanHtml(span, markDefs){
+      let text = esc(span.text);
+      const marks = span.marks || [];
+      if(marks.includes('code')) text = '<code>' + text + '</code>';
+      if(marks.includes('strong')) text = '<strong>' + text + '</strong>';
+      if(marks.includes('em')) text = '<em>' + text + '</em>';
+      const linkKey = marks.find(m => (markDefs||[]).some(d=>d._key===m && d._type==='link'));
+      if(linkKey){
+        const def = (markDefs||[]).find(d=>d._key===linkKey);
+        text = '<a href="' + esc(def && def.href || '') + '">' + text + '</a>';
+      }
+      return text;
+    }
+    function childrenHtml(block){
+      return (block.children||[]).map(c => c._type==='span' ? spanHtml(c, block.markDefs) : '').join('');
+    }
+    const parts = [];
+    let i = 0;
+    const list = blocks || [];
+    while(i < list.length){
+      const block = list[i];
+      if(block._type === 'tableBlock'){ parts.push(richTextTableToHtml(block)); i++; continue; }
+      if(block._type === 'calloutBlock'){
+        parts.push('<div data-callout-tone="' + esc(block.tone||'info') + '">\\n' + richTextBlocksToHtml(block.text||[]) + '\\n</div>');
+        i++; continue;
+      }
+      if(block._type === 'block' && (block.listItem === 'bullet' || block.listItem === 'number')){
+        const listItem = block.listItem;
+        const tag = listItem === 'bullet' ? 'ul' : 'ol';
+        const items = [];
+        while(i < list.length && list[i]._type === 'block' && list[i].listItem === listItem){
+          items.push('<li>' + childrenHtml(list[i]) + '</li>');
+          i++;
+        }
+        parts.push('<' + tag + '>\\n' + items.join('\\n') + '\\n</' + tag + '>');
+        continue;
+      }
+      const inner = childrenHtml(block);
+      if(block.style === 'h2') parts.push('<h2>' + inner + '</h2>');
+      else if(block.style === 'h3') parts.push('<h3>' + inner + '</h3>');
+      else if(block.style === 'blockquote') parts.push('<blockquote>' + inner + '</blockquote>');
+      else parts.push('<p>' + inner + '</p>');
+      i++;
+    }
+    return parts.join('\\n');
+  }
+
+  function richTextHtmlTableToBlock(tableEl){
+    const theadRows = Array.from(tableEl.querySelectorAll(':scope > thead > tr'));
+    const bodyRows = Array.from(tableEl.querySelectorAll(':scope > tbody > tr, :scope > tr'));
+    const rowCells = rowEl => Array.from(rowEl.querySelectorAll(':scope > th, :scope > td')).map(c => c.textContent || '');
+    const hasHeaderRow = theadRows.length > 0;
+    const allRows = hasHeaderRow ? theadRows.concat(bodyRows) : bodyRows;
+    return {
+      _type: 'tableBlock', _key: crypto.randomUUID(), hasHeaderRow,
+      rows: allRows.map(rowEl => ({ _key: crypto.randomUUID(), cells: rowCells(rowEl) })),
+    };
+  }
+
+  function richTextCollectSpans(node, marks, markDefs){
+    if(node.nodeType === Node.TEXT_NODE){
+      const text = node.textContent || '';
+      return text ? [{ _type: 'span', _key: crypto.randomUUID(), text, marks: marks.slice() }] : [];
+    }
+    if(node.nodeType !== Node.ELEMENT_NODE) return [];
+    const tag = node.tagName.toLowerCase();
+    let nextMarks = marks;
+    if(tag === 'strong' || tag === 'b') nextMarks = marks.concat('strong');
+    else if(tag === 'em' || tag === 'i') nextMarks = marks.concat('em');
+    else if(tag === 'code') nextMarks = marks.concat('code');
+    else if(tag === 'a'){
+      const key = crypto.randomUUID();
+      markDefs.push({ _type: 'link', _key: key, href: node.getAttribute('href') || '' });
+      nextMarks = marks.concat(key);
+    }
+    const spans = [];
+    node.childNodes.forEach(child => { spans.push.apply(spans, richTextCollectSpans(child, nextMarks, markDefs)); });
+    return spans;
+  }
+
+  function richTextElementToBlock(el, style, listItem){
+    const markDefs = [];
+    const children = richTextCollectSpans(el, [], markDefs);
+    return {
+      _type: 'block', _key: crypto.randomUUID(), style,
+      listItem: listItem || undefined, level: listItem ? 1 : undefined,
+      markDefs,
+      children: children.length ? children : [{ _type: 'span', _key: crypto.randomUUID(), text: '', marks: [] }],
+    };
+  }
+
+  function richTextHtmlToBlocks(html){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const blocks = [];
+    doc.body.childNodes.forEach(node => {
+      if(node.nodeType !== Node.ELEMENT_NODE) return;
+      const tag = node.tagName.toLowerCase();
+      if(tag === 'h2') blocks.push(richTextElementToBlock(node, 'h2'));
+      else if(tag === 'h3') blocks.push(richTextElementToBlock(node, 'h3'));
+      else if(tag === 'blockquote') blocks.push(richTextElementToBlock(node, 'blockquote'));
+      else if(tag === 'table') blocks.push(richTextHtmlTableToBlock(node));
+      else if(tag === 'ul' || tag === 'ol'){
+        const listItem = tag === 'ul' ? 'bullet' : 'number';
+        node.querySelectorAll(':scope > li').forEach(li => blocks.push(richTextElementToBlock(li, 'normal', listItem)));
+      }else if(tag === 'div' && node.hasAttribute('data-callout-tone')){
+        blocks.push({
+          _type: 'calloutBlock', _key: crypto.randomUUID(),
+          tone: node.getAttribute('data-callout-tone') || 'info',
+          text: richTextHtmlToBlocks(node.innerHTML),
+        });
+      }else{
+        blocks.push(richTextElementToBlock(node, 'normal'));
+      }
+    });
+    return blocks;
+  }
+
+  // True if a Portable Text array contains anything Quill's Delta model
+  // can't represent (see the comment above) — the signal both
+  // setRichTextBlocks (below) and the "back to WYSIWYG" toggle
+  // (toggleRichTextSource above) use to route around Quill entirely
+  // rather than silently flattening/dropping that content.
+  function richTextHasUnrepresentableBlocks(blocks){
+    return (blocks || []).some(b => b._type === 'tableBlock' || b._type === 'calloutBlock');
+  }
+  function richTextHtmlHasUnrepresentableContent(html){
+    return /<table[\\s>]/i.test(html || '') || /data-callout-tone/i.test(html || '');
+  }
+
   function getRichTextBlocks(id){
-    // If a GM hand-edited the HTML source view and clicked Save without
-    // switching back to the visual editor first, that edit only lives in
-    // the textarea — pull it into Quill before reading, or it's silently
-    // lost.
-    syncRichTextSourceToQuill(id);
+    const state = richTextSourceState.get(id);
+    if(state && state.active){
+      // Parse straight from the textarea — never round-trip through
+      // Quill for this read. Correct for every case, not just tables:
+      // it's exactly the HTML the GM is looking at, with no lossy
+      // clipboard-conversion step in between.
+      return richTextHtmlToBlocks(state.textarea.value);
+    }
     const q = richTextEditors.get(id);
     return q ? deltaToBlocks(q.getContents()) : [];
   }
   function setRichTextBlocks(id, blocks){
     resetRichTextUiState(id);
+    blocks = blocks || [];
     const q = richTextEditors.get(id);
-    if(q) q.setContents(blocksToDelta(blocks || []));
+    if(richTextHasUnrepresentableBlocks(blocks)){
+      // Open straight into source view rather than loading into Quill
+      // — blocksToDelta would silently drop the table/callout, and the
+      // GM would never know until it vanished after a save. They can
+      // still switch to the visual editor afterward if they remove
+      // that content from the HTML first (see toggleRichTextSource's
+      // guard).
+      if(q) q.setContents([]);
+      toggleRichTextSource(id);
+      const state = richTextSourceState.get(id);
+      if(state) state.textarea.value = richTextBlocksToHtml(blocks);
+      return;
+    }
+    if(q) q.setContents(blocksToDelta(blocks));
   }
   // dossier.overview — plain HTML string, not Portable Text (see
   // api-dossier.js's sanitizeHtml comment for why). No conversion
-  // needed in either direction; Quill's own innerHTML IS the value.
+  // needed in either direction; Quill's own innerHTML IS the value —
+  // except while in source mode, where the textarea's raw value IS the
+  // value (reading through Quill there would round-trip it through
+  // clipboard.convert, which is lossy for a table/callout the same way
+  // it is for article/loreEntry body — see getRichTextBlocks above).
   function getRichTextHtml(id){
-    syncRichTextSourceToQuill(id);
+    const state = richTextSourceState.get(id);
+    if(state && state.active) return state.textarea.value;
     const q = richTextEditors.get(id);
     return q ? q.root.innerHTML : '';
   }
@@ -2750,6 +2946,13 @@ const CONSOLE_JS = `
     resetRichTextUiState(id);
     const q = richTextEditors.get(id);
     if(!q) return;
+    if(richTextHtmlHasUnrepresentableContent(html)){
+      q.setContents([]);
+      toggleRichTextSource(id);
+      const state = richTextSourceState.get(id);
+      if(state) state.textarea.value = html || '';
+      return;
+    }
     q.setContents([]);
     if(html) q.clipboard.dangerouslyPasteHTML(html);
   }

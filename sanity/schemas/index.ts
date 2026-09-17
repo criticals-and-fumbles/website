@@ -2,6 +2,7 @@ import { type SchemaTypeDefinition } from "sanity";
 
 import calloutBlock from "./objects/calloutBlock";
 import mediaGalleryItem from "./objects/mediaGalleryItem";
+import tableBlock from "./objects/tableBlock";
 import siteSettings from "./siteSettings";
 import philosophy from "./philosophy";
 import codeOfConduct from "./codeOfConduct";
@@ -60,5 +61,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     // Reusable objects
     calloutBlock,
     mediaGalleryItem,
+    tableBlock,
   ],
 };

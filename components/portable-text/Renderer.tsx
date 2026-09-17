@@ -34,6 +34,42 @@ const components: PortableTextComponents = {
     calloutBlock: ({ value }) => (
       <CalloutBlock tone={value.tone} text={value.text} />
     ),
+    tableBlock: ({ value }) => {
+      const rows: { cells?: string[] }[] = value.rows || [];
+      if (!rows.length) return null;
+      const [headerRow, ...bodyRows] = value.hasHeaderRow ? rows : [null, ...rows];
+      return (
+        <div className="my-6 overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            {headerRow && (
+              <thead>
+                <tr>
+                  {(headerRow.cells || []).map((cell, i) => (
+                    <th
+                      key={i}
+                      className="border border-border bg-surface/75 px-3 py-2 text-left font-ui"
+                    >
+                      {cell}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {bodyRows.map((row, i) => (
+                <tr key={i}>
+                  {(row?.cells || []).map((cell, j) => (
+                    <td key={j} className="border border-border px-3 py-2">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    },
   },
 };
 

@@ -63,7 +63,7 @@ export default defineType({
       name: "body",
       title: "Body",
       type: "array",
-      of: [{ type: "block" }, { type: "calloutBlock" }],
+      of: [{ type: "block" }, { type: "calloutBlock" }, { type: "tableBlock" }],
       components: { input: RichTextSourceToggle },
     }),
     defineField({
