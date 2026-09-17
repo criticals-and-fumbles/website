@@ -1,5 +1,6 @@
 import { defineField, defineType } from "sanity";
 import { ARTICLE_CATEGORIES, RECOMMENDED_FOR } from "./constants";
+import { RichTextSourceToggle } from "../components/RichTextSourceToggle";
 
 export default defineType({
   name: "article",
@@ -92,6 +93,7 @@ export default defineType({
       title: "Body",
       type: "array",
       of: [{ type: "block" }, { type: "calloutBlock" }],
+      components: { input: RichTextSourceToggle },
     }),
     defineField({
       name: "featured",

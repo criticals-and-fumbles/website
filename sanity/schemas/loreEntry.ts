@@ -1,5 +1,6 @@
 import { defineField, defineType } from "sanity";
 import { LORE_CATEGORIES, CANON_STATUSES } from "./constants";
+import { RichTextSourceToggle } from "../components/RichTextSourceToggle";
 
 export default defineType({
   name: "loreEntry",
@@ -63,6 +64,7 @@ export default defineType({
       title: "Body",
       type: "array",
       of: [{ type: "block" }, { type: "calloutBlock" }],
+      components: { input: RichTextSourceToggle },
     }),
     defineField({
       name: "canonStatus",

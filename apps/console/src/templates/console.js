@@ -996,15 +996,45 @@ const CONSOLE_CSS = `
   .field input[type=text]:focus, .field input[type=number]:focus, .field input[type=email]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   /* Quill (WYSIWYG editor, 2026-09-15) — its "snow" theme is light by
      default; these overrides are the minimum to make it read correctly
-     against this console's dark panels, not a full re-skin. */
+     against this console's dark panels, not a full re-skin.
+
+     Fixed 2026-09-17: every selector below used to read
+     ".field .richtext .ql-toolbar" etc., assuming the toolbar sits
+     INSIDE the richtext div — it doesn't. Quill inserts its toolbar as
+     that div's previous SIBLING (confirmed by reading quill.js's own
+     Toolbar constructor: quill.container.parentNode.insertBefore(
+     container, quill.container)), so ".richtext .ql-toolbar" as a
+     descendant selector never matched anything and the toolbar has
+     been rendering with Quill's default light theme this whole time.
+     ".ql-editor" IS a real descendant of .richtext (Quill appends it
+     as a child there), so that one selector was always fine. */
   .field .richtext{width:100%; max-width:640px;}
-  .field .richtext .ql-toolbar{background:var(--panel-2); border:1px solid var(--line); border-bottom:none;}
-  .field .richtext .ql-container{background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:var(--font-body); font-size:.92rem; min-height:140px;}
+  .field .ql-toolbar{background:var(--panel-2); border:1px solid var(--line); border-bottom:none;}
+  .field .richtext.ql-container{background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:var(--font-body); font-size:.92rem; min-height:140px;}
   .field .richtext .ql-editor.ql-blank::before{color:var(--text-faint); font-style:normal;}
-  .field .richtext .ql-stroke{stroke:var(--text-dim);}
-  .field .richtext .ql-fill{fill:var(--text-dim);}
-  .field .richtext .ql-picker-label{color:var(--text-dim);}
-  .field .richtext:focus-within .ql-toolbar, .field .richtext:focus-within .ql-container{border-color:var(--pink);}
+  .field .ql-toolbar .ql-stroke{stroke:var(--text-dim);}
+  .field .ql-toolbar .ql-fill{fill:var(--text-dim);}
+  .field .ql-toolbar .ql-picker-label{color:var(--text-dim);}
+  .field .ql-toolbar:hover .ql-stroke, .field .ql-toolbar button:hover .ql-stroke, .field .ql-toolbar button.ql-active .ql-stroke{stroke:var(--pink);}
+  .field .ql-toolbar:hover .ql-fill, .field .ql-toolbar button:hover .ql-fill, .field .ql-toolbar button.ql-active .ql-fill{fill:var(--pink);}
+  .field .richtext:focus-within + .ql-toolbar, .ql-toolbar:has(+ .richtext:focus-within){border-color:var(--pink);}
+  .field .richtext.ql-container:focus-within{border-color:var(--pink);}
+  /* The two custom buttons (View Source / Expand) appended into Quill's
+     own toolbar — styled to match its native icon buttons rather than
+     standing out as a bolted-on group. */
+  .ql-toolbar .richtext-btn{width:28px; height:24px; font-size:.85rem; line-height:1; color:var(--text-dim); background:transparent; border:none; cursor:pointer; font-family:var(--font-body);}
+  .ql-toolbar .richtext-btn:hover{color:var(--pink);}
+  .richtext-source{width:100%; max-width:640px; min-height:140px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-family:var(--font-mono, monospace); font-size:.85rem; padding:10px 12px; box-sizing:border-box; resize:vertical;}
+  .richtext-source:focus{border-color:var(--pink); outline:none;}
+  /* Expand mode — the editor (or its source textarea) grows into a
+     large fixed overlay instead of the normal ~140px inline box; its
+     toolbar rides along directly above it. Escape or the same button
+     collapses it back (see toggleRichTextExpanded/collapseExpandedRichText). */
+  body.richtext-modal-open{overflow:hidden;}
+  .richtext-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; display:none;}
+  .richtext-backdrop.visible{display:block;}
+  .ql-toolbar.richtext-toolbar-expanded{position:fixed; top:8vh; left:50%; transform:translateX(-50%); width:min(90vw, 900px); z-index:201; max-width:none;}
+  .richtext.richtext-expanded, .richtext-source.richtext-expanded{position:fixed; top:calc(8vh + 43px); left:50%; transform:translateX(-50%); width:min(90vw, 900px); height:76vh; max-width:none; z-index:201; box-shadow:0 12px 40px rgba(0,0,0,.5);}
   .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
   .back-link{display:inline-block; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); text-decoration:none; margin-bottom:6px;}
   .back-link:hover{color:var(--emerald);}
@@ -2383,6 +2413,9 @@ const CONSOLE_JS = `
   // panel, repopulated per edit" model this console already uses for
   // every other field.
   const richTextEditors = new Map();
+  // id -> { textarea, active } — lazily created the first time a given
+  // editor's "View Source" button is clicked (see toggleRichTextSource).
+  const richTextSourceState = new Map();
 
   const QUILL_TOOLBAR = [
     [{ header: [2, 3, false] }],
@@ -2392,6 +2425,170 @@ const CONSOLE_JS = `
     ['link'],
     ['clean'],
   ];
+
+  // title/tooltip text for Quill's own default toolbar buttons — Quill's
+  // "snow" theme ships with icon-only buttons and no built-in tooltips,
+  // so these are added by hand once per toolbar, right after Quill
+  // builds it (see initRichTextEditors below).
+  const QUILL_BUTTON_TOOLTIPS = {
+    'ql-bold': 'Bold',
+    'ql-italic': 'Italic',
+    'ql-blockquote': 'Quote',
+    'ql-link': 'Insert link',
+    'ql-clean': 'Clear formatting',
+  };
+
+  function addToolbarTooltips(toolbarEl){
+    if(!toolbarEl) return;
+    toolbarEl.querySelectorAll('button').forEach(btn=>{
+      if(btn.title) return;
+      if(btn.classList.contains('ql-list')){
+        btn.title = btn.getAttribute('value') === 'ordered' ? 'Numbered list' : 'Bulleted list';
+        return;
+      }
+      for(const cls in QUILL_BUTTON_TOOLTIPS){
+        if(btn.classList.contains(cls)){ btn.title = QUILL_BUTTON_TOOLTIPS[cls]; return; }
+      }
+    });
+    const headerLabel = toolbarEl.querySelector('.ql-header .ql-picker-label');
+    if(headerLabel && !headerLabel.title) headerLabel.title = 'Heading style';
+    toolbarEl.querySelectorAll('.ql-header .ql-picker-item').forEach(item=>{
+      if(item.title) return;
+      const v = item.getAttribute('data-value');
+      item.title = v === '2' ? 'Heading 2' : v === '3' ? 'Heading 3' : 'Normal text';
+    });
+  }
+
+  // The two custom buttons every rich-text editor gets beyond Quill's
+  // own toolbar — appended into Quill's toolbar as one more ".ql-formats"
+  // group so they look and space like native buttons, not bolted on.
+  function addCustomToolbarButtons(toolbarEl, id){
+    if(!toolbarEl) return;
+    const group = document.createElement('span');
+    group.className = 'ql-formats';
+
+    const sourceBtn = document.createElement('button');
+    sourceBtn.type = 'button';
+    sourceBtn.className = 'richtext-btn richtext-source-btn';
+    sourceBtn.title = 'View/edit HTML source';
+    sourceBtn.textContent = '</>';
+    sourceBtn.addEventListener('click', () => toggleRichTextSource(id));
+
+    const expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'richtext-btn richtext-expand-btn';
+    expandBtn.title = 'Expand editor';
+    expandBtn.textContent = '⤢';
+    expandBtn.addEventListener('click', () => toggleRichTextExpanded(id));
+
+    group.appendChild(sourceBtn);
+    group.appendChild(expandBtn);
+    toolbarEl.appendChild(group);
+  }
+
+  // Flips one editor between its normal Quill view and a plain
+  // <textarea> holding the same content as raw HTML — Quill's own
+  // clipboard module already knows how to parse arbitrary HTML back
+  // into a Delta (clipboard.convert(html), Quill 1.x signature — this
+  // project is pinned to 1.3.7, see the CDN comment above), so no extra
+  // conversion library is needed to round-trip it. The textarea is
+  // created once per editor and reused, same "static, reused across
+  // opens" model the rest of this console follows.
+  function toggleRichTextSource(id){
+    const quill = richTextEditors.get(id);
+    const container = document.getElementById(id);
+    if(!quill || !container) return;
+    let state = richTextSourceState.get(id);
+    if(!state){
+      const textarea = document.createElement('textarea');
+      textarea.className = 'richtext-source';
+      textarea.style.display = 'none';
+      container.insertAdjacentElement('afterend', textarea);
+      state = { textarea, active: false };
+      richTextSourceState.set(id, state);
+    }
+    if(!state.active){
+      state.textarea.value = quill.root.innerHTML;
+      container.style.display = 'none';
+      state.textarea.style.display = '';
+      state.active = true;
+    }else{
+      syncRichTextSourceToQuill(id);
+      state.textarea.style.display = 'none';
+      container.style.display = '';
+      state.active = false;
+    }
+  }
+
+  // Parses whatever's currently in an editor's source textarea back
+  // into its Quill instance — used both by the "back to WYSIWYG" side
+  // of the toggle above AND by getRichTextBlocks/getRichTextHtml below,
+  // so a GM who edits the HTML and clicks Save without switching back
+  // to the visual view first doesn't lose that edit.
+  function syncRichTextSourceToQuill(id){
+    const state = richTextSourceState.get(id);
+    if(!state || !state.active) return;
+    const quill = richTextEditors.get(id);
+    if(!quill) return;
+    try{
+      quill.setContents(quill.clipboard.convert(state.textarea.value), 'user');
+    }catch(err){
+      console.error('Failed to parse HTML source back into the editor for #' + id + ':', err);
+    }
+  }
+
+  // Toggles one editor (plus its toolbar, and its source textarea if
+  // open) into a large fixed-position overlay — useful for a long
+  // article/dossier body where the normal ~200px-tall box makes editing
+  // awkward. Escape (wired further below) collapses whichever editor is
+  // currently expanded.
+  let richTextBackdrop = null;
+  function getRichTextBackdrop(){
+    if(!richTextBackdrop){
+      richTextBackdrop = document.createElement('div');
+      richTextBackdrop.className = 'richtext-backdrop';
+      richTextBackdrop.addEventListener('click', collapseExpandedRichText);
+      document.body.appendChild(richTextBackdrop);
+    }
+    return richTextBackdrop;
+  }
+
+  function toggleRichTextExpanded(id){
+    const container = document.getElementById(id);
+    if(!container) return;
+    const toolbar = container.previousElementSibling;
+    const expanded = container.classList.toggle('richtext-expanded');
+    if(toolbar) toolbar.classList.toggle('richtext-toolbar-expanded', expanded);
+    const state = richTextSourceState.get(id);
+    if(state) state.textarea.classList.toggle('richtext-expanded', expanded);
+    document.body.classList.toggle('richtext-modal-open', expanded);
+    getRichTextBackdrop().classList.toggle('visible', document.body.classList.contains('richtext-modal-open'));
+  }
+
+  function collapseExpandedRichText(){
+    document.querySelectorAll('.richtext.richtext-expanded').forEach(el => toggleRichTextExpanded(el.id));
+  }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') collapseExpandedRichText(); });
+
+  // Resets one editor's UI back to plain/collapsed WYSIWYG view without
+  // touching content — called before loading fresh data into a panel
+  // (setRichTextBlocks/setRichTextHtml below), since these editors are
+  // static and reused across every open/close of their panel and
+  // shouldn't reopen still in source or expanded mode from last time.
+  function resetRichTextUiState(id){
+    const container = document.getElementById(id);
+    if(!container) return;
+    const toolbar = container.previousElementSibling;
+    container.classList.remove('richtext-expanded');
+    container.style.display = '';
+    if(toolbar) toolbar.classList.remove('richtext-toolbar-expanded');
+    const state = richTextSourceState.get(id);
+    if(state){
+      state.active = false;
+      state.textarea.style.display = 'none';
+      state.textarea.classList.remove('richtext-expanded');
+    }
+  }
 
   // Never let a Quill init failure (CDN blocked/slow/down, a browser
   // quirk, anything) take down the rest of this script — this is one
@@ -2413,7 +2610,11 @@ const CONSOLE_JS = `
     document.querySelectorAll('[data-richtext]').forEach(el=>{
       if(richTextEditors.has(el.id)) return;
       try{
-        richTextEditors.set(el.id, new Quill('#' + el.id, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } }));
+        const quill = new Quill('#' + el.id, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } });
+        richTextEditors.set(el.id, quill);
+        const toolbarEl = el.previousElementSibling;
+        addToolbarTooltips(toolbarEl);
+        addCustomToolbarButtons(toolbarEl, el.id);
       }catch(err){
         console.error('Quill init failed for #' + el.id + ':', err);
       }
@@ -2524,10 +2725,16 @@ const CONSOLE_JS = `
   }
 
   function getRichTextBlocks(id){
+    // If a GM hand-edited the HTML source view and clicked Save without
+    // switching back to the visual editor first, that edit only lives in
+    // the textarea — pull it into Quill before reading, or it's silently
+    // lost.
+    syncRichTextSourceToQuill(id);
     const q = richTextEditors.get(id);
     return q ? deltaToBlocks(q.getContents()) : [];
   }
   function setRichTextBlocks(id, blocks){
+    resetRichTextUiState(id);
     const q = richTextEditors.get(id);
     if(q) q.setContents(blocksToDelta(blocks || []));
   }
@@ -2535,10 +2742,12 @@ const CONSOLE_JS = `
   // api-dossier.js's sanitizeHtml comment for why). No conversion
   // needed in either direction; Quill's own innerHTML IS the value.
   function getRichTextHtml(id){
+    syncRichTextSourceToQuill(id);
     const q = richTextEditors.get(id);
     return q ? q.root.innerHTML : '';
   }
   function setRichTextHtml(id, html){
+    resetRichTextUiState(id);
     const q = richTextEditors.get(id);
     if(!q) return;
     q.setContents([]);
