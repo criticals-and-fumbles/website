@@ -224,6 +224,44 @@ affect, before assuming it shipped. If a deploy didn't land, the safe
 manual fallback is documented above (`npm run build:cloudflare && npm
 run deploy` — never skip the build step).
 
+## On-demand ISR revalidation silently no-op'd for a month — no `tagCache` configured (2026-09-20, closed issue #28)
+
+`app/api/revalidate/route.ts` (added 2026-08-20 specifically so editors
+don't have to wait out the 5-minute `revalidate = 300` ISR window) called
+`revalidatePath()` and returned `{"revalidated":true}` — looked like it
+worked, every time, for a month. It never actually invalidated anything.
+Root cause: `open-next.config.ts` only configured `incrementalCache`
+(the R2-backed page store), never `tagCache`. Without one,
+`@opennextjs/cloudflare` silently falls back to a `"dummy"` tag cache
+whose `isStale()` always returns `false` and `writeTags()` is a no-op —
+no error, no warning, just a permanently-successful-looking API call that
+did nothing underneath.
+
+Found while debugging why a `teamMember.order` change (setting Display
+Order so a member appears first on `/team`) wasn't showing up live: the
+Sanity data was confirmed correct via a direct GROQ query, `/api/revalidate`
+returned success, and the live page still served the old order 10+ minutes
+later across repeated polls. Only a full redeploy fixed it — a redeploy
+re-seeds the R2 cache directly from a fresh build (a completely different
+mechanism from `revalidatePath`, which is why it "worked" despite the
+underlying feature being broken).
+
+**Fix**: wired in `@opennextjs/cloudflare`'s KV-based tag cache
+(`NEXT_TAG_CACHE_KV` binding — exact name required by that
+implementation) via `open-next.config.ts`'s `tagCache` option. Verified
+live: patched a teamMember's `order` in Sanity, called `/api/revalidate`,
+confirmed the rendered order updated within ~5 seconds with no redeploy,
+then reverted the test edit and re-verified. See `docs/seo-and-infra.md`
+§ Stack for the binding detail.
+
+**General lesson**: an API route returning a success response is not
+evidence the underlying library integration is fully wired up — for any
+adapter/framework feature with multiple required config pieces (here:
+`incrementalCache` alone looks complete but silently degrades without
+`tagCache` too), verify the actual end-to-end effect (data change →
+live page change) at least once after building the feature, not just
+that the route itself doesn't error.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they

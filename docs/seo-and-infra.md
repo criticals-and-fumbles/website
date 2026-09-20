@@ -191,6 +191,23 @@ placeholder ID; it was omitted since nothing in the app uses D1 (the cache
 is R2-backed) and a placeholder ID would have blocked `wrangler deploy`. Add
 one later if a real use case needs it.
 
+**KV binding required for on-demand revalidation to actually work
+(added 2026-09-20, issue #28):** `wrangler.toml` declares a
+`[[kv_namespaces]]` binding (`NEXT_TAG_CACHE_KV`, exact name required by
+`@opennextjs/cloudflare`'s `kv-next-tag-cache` implementation — don't
+rename it) wired into `open-next.config.ts`'s `tagCache`. Before this,
+`open-next.config.ts` only configured `incrementalCache`; without a
+`tagCache`, the adapter silently falls back to a `"dummy"` implementation
+whose `isStale()` always returns `false` — meaning `app/api/revalidate`
+(and any `revalidatePath`/`revalidateTag` call) reported success but never
+actually invalidated the R2-cached page HTML. Only a full redeploy (which
+re-seeds R2 directly from the fresh build) ever picked up a content
+change. Fixed by wiring the KV tag cache; verified live (edit Sanity data
+→ call `/api/revalidate` → page updates within ~5s, no redeploy needed).
+KV is documented upstream as eventually-consistent for this use
+(up to ~60s for a write to propagate) — a real tradeoff, but a large
+improvement over the prior "never."
+
 ## SEO & Discord funnel (Phase 1.4)
 
 **`lib/metadata.ts`** — `buildMetadata({ title, description, path, image?,
