@@ -12,6 +12,12 @@ export default defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "order",
+      title: "Display Order",
+      type: "number",
+      description: "Controls order shown on the Wiki Worlds page. Lower numbers appear first; worlds without a value sort after any that have one.",
+    }),
+    defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
@@ -159,4 +165,7 @@ export default defineType({
   preview: {
     select: { title: "name", subtitle: "tagline", media: "coverImage" },
   },
+  orderings: [
+    { title: "Display Order", name: "orderAsc", by: [{ field: "order", direction: "asc" }] },
+  ],
 });

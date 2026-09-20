@@ -237,7 +237,7 @@ export const HOME_UPCOMING_EVENTS_QUERY = groq`{
 }`;
 
 export const HOME_WORLDS_QUERY = groq`
-  *[_type == "world"] | order(name asc) {
+  *[_type == "world"] | order(order asc, name asc) {
     _id, name, "slug": slug.current, tagline, colourAccent, coverImage,
     "dms": dms[]->{ ${teamMemberRefFields} }
   }
@@ -250,7 +250,7 @@ export const HOME_WORLDS_QUERY = groq`
 export const ARTICLES_QUERY = groq`
   *[_type == "article" && status == "published"
     && (!defined($category) || category == $category)]
-    | order(coalesce(publishedAt, _updatedAt) desc) {
+    | order(order asc, coalesce(publishedAt, _updatedAt) desc) {
     ${articleCardFields}
   }
 `;
@@ -320,7 +320,7 @@ export const REGULAR_EVENT_BY_SLUG_QUERY = groq`
 /* ---------------------------------------------------------------------- */
 
 export const TEAM_MEMBERS_QUERY = groq`
-  *[_type == "teamMember" && active == true] | order(tier asc, handle asc) {
+  *[_type == "teamMember" && active == true] | order(tier asc, order asc, handle asc) {
     _id, handle, "slug": slug.current, realName, roles, tier,
     dndClass, race, alignment, stats, backstory, signatureMove,
     avatar, socialLinks,
@@ -342,7 +342,7 @@ export const TEAM_MEMBER_BY_SLUG_QUERY = groq`
 /* ---------------------------------------------------------------------- */
 
 export const WORLDS_QUERY = groq`
-  *[_type == "world"] | order(name asc) {
+  *[_type == "world"] | order(order asc, name asc) {
     _id, name, "slug": slug.current, tagline, colourAccent, coverImage,
     sessionCount, loreCount,
     "dms": dms[]->{ ${teamMemberRefFields} }

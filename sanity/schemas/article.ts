@@ -14,6 +14,12 @@ export default defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "order",
+      title: "Display Order",
+      type: "number",
+      description: "Controls order shown on the Chronicles listing page. Lower numbers appear first; articles without a value sort after any that have one, by published date.",
+    }),
+    defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
@@ -142,4 +148,7 @@ export default defineType({
   preview: {
     select: { title: "title", subtitle: "category", media: "coverImage" },
   },
+  orderings: [
+    { title: "Display Order", name: "orderAsc", by: [{ field: "order", direction: "asc" }] },
+  ],
 });

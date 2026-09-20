@@ -54,6 +54,12 @@ export default defineType({
       },
     }),
     defineField({
+      name: "order",
+      title: "Display Order",
+      type: "number",
+      description: "Controls order shown within this member's tier on the Team page. Lower numbers appear first; members without a value sort after any that have one.",
+    }),
+    defineField({
       name: "tier",
       title: "Tier",
       type: "string",
@@ -206,4 +212,7 @@ export default defineType({
       };
     },
   },
+  orderings: [
+    { title: "Display Order", name: "orderAsc", by: [{ field: "tier", direction: "asc" }, { field: "order", direction: "asc" }] },
+  ],
 });
