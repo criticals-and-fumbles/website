@@ -108,6 +108,12 @@ export default async function CampaignsDirectoryPage() {
             </div>
           </aside>
         </div>
+
+        {siteSettings?.legalDisclaimer && (
+          <p className="mt-14 max-w-prose border-t border-[var(--celestial-gold-500-20)] pt-6 text-xs leading-relaxed text-text-muted">
+            {siteSettings.legalDisclaimer}
+          </p>
+        )}
       </div>
 
       <Footer />

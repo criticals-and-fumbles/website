@@ -111,6 +111,14 @@ export default defineType({
       type: "string",
     }),
     defineField({
+      name: "legalDisclaimer",
+      title: "Legal Disclaimer",
+      type: "text",
+      description:
+        "Fan-content/IP disclaimer shown on the Campaign Logs directory page " +
+        "(/campaigns), just above the footer. Blank hides it entirely.",
+    }),
+    defineField({
       name: "activities",
       title: "Activities",
       type: "array",

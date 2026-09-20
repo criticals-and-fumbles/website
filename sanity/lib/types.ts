@@ -579,6 +579,7 @@ export interface SiteSettings {
   keywords?: string[];
   footerNavLinks?: { label: string; url: string }[];
   copyrightLine?: string;
+  legalDisclaimer?: string;
   activities?: string[];
   visionStatement?: string;
   missionStatement?: string;
