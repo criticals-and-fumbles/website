@@ -116,9 +116,11 @@ export function renderConsolePage({
     <div class="topbar">
       <h1 id="viewTitle">Dossier</h1>
       <div class="toolbar" id="bulkToolbar">
-        <a class="btn secondary" href="/console/templates/dossiers.xml">Download XML Template</a>
+        <a class="btn secondary" href="/templates/dossiers.xml">Download XML Template</a>
+        <button class="btn" id="dossierCopyPrompt">Copy AI Prompt</button>
+        <span class="savedflag" id="dossierCopyFlag"></span>
         <button class="btn" id="importXmlBtn">Import XML</button>
-        <input type="file" id="importXml" accept=".xml">
+        <input type="file" id="importXml" accept=".xml" multiple>
         <button class="btn primary" id="exportXml">Export XML</button>
       </div>
     </div>
@@ -127,6 +129,11 @@ export function renderConsolePage({
       match one of your own campaigns), then Import XML to create-or-update by dossier code —
       existing dossiers with the same code get overwritten, not duplicated. Export XML gives you
       everything currently in this table, in the same format, as a starting point for edits.
+      "Copy AI Prompt" hands your session notes to an AI agent (Claude, ChatGPT, Gemini) along
+      with the template — it sorts facts into quickFacts/locationFacts/statTiles/objectives and
+      updates threatAssessment/status fields to reflect how the session moved the world state
+      forward. You can select multiple XML files at once in Import XML — each is imported in
+      its own transaction, so one session's file failing doesn't block the others.
     </p>
 
     <div class="status" id="statusLine">Ready.</div>
@@ -505,7 +512,7 @@ export function renderConsolePage({
         in Sanity Studio, but a unit can be created right here.
       </p>
       <div class="field">
-        <a class="btn" href="/console/templates/wiki-import.json">Download JSON Template</a>
+        <a class="btn" href="/templates/wiki-import.json">Download JSON Template</a>
         <button class="btn" id="bwCopyPrompt">Copy AI Prompt</button>
         <span class="savedflag" id="bwCopyFlag"></span>
       </div>
@@ -517,7 +524,7 @@ export function renderConsolePage({
         the World as a whole rather than one Unit. Uploaded through the same file picker below.
       </p>
       <div class="field">
-        <a class="btn" href="/console/templates/wiki-restructure.json">Download Restructure Template</a>
+        <a class="btn" href="/templates/wiki-restructure.json">Download Restructure Template</a>
         <a class="btn" href="https://www.criticalsandfumbles.com/wiki-restructure-kit" target="_blank" rel="noopener noreferrer">Open Wiki Restructure Kit ↗</a>
       </div>
       <p class="hint">
@@ -2014,33 +2021,54 @@ const CONSOLE_JS = `
   });
   document.getElementById('importXmlBtn').addEventListener('click', ()=> document.getElementById('importXml').click());
   document.getElementById('importXml').addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
+    const files = Array.from(e.target.files || []); if(!files.length) return;
     clearXmlResults();
-    flashStatus('Importing…', '');
-    try{
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/import', { method:'POST', body: form });
-      // A 502/500 from an upstream failure (or any non-JSON error page)
-      // must not surface as a raw "Unexpected token < in JSON" — that's
-      // exactly the kind of non-actionable message this fix is for.
-      const body = await res.json().catch(()=>null);
-      if(!body) throw new Error(\`Server returned an unreadable response (HTTP \${res.status}). Try again — if it persists, the file may be malformed.\`);
-      if(!res.ok) throw new Error(body.error || \`HTTP \${res.status}\`);
+    // Each file is its own /api/import call (own Sanity transaction) —
+    // one session's malformed XML shouldn't block the rest of the batch.
+    // Sequential, not Promise.all, so the status line can report progress
+    // and so two files importing the same dossier code apply in the
+    // order the GM picked them rather than racing.
+    const totals = { imported: 0, created: 0, updated: 0, failed: 0, failures: [] };
+    let hadError = false;
+    for(let i=0; i<files.length; i++){
+      const file = files[i];
+      if(files.length > 1) flashStatus(\`Importing \${i+1}/\${files.length}: \${file.name}…\`, '');
+      else flashStatus('Importing…', '');
+      try{
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch('/api/import', { method:'POST', body: form });
+        // A 502/500 from an upstream failure (or any non-JSON error page)
+        // must not surface as a raw "Unexpected token < in JSON" — that's
+        // exactly the kind of non-actionable message this fix is for.
+        const body = await res.json().catch(()=>null);
+        if(!body) throw new Error(\`Server returned an unreadable response (HTTP \${res.status}). Try again — if it persists, the file may be malformed.\`);
+        if(!res.ok) throw new Error(body.error || \`HTTP \${res.status}\`);
 
-      renderXmlResults(body);
-      if(body.failed > 0){
-        flashStatus(\`Imported with \${body.failed} failure\${body.failed===1?'':'s'} — see details below.\`, 'err');
-        // Deliberately no reload here: a reload would wipe the failure
-        // detail above before the GM can read which codes failed and
-        // why. Whatever DID succeed is already live in Sanity; the grid
-        // just won't reflect it until the next reload/navigation.
-      } else {
-        flashStatus(\`Imported \${body.imported} dossiers (\${body.created} created, \${body.updated} updated).\`, 'ok');
-        window.location.reload();
+        totals.imported += body.imported;
+        totals.created += body.created;
+        totals.updated += body.updated;
+        totals.failed += body.failed;
+        totals.failures.push(...(body.failures || []).map(f=> files.length > 1 ? { code: f.code, reason: \`[\${file.name}] \${f.reason}\` } : f));
+      }catch(err){
+        hadError = true;
+        totals.failed += 1;
+        totals.failures.push({ code: '(whole file)', reason: files.length > 1 ? \`[\${file.name}] \${err.message}\` : err.message });
       }
-    }catch(err){
-      flashStatus('XML import failed: ' + err.message, 'err');
+    }
+
+    renderXmlResults(totals);
+    if(totals.failed > 0){
+      flashStatus(\`Imported with \${totals.failed} failure\${totals.failed===1?'':'s'} — see details below.\`, 'err');
+      // Deliberately no reload here: a reload would wipe the failure
+      // detail above before the GM can read which codes failed and
+      // why. Whatever DID succeed is already live in Sanity; the grid
+      // just won't reflect it until the next reload/navigation.
+    } else if(hadError) {
+      flashStatus('Import failed — see details below.', 'err');
+    } else {
+      flashStatus(\`Imported \${totals.imported} dossiers (\${totals.created} created, \${totals.updated} updated)\${files.length>1 ? \` across \${files.length} files\` : ''}.\`, 'ok');
+      window.location.reload();
     }
     e.target.value = '';
   });
@@ -3567,13 +3595,27 @@ const CONSOLE_JS = `
   document.getElementById('bwCopyPrompt').addEventListener('click', async ()=>{
     const flag = document.getElementById('bwCopyFlag');
     try{
-      const res = await fetch('/console/templates/wiki-import-prompt.txt');
+      const res = await fetch('/templates/wiki-import-prompt.txt');
       const text = await res.text();
       await navigator.clipboard.writeText(text);
       flag.textContent = '✓ Copied.';
       flag.className = 'savedflag show';
     }catch(err){
-      flag.textContent = 'Copy failed — see /console/templates/wiki-import-prompt.txt';
+      flag.textContent = 'Copy failed — see /templates/wiki-import-prompt.txt';
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  document.getElementById('dossierCopyPrompt').addEventListener('click', async ()=>{
+    const flag = document.getElementById('dossierCopyFlag');
+    try{
+      const res = await fetch('/templates/dossier-import-prompt.txt');
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      flag.textContent = '✓ Copied.';
+      flag.className = 'savedflag show';
+    }catch(err){
+      flag.textContent = 'Copy failed — see /templates/dossier-import-prompt.txt';
       flag.className = 'savedflag show err';
     }
   });

@@ -71,6 +71,76 @@ export const DOSSIER_XML_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
 </dossiers>
 `;
 
+/**
+ * Copy-paste prompt for the console's Dossier "Copy AI Prompt" button —
+ * same idea as WIKI_IMPORT_PROMPT below, but for turning raw session
+ * notes into DOSSIER_XML_TEMPLATE's shape. Deliberately redundant with
+ * the usage comment at the top of DOSSIER_XML_TEMPLATE rather than
+ * relying on one or the other — if either changes, update both plus this
+ * prompt in the same commit, nothing keeps them in sync automatically.
+ */
+export const DOSSIER_XML_PROMPT = `You are converting my raw tabletop session notes into a dossier XML file
+for a bulk-import tool. I'm giving you three things: this prompt, the XML
+template below, and my raw notes below that.
+
+Rules — follow exactly, do not deviate:
+
+1. Output ONLY valid XML matching the template's structure (one <dossier>
+   per session I describe). No markdown code fences, no commentary before
+   or after — just the XML, so I can paste your output directly into a
+   file.
+
+2. id and campaignSlug are required on every <dossier>. id becomes the
+   dossier's code — make it short and stable (e.g. "SESSION-07"), unique
+   within the campaign. campaignSlug must match one of my existing
+   campaigns exactly (I'll tell you the slug, or you'll find it in my
+   notes) — never invent one.
+
+3. This is the core judgment call: don't just log what happened, work out
+   what CHANGED in the world state and record the facts a reader needs to
+   track it going forward.
+   - overview is the narrative recap — what happened, in order.
+   - quickFacts / locationFacts / statTiles / threatAssessment are the
+     STATE the session left behind, not a retelling of the recap — e.g.
+     if the party toppled a faction leader, a threatAssessment <meter>
+     for that faction's tension should now read lower than last session,
+     and a quickFacts <fact> should record the leadership vacuum this
+     creates. If a fact was true last session and nothing in my notes
+     changed it, leave it out rather than repeating it unchanged — only
+     include facts that are new, changed, or essential to understanding
+     THIS session's dossier on its own.
+   - objectives are forward-looking: what's now open (unresolved threads,
+     new leads) and what's now done (resolved this session). Don't
+     restate objectives that were already done in a previous session.
+   - If my notes don't give you enough to state a fact confidently, leave
+     it out rather than inventing or guessing a plausible-sounding value —
+     an absent fact is safe, a wrong one misleads whoever reads the
+     dossier next.
+
+4. threatAssessment meter "level" must be exactly one of: low, medium,
+   high, very-high. objective "priority" must be exactly one of: primary,
+   secondary, tertiary. objective "status" must be exactly one of: open,
+   done. Never a synonym, never a different case — if none fit, omit the
+   element rather than guessing.
+
+5. Re-importing the same id + campaignSlug updates that dossier in place
+   — if I tell you this is a correction/continuation of a session you
+   (or I) already logged, reuse the same id rather than inventing a new
+   one.
+
+6. Media isn't part of this format — never invent a <media> entry; leave
+   the element empty if my notes mention images/audio/video.
+
+7. If my notes cover multiple sessions, output one <dossier> block per
+   session inside a single <dossiers> root, in session order.
+
+Template:
+<paste the downloaded template XML here>
+
+My notes:
+<paste raw session notes here>
+`;
+
 export const OBJECTIVES_CSV_TEMPLATE = `dossier_id,priority,status,title,description
 EXAMPLE-01,primary,open,Find the missing courier,Last seen heading north along the old trade road.
 EXAMPLE-01,secondary,done,Deliver the sealed letter,Handed off to the garrison captain.

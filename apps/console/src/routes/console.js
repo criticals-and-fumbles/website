@@ -3,6 +3,7 @@ import { query } from "../lib/sanity.js";
 import { renderConsolePage } from "../templates/console.js";
 import {
   DOSSIER_XML_TEMPLATE,
+  DOSSIER_XML_PROMPT,
   OBJECTIVES_CSV_TEMPLATE,
   WIKI_JSON_TEMPLATE,
   WIKI_IMPORT_PROMPT,
@@ -182,6 +183,13 @@ app.get("/templates/dossiers.xml", (c) =>
     "content-type": "application/xml",
     "content-disposition": 'attachment; filename="dossier-import-template.xml"',
   }),
+);
+
+// Plain text, not a download — the console's "Copy AI Prompt" button (in
+// the Dossier toolbar) reads this via fetch() and writes it to the
+// clipboard directly. Same pattern as wiki-import-prompt.txt below.
+app.get("/templates/dossier-import-prompt.txt", (c) =>
+  c.body(DOSSIER_XML_PROMPT, 200, { "content-type": "text/plain; charset=utf-8" }),
 );
 
 app.get("/templates/objectives.csv", (c) =>
