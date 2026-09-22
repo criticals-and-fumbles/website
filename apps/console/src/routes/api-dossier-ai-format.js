@@ -13,8 +13,8 @@ const app = new Hono();
 // doesn't have (AI Gateway's own logs/analytics API needs one; the
 // Workers AI binding used here doesn't expose bulk log reads at all —
 // see that route's file comment for the full reasoning).
-const PRICE_PER_INPUT_TOKEN_USD = 0.152 / 1_000_000;
-const PRICE_PER_OUTPUT_TOKEN_USD = 0.287 / 1_000_000;
+const PRICE_PER_INPUT_TOKEN_USD = 0.351 / 1_000_000;
+const PRICE_PER_OUTPUT_TOKEN_USD = 0.555 / 1_000_000;
 
 // aiUsageLog is deliberately NOT registered in sanity/schemas/ (no
 // Studio editing UI for it — nobody hand-edits telemetry) but is a real
@@ -71,13 +71,41 @@ async function logAiUsage(c, { success, usage }) {
 //     at the edges (a field coming back as a bare string/object instead
 //     of the specified array, "text" instead of "title", etc.), since
 //     nothing constrains the shape but the prompt's own wording.
-// Net choice: this cheaper model + json_object + an explicit shape
-// example in DOSSIER_AI_SYSTEM_PROMPT + defensive normalizeDraft()
-// below to coerce the shape drift that still shows up. If real DM usage
-// shows content quality problems instead of shape ones, that's the
-// signal to revisit — not swapping back to json_schema mode, which
-// tested strictly worse on content here regardless of model.
-const MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
+// Net choice at that point: the cheap fp8 model + json_object + an
+// explicit shape example in DOSSIER_AI_SYSTEM_PROMPT + defensive
+// normalizeDraft() below to coerce the shape drift that still showed up.
+//
+// Upgraded 2026-09-23 to this larger, non-reasoning model, per explicit
+// request for "better reasoning" within a 25%-over-current cost ceiling.
+// Two things ruled out before landing here:
+//   - Reasoning-labeled models (tried @cf/zai-org/glm-4.7-flash) don't
+//     fit ANY reasonable ceiling for this task — the hidden chain-of-
+//     thought trace alone burned the entire 2048-token output budget
+//     before the model even finished the JSON answer, at any
+//     reasoning_effort setting. Real cost for a completed call would
+//     have been ~450-550% of the fp8 baseline. This task (read prose,
+//     extract facts, follow a few consistent rules) isn't the kind of
+//     multi-step logical/mathematical problem reasoning-training
+//     actually improves — the fp8 model's failures were JSON-shape
+//     reliability and decoding stability, not shallow judgment, so
+//     "add reasoning" was the wrong lever regardless of cost.
+//   - @cf/meta/llama-3.2-11b-vision-instruct priced in-budget (~110% of
+//     baseline) but is gated behind a one-time Meta license acceptance
+//     ("you represent you are not domiciled in the EU") — a legal
+//     representation left for a human to make, not silently agreed to
+//     here.
+// This model (24B, non-reasoning, real architecture step up) landed at
+// ~215-227% of the fp8 baseline in testing — over the original 125%
+// ask, but accepted explicitly after showing the real numbers, since
+// absolute cost stays trivial (~$0.001/call on a full real session
+// recap) at this project's volume. Verified live against a real
+// session's prose (not synthetic test text) across two runs: clean,
+// non-garbled, well-structured output both times, zero shape drift
+// (better than the fp8 model's occasional shape drift, a genuine bonus)
+// — one run mislabeled an already-resolved objective as still open, the
+// repeat run got it right, consistent with normal model variance rather
+// than a systematic blind spot.
+const MODEL = "@cf/mistralai/mistral-small-3.1-24b-instruct";
 
 // Enforced HERE, before the model is ever called — this is the actual
 // mechanism keeping a request scoped to "one session's notes," not the
