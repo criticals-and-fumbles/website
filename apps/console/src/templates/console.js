@@ -197,6 +197,15 @@ export function renderConsolePage({
         <label>Genre Details</label>
         <textarea id="ecGenrePreview" readonly rows="10" style="font-family:var(--font-mono); font-size:12px;"></textarea>
       </div>
+      <div class="field">
+        <label>Default Classification</label>
+        <input type="text" id="ecClassification" placeholder="e.g. TOP SECRET">
+        <p class="field-tip">Applies to every dossier in this campaign unless a dossier sets its own — see cnf-website issue #29's addendum.</p>
+      </div>
+      <div class="field">
+        <label>Default Distribution</label>
+        <input type="text" id="ecDistribution" placeholder="e.g. PLAYER-FACING">
+      </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ecGmNames"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ecHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ecMotto"></div>
@@ -233,6 +242,15 @@ export function renderConsolePage({
       <div class="field">
         <label>Genre Details</label>
         <textarea id="ccGenrePreview" readonly rows="10" style="font-family:var(--font-mono); font-size:12px;"></textarea>
+      </div>
+      <div class="field">
+        <label>Default Classification</label>
+        <input type="text" id="ccClassification" placeholder="e.g. TOP SECRET">
+        <p class="field-tip">Applies to every dossier in this campaign unless a dossier sets its own — see cnf-website issue #29's addendum.</p>
+      </div>
+      <div class="field">
+        <label>Default Distribution</label>
+        <input type="text" id="ccDistribution" placeholder="e.g. PLAYER-FACING">
       </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ccGmNames" placeholder="e.g. Alex, Sam"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
@@ -1401,6 +1419,8 @@ const CONSOLE_JS = `
     document.getElementById('ecTitle').value = cmp.title || '';
     document.getElementById('ecSlug').value = cmp.slug?.current || '';
     document.getElementById('ecSystem').value = cmp.system || '';
+    document.getElementById('ecClassification').value = cmp.classification || '';
+    document.getElementById('ecDistribution').value = cmp.distribution || '';
     document.getElementById('ecStatus').value = cmp.status || 'active';
     populateThemeSelect('ecTheme', 'ecGenrePreview');
     document.getElementById('ecTheme').value = cmp.theme || '';
@@ -1430,6 +1450,8 @@ const CONSOLE_JS = `
     const fields = {
       title: document.getElementById('ecTitle').value.trim(),
       system: document.getElementById('ecSystem').value.trim(),
+      classification: document.getElementById('ecClassification').value.trim(),
+      distribution: document.getElementById('ecDistribution').value.trim(),
       status: document.getElementById('ecStatus').value,
       theme: document.getElementById('ecTheme').value,
       gmNames: document.getElementById('ecGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -1526,6 +1548,8 @@ const CONSOLE_JS = `
     const body = {
       title: document.getElementById('ccTitle').value.trim(),
       system: document.getElementById('ccSystem').value.trim(),
+      classification: document.getElementById('ccClassification').value.trim(),
+      distribution: document.getElementById('ccDistribution').value.trim(),
       status: document.getElementById('ccStatus').value,
       theme: document.getElementById('ccTheme').value,
       gmNames: document.getElementById('ccGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -1550,10 +1574,10 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, visible: body.visible, heroImage: body.heroImage });
+      campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, classification: body.classification, distribution: body.distribution, visible: body.visible, heroImage: body.heroImage });
       flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
-      ['ccTitle','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
+      ['ccTitle','ccSystem','ccClassification','ccDistribution','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
       document.getElementById('ccVisible').checked = false;
       ccHeroImageAsset = null;
       renderExistingThumb('cc', null);
@@ -1640,6 +1664,29 @@ const CONSOLE_JS = `
   });
 
   // ---------- CREATE DOSSIER ----------
+  // Fallback order matches the public dossier page's own resolution
+  // exactly (campaigns/src/templates/dossier.js's resolvedClassification/
+  // resolvedDistribution): dossier's own value → campaign's default →
+  // campaign's genre theme's default. Only used here to show what WILL
+  // apply as a placeholder — never writes into the field, so a DM typing
+  // their own value always wins, same as leaving it blank always means
+  // "inherit" server-side too.
+  function inheritedDossierDefault(campaignId, field){
+    const cmp = campaigns.find(c=>c._id===campaignId);
+    if(!cmp) return '';
+    if(cmp[field]) return cmp[field];
+    const theme = themes.find(t=>t._id===cmp.theme);
+    return (theme && theme[field]) || '';
+  }
+
+  function syncDossierDefaultsPlaceholder(prefix){
+    const campaignId = document.getElementById(prefix + 'Campaign').value;
+    const classification = inheritedDossierDefault(campaignId, 'classification');
+    const distribution = inheritedDossierDefault(campaignId, 'distribution');
+    document.getElementById(prefix + 'Classification').placeholder = classification ? 'Inherited: ' + classification : 'e.g. TOP SECRET';
+    document.getElementById(prefix + 'Distribution').placeholder = distribution ? 'Inherited: ' + distribution : 'e.g. PLAYER-FACING';
+  }
+
   function populateCampaignSelect(){
     const sel = document.getElementById('cdCampaign');
     if(campaigns.length === 0){
@@ -1647,6 +1694,8 @@ const CONSOLE_JS = `
       return;
     }
     sel.innerHTML = campaigns.map(c=> \`<option value="\${c._id}">\${c.title}</option>\`).join('');
+    sel.onchange = ()=> syncDossierDefaultsPlaceholder('cd');
+    syncDossierDefaultsPlaceholder('cd');
   }
 
   document.getElementById('cdSubmit').addEventListener('click', async ()=>{
@@ -1859,6 +1908,8 @@ const CONSOLE_JS = `
         populateRepeater(id, kind, d[field]);
       }
     });
+    document.getElementById('edClassification').placeholder = 'Inherited: ' + (inheritedDossierDefault(d.campaignId, 'classification') || '(none set)');
+    document.getElementById('edDistribution').placeholder = 'Inherited: ' + (inheritedDossierDefault(d.campaignId, 'distribution') || '(none set)');
     renderExistingThumb('ed', d.heroImage);
     document.getElementById('edSizeWarn').textContent = '';
     renderExistingThumb('edHeader', d.headerImage);

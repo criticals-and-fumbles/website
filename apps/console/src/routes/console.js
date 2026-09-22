@@ -21,8 +21,8 @@ const app = new Hono();
 // needs every field it can PATCH, not just what the read-only table
 // displays.
 const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmailHash == $hash] | order(title asc){
-  _id, title, slug, genre, system, status, gmNames, hook, motto, signOff,
-  visible, heroImage, "theme": theme._ref
+  _id, title, slug, genre, system, status, classification, distribution,
+  gmNames, hook, motto, signOff, visible, heroImage, "theme": theme._ref
 }`;
 
 // Same reasoning — the single dossier editor edits every schema field
@@ -40,7 +40,7 @@ const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $
 // read-only detail preview in createCampaignView/editCampaignView, so a
 // GM can see what they're actually getting (colors, section-label copy)
 // before committing, without opening Sanity Studio.
-const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride, colors, labels }`;
+const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride, colors, labels, classification, distribution }`;
 
 // ---- Wiki manual builder data (unscoped — shared content, any console
 // GM may edit any of it, see lib/wiki-audit.js) ----

@@ -57,6 +57,8 @@ app.post("/", async (c) => {
     slug: { _type: "slug", current: slug },
     genre: theme.genre,
     system: body.system || undefined,
+    classification: body.classification || undefined,
+    distribution: body.distribution || undefined,
     status: body.status || "active",
     gmNames: Array.isArray(body.gmNames) ? body.gmNames : undefined,
     theme: { _type: "reference", _ref: body.theme },
