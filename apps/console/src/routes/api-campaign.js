@@ -24,8 +24,16 @@ function slugify(s) {
 app.post("/", async (c) => {
   const body = await c.req.json();
   if (!body.title) return c.json({ error: "title is required" }, 400);
-  if (!body.genre) return c.json({ error: "genre is required" }, 400);
   if (!body.theme) return c.json({ error: "theme is required" }, 400);
+
+  // genre is derived from the referenced theme, never trusted from the
+  // client — schema/campaign.js's own description says it should always
+  // "match a genreTheme.genre value", and the console UI used to make a
+  // DM retype that value into a separate free-text field with nothing
+  // keeping the two in sync (fixed 2026-09-22, folded into issue #29 —
+  // this was the "genre error whenever a new campaign is created" bug).
+  const theme = await query(c.env, `*[_id == $id][0]{genre}`, { id: body.theme });
+  if (!theme) return c.json({ error: "No such Genre Theme" }, 404);
 
   const slug = slugify(body.title);
   if (!slug) return c.json({ error: "title must contain at least one letter/number" }, 400);
@@ -47,7 +55,7 @@ app.post("/", async (c) => {
     _type: "campaign",
     title: body.title,
     slug: { _type: "slug", current: slug },
-    genre: body.genre,
+    genre: theme.genre,
     system: body.system || undefined,
     status: body.status || "active",
     gmNames: Array.isArray(body.gmNames) ? body.gmNames : undefined,
@@ -68,7 +76,7 @@ app.post("/", async (c) => {
     // (same pattern api-me-articles.js already uses). Sanity always
     // echoes the created document's id back in results[0].id.
     const result = await mutate(c.env, [{ create: doc }]);
-    return c.json({ ok: true, id: result?.results?.[0]?.id, result });
+    return c.json({ ok: true, id: result?.results?.[0]?.id, genre: theme.genre, result });
   } catch (err) {
     return c.json({ error: err.message }, 502);
   }
@@ -86,6 +94,9 @@ app.patch("/:id", async (c) => {
   if (field === "ownerEmail" || field === "ownerEmailHash") {
     return c.json({ error: `"${field}" is server-managed, cannot be set directly` }, 400);
   }
+  if (field === "genre") {
+    return c.json({ error: `"genre" is derived from the selected theme — change "theme" instead` }, 400);
+  }
 
   const owner = await query(c.env, `*[_id == $id][0].ownerEmailHash`, { id });
   if (owner === null || owner === undefined) return c.notFound();
@@ -93,9 +104,20 @@ app.patch("/:id", async (c) => {
     return c.json({ error: "Forbidden — you did not create this campaign" }, 403);
   }
 
+  // Changing theme re-derives genre in the same mutation — same
+  // single-source-of-truth reasoning as the POST handler above, so a
+  // campaign's genre can never drift from its theme's genre via an edit
+  // either, not just at creation.
+  const set = { [field]: value };
+  if (field === "theme") {
+    const theme = await query(c.env, `*[_id == $id][0]{genre}`, { id: value });
+    if (!theme) return c.json({ error: "No such Genre Theme" }, 404);
+    set.genre = theme.genre;
+  }
+
   try {
-    const result = await mutate(c.env, [{ patch: { id, set: { [field]: value } } }]);
-    return c.json({ ok: true, result });
+    const result = await mutate(c.env, [{ patch: { id, set } }]);
+    return c.json({ ok: true, genre: set.genre, result });
   } catch (err) {
     return c.json({ error: err.message }, 502);
   }

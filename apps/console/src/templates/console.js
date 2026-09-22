@@ -176,7 +176,7 @@ export function renderConsolePage({
         <input type="text" id="ecSlug" readonly>
         <p class="field-tip">Fixed at creation — this is the Sanity slug.current value, the last path segment of the campaign's public URL.</p>
       </div>
-      <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ecGenre"></div>
+      <div class="field"><label>Genre (auto-set from Genre Theme below)</label><input type="text" id="ecGenre" readonly></div>
       <div class="field"><label>System</label><input type="text" id="ecSystem"></div>
       <div class="field">
         <label>Status</label>
@@ -209,7 +209,7 @@ export function renderConsolePage({
     <div class="editor" id="createCampaignView">
       <h2>NEW CAMPAIGN</h2>
       <div class="field"><label>Title *</label><input type="text" id="ccTitle" placeholder="e.g. Bureau Noir: Dawn Protocol"></div>
-      <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ccGenre" placeholder="e.g. Sci-Fi, Fantasy, Horror, Modern"></div>
+      <div class="field"><label>Genre (auto-set from Genre Theme below)</label><input type="text" id="ccGenre" readonly></div>
       <div class="field"><label>System</label><input type="text" id="ccSystem" placeholder="e.g. D&D 5e, Call of Cthulhu 7e"></div>
       <div class="field">
         <label>Status</label>
@@ -1144,7 +1144,7 @@ const CONSOLE_JS = `
     document.getElementById('xmlResults').style.display = target.toolbar ? '' : 'none';
     document.querySelectorAll('.navitem[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
     if(view === 'campaigns') renderCampaignGrid();
-    if(view === 'createCampaign') populateThemeSelect();
+    if(view === 'createCampaign') populateThemeSelect('ccTheme', 'ccGenre');
     if(view === 'createDossier') populateCampaignSelect();
   }
 
@@ -1329,13 +1329,13 @@ const CONSOLE_JS = `
     const cmp = campaigns.find(x=>x._id===id);
     if(!cmp) return;
     activeCampaignEditId = id;
-    populateThemeSelect('ecTheme');
     document.getElementById('ecTitle').value = cmp.title || '';
     document.getElementById('ecSlug').value = cmp.slug?.current || '';
-    document.getElementById('ecGenre').value = cmp.genre || '';
     document.getElementById('ecSystem').value = cmp.system || '';
     document.getElementById('ecStatus').value = cmp.status || 'active';
+    populateThemeSelect('ecTheme', 'ecGenre');
     document.getElementById('ecTheme').value = cmp.theme || '';
+    document.getElementById('ecTheme').onchange(); // re-sync ecGenre to the campaign's actual theme, not the dropdown's default first option
     document.getElementById('ecGmNames').value = (cmp.gmNames||[]).join(', ');
     document.getElementById('ecHook').value = cmp.hook || '';
     document.getElementById('ecMotto').value = cmp.motto || '';
@@ -1354,9 +1354,12 @@ const CONSOLE_JS = `
   document.getElementById('ecSave').addEventListener('click', async ()=>{
     const flag = document.getElementById('ecFlag');
     const id = activeCampaignEditId;
+    // genre isn't sent here — it's server-derived from theme (the
+    // PATCH endpoint rejects a direct "genre" field write, see
+    // api-campaign.js). Read for the local optimistic-cache update
+    // below only, after the real writes succeed.
     const fields = {
       title: document.getElementById('ecTitle').value.trim(),
-      genre: document.getElementById('ecGenre').value.trim(),
       system: document.getElementById('ecSystem').value.trim(),
       status: document.getElementById('ecStatus').value,
       theme: document.getElementById('ecTheme').value,
@@ -1366,8 +1369,8 @@ const CONSOLE_JS = `
       signOff: document.getElementById('ecSignOff').value.trim(),
       visible: document.getElementById('ecVisible').checked,
     };
-    if(!fields.title || !fields.genre || !fields.theme){
-      flag.textContent = 'Title, Genre, and Genre Theme are required.';
+    if(!fields.title || !fields.theme){
+      flag.textContent = 'Title and Genre Theme are required.';
       flag.className = 'savedflag show err';
       return;
     }
@@ -1382,7 +1385,7 @@ const CONSOLE_JS = `
         })
       ));
       const cmp = campaigns.find(x=>x._id===id);
-      if(cmp) Object.assign(cmp, fields);
+      if(cmp) Object.assign(cmp, fields, { genre: document.getElementById('ecGenre').value.trim() });
       flag.textContent = '✓ Saved.';
       flag.className = 'savedflag show';
       setTimeout(()=>switchView('campaigns'), 700);
@@ -1393,18 +1396,34 @@ const CONSOLE_JS = `
   });
 
   // ---------- CREATE CAMPAIGN ----------
-  function populateThemeSelect(selectId){
+  // Genre is derived from whichever Genre Theme is selected, never typed
+  // independently — the two used to be separate fields a DM had to keep
+  // in sync by hand, which is exactly what produced "Title, Genre, and
+  // Genre Theme are required" on a perfectly valid-looking submission
+  // (fixed 2026-09-22, folded into issue #29). genreSelectId's matching
+  // genreInputId is auto-filled here and on every 'change' below; the
+  // input itself is readonly (see the HTML above) so this is the only
+  // way it's ever set client-side. Server-side (api-campaign.js) also
+  // re-derives it independently as the authoritative source, so this
+  // sync is a UX convenience, not the actual guarantee.
+  function populateThemeSelect(selectId, genreInputId){
     const sel = document.getElementById(selectId || 'ccTheme');
     sel.innerHTML = themes.map(t=>
       \`<option value="\${t._id}">\${t.genre}\${t.campaignOverride ? ' (override)' : ''}</option>\`
     ).join('');
+    const syncGenre = ()=>{
+      if(!genreInputId) return;
+      const theme = themes.find(t=>t._id===sel.value);
+      document.getElementById(genreInputId).value = theme ? theme.genre : '';
+    };
+    sel.onchange = syncGenre;
+    syncGenre();
   }
 
   document.getElementById('ccSubmit').addEventListener('click', async ()=>{
     const flag = document.getElementById('ccFlag');
     const body = {
       title: document.getElementById('ccTitle').value.trim(),
-      genre: document.getElementById('ccGenre').value.trim(),
       system: document.getElementById('ccSystem').value.trim(),
       status: document.getElementById('ccStatus').value,
       theme: document.getElementById('ccTheme').value,
@@ -1417,8 +1436,8 @@ const CONSOLE_JS = `
     if(ccHeroImageAsset){
       body.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: ccHeroImageAsset } };
     }
-    if(!body.title || !body.genre || !body.theme){
-      flag.textContent = 'Title, Genre, and Genre Theme are required.';
+    if(!body.title || !body.theme){
+      flag.textContent = 'Title and Genre Theme are required.';
       flag.className = 'savedflag show err';
       return;
     }
@@ -1430,7 +1449,7 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: body.visible, heroImage: body.heroImage });
+      campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, visible: body.visible, heroImage: body.heroImage });
       flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
       ['ccTitle','ccGenre','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
