@@ -471,6 +471,17 @@ export function renderConsolePage({
         <thead><tr><th>Month</th><th>Estimated Cost</th></tr></thead>
         <tbody id="aurTrendBody"></tbody>
       </table>
+      <h3 style="margin-top:24px;">By Model</h3>
+      <p class="hint">
+        Lets a past model swap be spotted after the fact — if pricing
+        constants ever drift out of sync with the model actually configured
+        (api-dossier-ai-format.js), it shows up here as an implausible
+        Avg Cost/Call rather than silently blending into the total.
+      </p>
+      <table>
+        <thead><tr><th>Model</th><th>Calls</th><th>Total Cost</th><th>Avg Cost/Call</th></tr></thead>
+        <tbody id="aurModelBody"></tbody>
+      </table>
     </div>
 
     <!-- ============ WIKI MANUAL BUILDER ============ -->
@@ -2720,6 +2731,23 @@ const CONSOLE_JS = `
     }
 
     renderAiUsageTrendChart(data.monthlyTrend);
+
+    const modelBody = document.getElementById('aurModelBody');
+    modelBody.innerHTML = '';
+    if(!data.byModel || data.byModel.length === 0){
+      modelBody.innerHTML = '<tr><td colspan="4" style="color:var(--text-dim);">No usage yet.</td></tr>';
+    } else {
+      data.byModel.forEach(m=>{
+        const tr = document.createElement('tr');
+        const cells = [m.model, String(m.calls), formatUsd(m.cost), formatUsd(m.avgCostPerCall)];
+        cells.forEach(text=>{
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        modelBody.appendChild(tr);
+      });
+    }
   }
 
   // Plain inline SVG, no charting library — consistent with this app's

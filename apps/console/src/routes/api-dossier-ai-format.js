@@ -13,6 +13,18 @@ const app = new Hono();
 // doesn't have (AI Gateway's own logs/analytics API needs one; the
 // Workers AI binding used here doesn't expose bulk log reads at all —
 // see that route's file comment for the full reasoning).
+//
+// IMPORTANT: these constants must always match MODEL below. Each
+// logAiUsage() call now stamps the model name onto its own record
+// (added 2026-09-23) specifically so a past model swap can be spotted
+// after the fact — but costUsd itself is still computed from WHATEVER
+// these two constants say at write time, not derived from the stamped
+// model name. Change both together in the same commit when MODEL
+// changes, or costUsd silently drifts from reality exactly like it did
+// during this feature's own model-selection testing (a GLM-4.7-flash
+// test call got logged with these Llama-pricing constants still live,
+// understating its real cost — caught by checking the report, not by
+// anything automatic).
 const PRICE_PER_INPUT_TOKEN_USD = 0.351 / 1_000_000;
 const PRICE_PER_OUTPUT_TOKEN_USD = 0.555 / 1_000_000;
 
@@ -25,7 +37,10 @@ const PRICE_PER_OUTPUT_TOKEN_USD = 0.555 / 1_000_000;
 // dataset is publicly readable with no auth, so a plain email here would
 // be scrapable. The hash alone doesn't identify a DM to a public reader;
 // only the Horsemen-only report route cross-references it against
-// teamMember.ownerEmailHash to show a real handle.
+// teamMember.ownerEmailHash to show a real handle. `model` (added
+// 2026-09-23) is plain text, not sensitive — just the MODEL constant's
+// value at call time, so a stale-pricing-constant bug like the one above
+// is visible in the raw data even if nobody remembers to check for it.
 async function logAiUsage(c, { success, usage }) {
   if (!usage) return; // no usage object = the call never actually reached the model (e.g. a thrown network error) — nothing was billed
   try {
@@ -37,6 +52,7 @@ async function logAiUsage(c, { success, usage }) {
         create: {
           _type: "aiUsageLog",
           feature: "dossier-ai-format",
+          model: MODEL,
           gmEmailHash,
           success: !!success,
           promptTokens,

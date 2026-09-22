@@ -63,7 +63,7 @@ app.post("/unlink-team-member", async (c) => {
 });
 
 const USAGE_LOG_QUERY = `*[_type == "aiUsageLog" && _createdAt > $since]{
-  _createdAt, gmEmailHash, success, costUsd
+  _createdAt, gmEmailHash, success, costUsd, model
 }`;
 const TEAM_MEMBER_HASHES_QUERY = `*[_type == "teamMember" && defined(ownerEmailHash)]{
   handle, ownerEmailHash
@@ -96,6 +96,7 @@ app.get("/ai-usage-report", async (c) => {
 
   const byUser = new Map();
   const byMonth = new Map();
+  const byModel = new Map();
   let totalCost = 0;
   let totalCalls = 0;
   let failedCalls = 0;
@@ -114,6 +115,18 @@ app.get("/ai-usage-report", async (c) => {
 
     const month = String(log._createdAt || "").slice(0, 7); // "YYYY-MM"
     if (month) byMonth.set(month, (byMonth.get(month) || 0) + cost);
+
+    // model (added 2026-09-23) — lets a past model swap be spotted after
+    // the fact: if pricing constants drift out of sync with MODEL (see
+    // that route's file comment for how this actually happened once
+    // already), the mismatch shows up here as a model with an
+    // implausible cost/call rather than silently blending into the
+    // total.
+    const modelName = log.model || "(unknown — logged before model tracking was added)";
+    const modelEntry = byModel.get(modelName) || { model: modelName, cost: 0, calls: 0 };
+    modelEntry.cost += cost;
+    modelEntry.calls += 1;
+    byModel.set(modelName, modelEntry);
   }
 
   const topUsers = [...byUser.values()]
@@ -125,6 +138,10 @@ app.get("/ai-usage-report", async (c) => {
     .sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([month, cost]) => ({ month, cost: Number(cost.toFixed(4)) }));
 
+  const byModelBreakdown = [...byModel.values()]
+    .sort((a, b) => b.cost - a.cost)
+    .map((m) => ({ ...m, cost: Number(m.cost.toFixed(4)), avgCostPerCall: Number((m.cost / m.calls).toFixed(6)) }));
+
   return c.json({
     ok: true,
     sinceDays,
@@ -133,6 +150,7 @@ app.get("/ai-usage-report", async (c) => {
     failedCalls,
     topUsers,
     monthlyTrend,
+    byModel: byModelBreakdown,
   });
 });
 
