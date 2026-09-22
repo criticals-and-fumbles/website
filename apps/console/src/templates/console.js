@@ -378,11 +378,25 @@ export function renderConsolePage({
         <button class="btn primary" id="caSubmit">Save as Draft</button>
         <span class="savedflag" id="caFlag"></span>
       </div>
+      <div class="field" id="caPreviewField" style="display:none;">
+        <label>Preview Link — same rendering as the live site, works before a Studio admin publishes</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="caPreviewLink" readonly style="flex:1;">
+          <button type="button" class="btn small" id="caCopyPreviewLink">Copy Link</button>
+        </div>
+      </div>
     </div>
 
     <div class="editor" id="editArticleView">
       <h2 id="eaTitleHeading">ARTICLE — DETAIL</h2>
       <p class="field-tip" id="eaStatusNote"></p>
+      <div class="field">
+        <label>Preview Link — same rendering as the live site, works before a Studio admin publishes</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="eaPreviewLink" readonly style="flex:1;">
+          <button type="button" class="btn small" id="eaCopyPreviewLink">Copy Link</button>
+        </div>
+      </div>
       ${articleFieldsBlock("ea")}
       <div class="savebar">
         <button class="btn primary" id="eaSave">Save Changes</button>
@@ -2409,6 +2423,35 @@ const CONSOLE_JS = `
     });
   }
 
+  // Renders through the exact same <ArticleContent> component as the
+  // real /articles/[slug] route (see cnf-website's components/articles/
+  // ArticleContent.tsx) — the article's _id is the access model, not a
+  // separate token, so this URL alone is the whole "direct link".
+  function articlePreviewUrl(id){
+    return 'https://www.criticalsandfumbles.com/articles/preview/' + id;
+  }
+
+  async function copyTextFieldToClipboard(inputId, flagId){
+    const input = document.getElementById(inputId);
+    const flag = document.getElementById(flagId);
+    try{
+      await navigator.clipboard.writeText(input.value);
+      if(flag){
+        flag.textContent = '✓ Copied.';
+        flag.className = 'savedflag show';
+      }
+    }catch(err){
+      input.select();
+      if(flag){
+        flag.textContent = 'Copy failed — link selected, copy manually.';
+        flag.className = 'savedflag show err';
+      }
+    }
+  }
+
+  document.getElementById('caCopyPreviewLink').addEventListener('click', ()=> copyTextFieldToClipboard('caPreviewLink', 'caFlag'));
+  document.getElementById('eaCopyPreviewLink').addEventListener('click', ()=> copyTextFieldToClipboard('eaPreviewLink', 'eaFlag'));
+
   document.getElementById('caSubmit').addEventListener('click', async ()=>{
     const flag = document.getElementById('caFlag');
     if(!myTeamMember){
@@ -2434,6 +2477,8 @@ const CONSOLE_JS = `
       myArticles.unshift({ _id: result.id, title: body.title, category: body.category, status: 'draft', readTimeMinutes: null });
       flag.textContent = '✓ Saved as draft.';
       flag.className = 'savedflag show';
+      document.getElementById('caPreviewLink').value = articlePreviewUrl(result.id);
+      document.getElementById('caPreviewField').style.display = '';
       ['caTitle','caExcerpt','caTags'].forEach(id=>document.getElementById(id).value='');
       setRichTextBlocks('caBody', []);
       document.getElementById('caCategory').value = '';
@@ -2441,7 +2486,11 @@ const CONSOLE_JS = `
       caCoverImageAsset = null;
       renderExistingThumb('ca', null);
       document.getElementById('caSizeWarn').textContent = '';
-      setTimeout(()=>switchView('myArticles'), 900);
+      // No longer auto-navigates back to "My Articles" after saving —
+      // used to (900ms timeout), but that made the preview link above
+      // flash and disappear before anyone could copy it. The form's
+      // already cleared for a next entry; the DM navigates away
+      // themselves once they're done with the link.
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
       flag.className = 'savedflag show err';
@@ -2462,6 +2511,7 @@ const CONSOLE_JS = `
       article.status === 'published'
         ? 'Published — content edits here still require Studio review to reflect the change publicly if the site caches it.'
         : 'Draft — not visible on the public site until a Studio admin publishes it.';
+    document.getElementById('eaPreviewLink').value = articlePreviewUrl(id);
     // Populate the Worlds <select>'s <option>s before prefilling it —
     // setFieldValue('multiSelect', ...) marks options selected by
     // iterating el.options, which is empty until this runs.

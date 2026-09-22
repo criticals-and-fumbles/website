@@ -264,6 +264,22 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
   }
 `;
 
+// Same projection as ARTICLE_BY_SLUG_QUERY, keyed by _id instead of
+// slug+status — used only by /articles/preview/[id], so a draft article
+// (status stays "draft" until a Studio admin flips it — see console's
+// api-me-articles.js) can be viewed via a direct link before it's ever
+// publicly reachable through the real route. Article._id is a random
+// Sanity id, not sequential/guessable, which is this feature's whole
+// access model — see that route's file comment.
+export const ARTICLE_PREVIEW_QUERY = groq`
+  *[_type == "article" && _id == $id][0] {
+    ...,
+    "slug": slug.current,
+    "author": author->{ ${teamMemberRefFields}, realName, roles },
+    "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
+  }
+`;
+
 export const ARTICLES_BY_MEMBER_QUERY = groq`
   *[_type == "article" && status == "published" && author._ref == $memberId]
     | order(publishedAt desc) {
