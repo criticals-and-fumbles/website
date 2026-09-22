@@ -36,7 +36,11 @@ const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $
 
 // Genre themes are shared reference data, not owned by any one DM — every
 // DM picks from the same list when creating a campaign.
-const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride }`;
+// colors/labels added 2026-09-22 (issue #29) — powers the Genre picker's
+// read-only detail preview in createCampaignView/editCampaignView, so a
+// GM can see what they're actually getting (colors, section-label copy)
+// before committing, without opening Sanity Studio.
+const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride, colors, labels }`;
 
 // ---- Wiki manual builder data (unscoped — shared content, any console
 // GM may edit any of it, see lib/wiki-audit.js) ----

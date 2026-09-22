@@ -176,7 +176,6 @@ export function renderConsolePage({
         <input type="text" id="ecSlug" readonly>
         <p class="field-tip">Fixed at creation — this is the Sanity slug.current value, the last path segment of the campaign's public URL.</p>
       </div>
-      <div class="field"><label>Genre (auto-set from Genre Theme below)</label><input type="text" id="ecGenre" readonly></div>
       <div class="field"><label>System</label><input type="text" id="ecSystem"></div>
       <div class="field">
         <label>Status</label>
@@ -188,8 +187,13 @@ export function renderConsolePage({
         </select>
       </div>
       <div class="field">
-        <label>Genre Theme *</label>
+        <label>Genre *</label>
         <select id="ecTheme"></select>
+        <p class="field-tip">Drives this campaign's colors, fonts, and dossier section labels.</p>
+      </div>
+      <div class="field">
+        <label>Genre Details</label>
+        <textarea id="ecGenrePreview" readonly rows="10" style="font-family:var(--font-mono); font-size:12px;"></textarea>
       </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ecGmNames"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ecHook" rows="2"></textarea></div>
@@ -209,7 +213,6 @@ export function renderConsolePage({
     <div class="editor" id="createCampaignView">
       <h2>NEW CAMPAIGN</h2>
       <div class="field"><label>Title *</label><input type="text" id="ccTitle" placeholder="e.g. Bureau Noir: Dawn Protocol"></div>
-      <div class="field"><label>Genre (auto-set from Genre Theme below)</label><input type="text" id="ccGenre" readonly></div>
       <div class="field"><label>System</label><input type="text" id="ccSystem" placeholder="e.g. D&D 5e, Call of Cthulhu 7e"></div>
       <div class="field">
         <label>Status</label>
@@ -221,8 +224,13 @@ export function renderConsolePage({
         </select>
       </div>
       <div class="field">
-        <label>Genre Theme *</label>
+        <label>Genre *</label>
         <select id="ccTheme"></select>
+        <p class="field-tip">Drives this campaign's colors, fonts, and dossier section labels.</p>
+      </div>
+      <div class="field">
+        <label>Genre Details</label>
+        <textarea id="ccGenrePreview" readonly rows="10" style="font-family:var(--font-mono); font-size:12px;"></textarea>
       </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ccGmNames" placeholder="e.g. Alex, Sam"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
@@ -1144,7 +1152,7 @@ const CONSOLE_JS = `
     document.getElementById('xmlResults').style.display = target.toolbar ? '' : 'none';
     document.querySelectorAll('.navitem[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
     if(view === 'campaigns') renderCampaignGrid();
-    if(view === 'createCampaign') populateThemeSelect('ccTheme', 'ccGenre');
+    if(view === 'createCampaign') populateThemeSelect('ccTheme', 'ccGenrePreview');
     if(view === 'createDossier') populateCampaignSelect();
   }
 
@@ -1333,9 +1341,9 @@ const CONSOLE_JS = `
     document.getElementById('ecSlug').value = cmp.slug?.current || '';
     document.getElementById('ecSystem').value = cmp.system || '';
     document.getElementById('ecStatus').value = cmp.status || 'active';
-    populateThemeSelect('ecTheme', 'ecGenre');
+    populateThemeSelect('ecTheme', 'ecGenrePreview');
     document.getElementById('ecTheme').value = cmp.theme || '';
-    document.getElementById('ecTheme').onchange(); // re-sync ecGenre to the campaign's actual theme, not the dropdown's default first option
+    document.getElementById('ecTheme').onchange(); // re-sync the preview to the campaign's actual theme, not the dropdown's default first option
     document.getElementById('ecGmNames').value = (cmp.gmNames||[]).join(', ');
     document.getElementById('ecHook').value = cmp.hook || '';
     document.getElementById('ecMotto').value = cmp.motto || '';
@@ -1385,7 +1393,8 @@ const CONSOLE_JS = `
         })
       ));
       const cmp = campaigns.find(x=>x._id===id);
-      if(cmp) Object.assign(cmp, fields, { genre: document.getElementById('ecGenre').value.trim() });
+      const selectedTheme = themes.find(t=>t._id===fields.theme);
+      if(cmp) Object.assign(cmp, fields, { genre: selectedTheme ? selectedTheme.genre : cmp.genre });
       flag.textContent = '✓ Saved.';
       flag.className = 'savedflag show';
       setTimeout(()=>switchView('campaigns'), 700);
@@ -1396,28 +1405,59 @@ const CONSOLE_JS = `
   });
 
   // ---------- CREATE CAMPAIGN ----------
-  // Genre is derived from whichever Genre Theme is selected, never typed
-  // independently — the two used to be separate fields a DM had to keep
-  // in sync by hand, which is exactly what produced "Title, Genre, and
-  // Genre Theme are required" on a perfectly valid-looking submission
-  // (fixed 2026-09-22, folded into issue #29). genreSelectId's matching
-  // genreInputId is auto-filled here and on every 'change' below; the
-  // input itself is readonly (see the HTML above) so this is the only
-  // way it's ever set client-side. Server-side (api-campaign.js) also
-  // re-derives it independently as the authoritative source, so this
-  // sync is a UX convenience, not the actual guarantee.
-  function populateThemeSelect(selectId, genreInputId){
+  // A campaign's genre is entirely driven by whichever Genre Theme is
+  // selected here — there is no separate genre text field to type
+  // anymore (removed 2026-09-22, folded into issue #29; it used to be a
+  // free-text box a DM had to keep in sync with this dropdown by hand,
+  // which is exactly what produced "Title, Genre, and Genre Theme are
+  // required" on a perfectly valid-looking submission). Server-side
+  // (api-campaign.js) independently re-derives campaign.genre from the
+  // theme reference as the actual source of truth; this preview is
+  // purely so a GM can see what they're picking before committing.
+  const THEME_LABEL_TITLES = {
+    dossier: 'Dossier', overview: 'Overview', location: 'Location',
+    quickFactsPanel: 'Quick Facts', locationFactsPanel: 'Location Facts',
+    meterSection: 'Threat Meter', meterItem: 'Meter Item',
+    objectives: 'Objectives', objectivePriorityHigh: 'Priority — High',
+    objectivePriorityMid: 'Priority — Mid', objectivePriorityLow: 'Priority — Low',
+    log: 'Log', media: 'Media', statPanel: 'Stat Panel',
+  };
+
+  function formatThemePreview(theme){
+    if(!theme) return '';
+    const lines = [theme.genre + (theme.campaignOverride ? ' (campaign override)' : '')];
+    const c = theme.colors && theme.colors.dark;
+    if(c){
+      lines.push('');
+      lines.push('Colors (dark mode):');
+      lines.push('  Background: ' + (c.bg || '—'));
+      lines.push('  Accent A:   ' + (c.accentA || '—'));
+      lines.push('  Accent B:   ' + (c.accentB || '—'));
+      lines.push('  Text:       ' + (c.text || '—'));
+    }
+    const l = theme.labels;
+    if(l){
+      lines.push('');
+      lines.push('Section labels:');
+      Object.entries(THEME_LABEL_TITLES).forEach(([key, title])=>{
+        if(l[key]) lines.push('  ' + title + ': ' + l[key]);
+      });
+    }
+    return lines.join('\\n');
+  }
+
+  function populateThemeSelect(selectId, previewId){
     const sel = document.getElementById(selectId || 'ccTheme');
     sel.innerHTML = themes.map(t=>
       \`<option value="\${t._id}">\${t.genre}\${t.campaignOverride ? ' (override)' : ''}</option>\`
     ).join('');
-    const syncGenre = ()=>{
-      if(!genreInputId) return;
+    const syncPreview = ()=>{
+      if(!previewId) return;
       const theme = themes.find(t=>t._id===sel.value);
-      document.getElementById(genreInputId).value = theme ? theme.genre : '';
+      document.getElementById(previewId).value = formatThemePreview(theme);
     };
-    sel.onchange = syncGenre;
-    syncGenre();
+    sel.onchange = syncPreview;
+    syncPreview();
   }
 
   document.getElementById('ccSubmit').addEventListener('click', async ()=>{
@@ -1452,7 +1492,7 @@ const CONSOLE_JS = `
       campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, visible: body.visible, heroImage: body.heroImage });
       flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
-      ['ccTitle','ccGenre','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
+      ['ccTitle','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
       document.getElementById('ccVisible').checked = false;
       ccHeroImageAsset = null;
       renderExistingThumb('cc', null);
