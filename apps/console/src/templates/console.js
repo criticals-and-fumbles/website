@@ -65,6 +65,7 @@ export function renderConsolePage({
       <div class="label">CAMPAIGNS</div>
       <div class="navitem" data-view="createCampaign">+ Create New Campaign</div>
       <div class="navitem sub" data-view="createDossier">+ Create Session / Dossier</div>
+      <div class="navitem sub" data-view="aiFormat">+ AI Format Dossier</div>
       <div class="navitem" data-view="campaigns">My Campaigns <span class="n" id="campaignCountTag">0</span></div>
     </div>
     <div class="navgroup">
@@ -259,6 +260,28 @@ export function renderConsolePage({
       <div class="savebar">
         <button class="btn primary" id="cdSubmit">Create Dossier</button>
         <span class="savedflag" id="cdFlag"></span>
+      </div>
+    </div>
+
+    <div class="editor" id="aiFormatView">
+      <h2>AI FORMAT DOSSIER</h2>
+      <p class="hint">
+        Paste your raw session notes below. The AI sorts them into quickFacts/
+        locationFacts/statTiles/threatAssessment/objectives and turns your
+        recap into paragraphed overview text — see the "What Your Dossier
+        Actually Needs" DM Advice article for what these actually mean.
+        Nothing is saved here: you'll land on the normal Create Dossier form
+        with everything pre-filled, review/edit as needed (pick the Campaign
+        and Code there too — the AI has no way to know those), then save it
+        the same way as any manual entry.
+      </p>
+      <div class="field">
+        <label>Session Notes * (<span id="afCharCount">0</span> / 8000 characters)</label>
+        <textarea id="afProse" rows="16" maxlength="8000" placeholder="Paste your raw session recap/notes here..."></textarea>
+      </div>
+      <div class="savebar">
+        <button class="btn primary" id="afGenerate">Generate Draft</button>
+        <span class="savedflag" id="afFlag"></span>
       </div>
     </div>
 
@@ -1122,6 +1145,7 @@ const CONSOLE_JS = `
     campaignSessions: { panel: 'campaignSessionsView', title: 'Campaign Sessions', toolbar: false },
     createCampaign: { panel: 'createCampaignView', title: 'Create New Campaign', toolbar: false },
     createDossier: { panel: 'createDossierView', title: 'Create Session / Dossier', toolbar: false },
+    aiFormat: { panel: 'aiFormatView', title: 'AI Format Dossier', toolbar: false },
     editCampaign: { panel: 'editCampaignView', title: 'Edit Campaign', toolbar: false },
     single: { panel: 'editorPanel', title: 'Dossier Detail', toolbar: false },
   };
@@ -1133,7 +1157,7 @@ const CONSOLE_JS = `
   // Mixing the two up here was the bug: setting style.display='' on an
   // .editor panel just falls back to its CSS default of none, since it
   // never gets .open added.
-  const EDITOR_PANELS = new Set(['createCampaignView', 'createDossierView', 'editCampaignView', 'editorPanel']);
+  const EDITOR_PANELS = new Set(['createCampaignView', 'createDossierView', 'aiFormatView', 'editCampaignView', 'editorPanel']);
 
   function switchView(view){
     Object.values(VIEWS).forEach(v=>{
@@ -1642,6 +1666,107 @@ const CONSOLE_JS = `
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
       flag.className = 'savedflag show err';
+    }
+  });
+
+  // ---------- AI FORMAT DOSSIER ----------
+  // Maps the AI draft's fields (DOSSIER_AI_JSON_SCHEMA, lib/import-
+  // templates.js — kept in sync with this by hand) onto the EXISTING
+  // Create Dossier form's cd* fields. Always the 'cd' prefix — the AI
+  // draft only ever prefills the create form, never the edit form.
+  // code/campaign aren't here: the AI has no way to infer either, the
+  // DM picks them on the (now pre-filled) create form same as manual
+  // entry.
+  const AI_DRAFT_FIELD_MAP = [
+    { field: 'title', id: 'cdTitle', kind: 'text' },
+    { field: 'classification', id: 'cdClassification', kind: 'text' },
+    { field: 'distribution', id: 'cdDistribution', kind: 'text' },
+    { field: 'sessionLabel', id: 'cdSessionLabel', kind: 'text' },
+    { field: 'location', id: 'cdLocation', kind: 'text' },
+    { field: 'overview', id: 'cdOverview', kind: 'richtext-html' },
+    { field: 'quickFacts', id: 'cdQuickFacts', kind: 'factRow' },
+    { field: 'locationFacts', id: 'cdLocationFacts', kind: 'factRow' },
+    { field: 'statTiles', id: 'cdStatTiles', kind: 'statTile' },
+    { field: 'threatAssessment', id: 'cdThreatAssessment', kind: 'meterRow' },
+    { field: 'objectives', id: 'cdObjectives', kind: 'objective' },
+    { field: 'log', id: 'cdLog', kind: 'logEntry' },
+  ];
+
+  function escapeHtmlClient(s){
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // The model returns overview as plain text (blank line = paragraph
+  // break) — same shape, same fix, as the paragraph-collapse bug found
+  // and fixed on the public dossier page 2026-09-21 (campaigns repo,
+  // renderOverview()). Converting to real <p> tags HERE, before
+  // setRichTextHtml's dangerouslyPasteHTML call, means the AI path
+  // never regresses into that exact bug.
+  function plainTextToParagraphHtml(text){
+    if(!text) return '';
+    return String(text)
+      .split(/\\n\\s*\\n+/)
+      .map(p=>p.trim())
+      .filter(Boolean)
+      .map(p=> '<p>' + escapeHtmlClient(p).replace(/\\n/g,'<br>') + '</p>')
+      .join('');
+  }
+
+  function prefillCreateDossierFromAiDraft(draft){
+    AI_DRAFT_FIELD_MAP.forEach(({ field, id, kind })=>{
+      if(kind === 'text'){
+        document.getElementById(id).value = draft[field] || '';
+      } else if(kind === 'richtext-html'){
+        setRichTextHtml(id, plainTextToParagraphHtml(draft[field] || ''));
+      } else {
+        populateRepeater(id, kind, draft[field]);
+      }
+    });
+  }
+
+  document.getElementById('afProse').addEventListener('input', (e)=>{
+    document.getElementById('afCharCount').textContent = e.target.value.length;
+  });
+
+  document.getElementById('afGenerate').addEventListener('click', async ()=>{
+    const flag = document.getElementById('afFlag');
+    const btn = document.getElementById('afGenerate');
+    const prose = document.getElementById('afProse').value.trim();
+    if(!prose){
+      flag.textContent = 'Paste your session notes first.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    flag.textContent = 'Generating — this can take a few seconds…';
+    flag.className = 'savedflag show';
+    btn.disabled = true;
+    try{
+      const res = await fetch('/api/dossier/ai-format', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ prose }),
+      });
+      const result = await res.json().catch(()=>null);
+      if(!result) throw new Error('Server returned an unreadable response (HTTP ' + res.status + ').');
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      prefillCreateDossierFromAiDraft(result.draft);
+      document.getElementById('afProse').value = '';
+      document.getElementById('afCharCount').textContent = '0';
+      flag.textContent = '';
+      flag.className = 'savedflag';
+      switchView('createDossier');
+      const cdFlag = document.getElementById('cdFlag');
+      cdFlag.textContent = '✓ Draft generated — review before saving. Pick the Campaign and Code above.';
+      cdFlag.className = 'savedflag show';
+    }catch(err){
+      flag.textContent = 'AI formatting failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }finally{
+      btn.disabled = false;
     }
   });
 

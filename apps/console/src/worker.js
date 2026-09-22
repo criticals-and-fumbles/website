@@ -3,6 +3,7 @@ import { requireAccessIdentity } from "./lib/auth.js";
 import { configureSanityImage } from "./lib/sanity-image.js";
 import consoleRoutes from "./routes/console.js";
 import apiDossierRoutes from "./routes/api-dossier.js";
+import apiDossierAiFormatRoutes from "./routes/api-dossier-ai-format.js";
 import apiCampaignRoutes from "./routes/api-campaign.js";
 import apiUploadRoutes from "./routes/api-upload.js";
 import apiExportXmlRoutes from "./routes/api-export-xml.js";
@@ -51,6 +52,7 @@ app.use("*", requireAccessIdentity);
 // to change, only this mount point.
 app.route("/", consoleRoutes);
 app.route("/api/dossier", apiDossierRoutes);
+app.route("/api/dossier/ai-format", apiDossierAiFormatRoutes);
 app.route("/api/campaign", apiCampaignRoutes);
 app.route("/api/upload", apiUploadRoutes);
 app.route("/api/export.xml", apiExportXmlRoutes);

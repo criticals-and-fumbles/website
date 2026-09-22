@@ -12,6 +12,18 @@ compatibility_flags = ["nodejs_compat"]
 # campaigns Worker this split out of: all media goes through Sanity's
 # asset pipeline, nothing here needs its own storage.
 
+# Workers AI, for /api/dossier/ai-format (issue #29) — routed through the
+# "cnf-ai-gateway" AI Gateway (id passed per-call in
+# routes/api-dossier-ai-format.js, not configured here). Binding calls
+# like env.AI.run() are pre-authenticated in-account automatically; they
+# do NOT use the gateway's "Authenticated Gateway" token
+# (AI_GATEWAY_TOKEN secret) — that token only matters for calls to the
+# gateway's public REST/HTTP endpoint, which this Worker doesn't use.
+# AI_GATEWAY_TOKEN is kept as a secret regardless, in case a future
+# admin tool needs direct REST access (e.g. reading gateway logs).
+[ai]
+binding = "AI"
+
 # Non-secret Sanity identifiers — pinned here (not dashboard-only), same
 # reasoning as the campaigns Worker's wrangler.toml: a routine Git-
 # triggered redeploy can silently drop dashboard-set "Runtime" plain-text
