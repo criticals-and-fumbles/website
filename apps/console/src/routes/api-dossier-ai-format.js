@@ -1,7 +1,59 @@
 import { Hono } from "hono";
 import { DOSSIER_AI_SYSTEM_PROMPT } from "../lib/import-templates.js";
+import { mutate } from "../lib/sanity.js";
+import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
+
+// Cloudflare's published per-token pricing for MODEL below (checked
+// 2026-09), used only to ESTIMATE cost for the aiUsageLog record this
+// route writes after every real call — not billing-authoritative, just
+// enough for the Horsemen-only usage report (routes/api-ai-usage.js) to
+// show trends without needing a Cloudflare API token this Worker
+// doesn't have (AI Gateway's own logs/analytics API needs one; the
+// Workers AI binding used here doesn't expose bulk log reads at all —
+// see that route's file comment for the full reasoning).
+const PRICE_PER_INPUT_TOKEN_USD = 0.152 / 1_000_000;
+const PRICE_PER_OUTPUT_TOKEN_USD = 0.287 / 1_000_000;
+
+// aiUsageLog is deliberately NOT registered in sanity/schemas/ (no
+// Studio editing UI for it — nobody hand-edits telemetry) but is a real
+// document type in the same dataset, written/read only by this Worker's
+// own routes via the raw mutate/query API, which doesn't require schema
+// registration. gmEmailHash follows the exact same reasoning as
+// teamMember.ownerEmailHash (see lib/identity.js's file comment) — this
+// dataset is publicly readable with no auth, so a plain email here would
+// be scrapable. The hash alone doesn't identify a DM to a public reader;
+// only the Horsemen-only report route cross-references it against
+// teamMember.ownerEmailHash to show a real handle.
+async function logAiUsage(c, { success, usage }) {
+  if (!usage) return; // no usage object = the call never actually reached the model (e.g. a thrown network error) — nothing was billed
+  try {
+    const gmEmailHash = await hashEmail(c.env, c.get("gmEmail"));
+    const promptTokens = usage.prompt_tokens ?? 0;
+    const completionTokens = usage.completion_tokens ?? 0;
+    await mutate(c.env, [
+      {
+        create: {
+          _type: "aiUsageLog",
+          feature: "dossier-ai-format",
+          gmEmailHash,
+          success: !!success,
+          promptTokens,
+          completionTokens,
+          neurons: usage.neurons ?? null,
+          costUsd: promptTokens * PRICE_PER_INPUT_TOKEN_USD + completionTokens * PRICE_PER_OUTPUT_TOKEN_USD,
+        },
+      },
+    ]);
+  } catch (err) {
+    // Never let usage logging break the actual feature — a DM's draft
+    // generation succeeding matters more than this Worker's own cost
+    // telemetry. Logged for whoever's watching Worker logs, not surfaced
+    // to the DM.
+    console.error("logAiUsage failed:", err);
+  }
+}
 
 // Model + response_format choice, decided empirically 2026-09-22 after
 // testing several combinations live against this exact prompt:
@@ -179,7 +231,14 @@ app.post("/", async (c) => {
   if (typeof raw === "string") {
     try { raw = JSON.parse(raw); } catch { raw = null; }
   }
-  if (!raw || typeof raw !== "object" || !String(raw.title || "").trim()) {
+  const usable = raw && typeof raw === "object" && !!String(raw.title || "").trim();
+
+  // Logged regardless of usable/not — the model call itself was billed
+  // either way, and "how often does this fail" is exactly what the
+  // usage report should be able to show.
+  await logAiUsage(c, { success: usable, usage: result?.usage });
+
+  if (!usable) {
     return c.json(
       { error: "The model didn't return a usable draft — try again, or fill in the dossier manually." },
       502,

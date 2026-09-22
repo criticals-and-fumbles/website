@@ -78,6 +78,7 @@ export function renderConsolePage({
     <div class="navgroup">
       <div class="label">ADMIN</div>
       <div class="navitem" data-view="adminLink">Link Team Members</div>
+      <div class="navitem" data-view="aiUsageReport">AI Usage Report</div>
     </div>
     ` : ""}
     <div class="navgroup collapsible collapsed" id="worldBuildingGroup">
@@ -415,6 +416,28 @@ export function renderConsolePage({
       <table style="margin-top:24px;">
         <thead><tr><th>Handle</th><th>Real Name</th><th>Tier</th><th>Linked</th><th></th></tr></thead>
         <tbody id="adminMemberGridBody"></tbody>
+      </table>
+    </div>
+
+    <div id="aiUsageReportView" style="display:none;">
+      <p class="hint">
+        AI Format Dossier usage and estimated cost — Horsemen only. costUsd is
+        an ESTIMATE computed from Cloudflare's published per-token pricing at
+        the time each call was logged, not pulled from Cloudflare's own
+        billing (this Worker has no API token for that). See cnf-website
+        issue #29.
+      </p>
+      <div class="status" id="aurSummary">Loading…</div>
+      <h3 style="margin-top:24px;">Top 5 DMs by Estimated Cost</h3>
+      <table>
+        <thead><tr><th>DM</th><th>Calls</th><th>Estimated Cost</th></tr></thead>
+        <tbody id="aurTopUsersBody"></tbody>
+      </table>
+      <h3 style="margin-top:24px;">Monthly Cost Trend</h3>
+      <div id="aurTrendChart"></div>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Month</th><th>Estimated Cost</th></tr></thead>
+        <tbody id="aurTrendBody"></tbody>
       </table>
     </div>
 
@@ -2537,6 +2560,89 @@ const CONSOLE_JS = `
     });
   }
 
+  // ---------- AI USAGE REPORT (Horsemen only) ----------
+  async function loadAiUsageReport(){
+    const summary = document.getElementById('aurSummary');
+    summary.textContent = 'Loading…';
+    summary.className = 'status';
+    try{
+      const res = await fetch('/api/admin/ai-usage-report');
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || res.statusText);
+      renderAiUsageReport(data);
+    }catch(err){
+      summary.textContent = 'Failed to load usage report: ' + err.message;
+      summary.className = 'status err';
+    }
+  }
+
+  function formatUsd(n){
+    return '$' + Number(n||0).toFixed(4);
+  }
+
+  function renderAiUsageReport(data){
+    const summary = document.getElementById('aurSummary');
+    summary.textContent = 'Last ' + data.sinceDays + ' days — ' + data.totalCalls + ' calls (' + data.failedCalls + ' failed), estimated total cost ' + formatUsd(data.totalCost) + '.';
+    summary.className = 'status';
+
+    const topBody = document.getElementById('aurTopUsersBody');
+    topBody.innerHTML = '';
+    if(data.topUsers.length === 0){
+      topBody.innerHTML = '<tr><td colspan="3" style="color:var(--text-dim);">No usage yet.</td></tr>';
+    } else {
+      data.topUsers.forEach(u=>{
+        const tr = document.createElement('tr');
+        const cells = [escapeHtmlClient(u.label), String(u.calls), formatUsd(u.cost)];
+        cells.forEach(text=>{
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        topBody.appendChild(tr);
+      });
+    }
+
+    const trendBody = document.getElementById('aurTrendBody');
+    trendBody.innerHTML = '';
+    if(data.monthlyTrend.length === 0){
+      trendBody.innerHTML = '<tr><td colspan="2" style="color:var(--text-dim);">No usage yet.</td></tr>';
+    } else {
+      data.monthlyTrend.forEach(m=>{
+        const tr = document.createElement('tr');
+        [m.month, formatUsd(m.cost)].forEach(text=>{
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        trendBody.appendChild(tr);
+      });
+    }
+
+    renderAiUsageTrendChart(data.monthlyTrend);
+  }
+
+  // Plain inline SVG, no charting library — consistent with this app's
+  // minimal-dependency bundle-size discipline (see cnf-website
+  // CLAUDE.md § Bundle size budget).
+  function renderAiUsageTrendChart(trend){
+    const el = document.getElementById('aurTrendChart');
+    if(!trend || trend.length === 0){
+      el.innerHTML = '<p class="hint">No data yet.</p>';
+      return;
+    }
+    const w = 480, h = 140, padBottom = 24, barGap = 8;
+    const barWidth = Math.max(4, (w / trend.length) - barGap);
+    const maxCost = Math.max(...trend.map(m=>m.cost), 0.0001);
+    const bars = trend.map((m, i)=>{
+      const barHeight = Math.max(2, (m.cost / maxCost) * (h - padBottom - 10));
+      const x = i * (barWidth + barGap);
+      const y = h - padBottom - barHeight;
+      return '<rect x="' + x + '" y="' + y + '" width="' + barWidth + '" height="' + barHeight + '" fill="var(--emerald)" rx="2"></rect>' +
+        '<text x="' + (x + barWidth/2) + '" y="' + (h - 6) + '" font-size="9" text-anchor="middle" fill="var(--text-dim)">' + escapeHtmlClient(m.month.slice(5)) + '</text>';
+    }).join('');
+    el.innerHTML = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%; max-width:520px; height:140px;">' + bars + '</svg>';
+  }
+
   document.getElementById('alLink').addEventListener('click', async ()=>{
     const flag = document.getElementById('alFlag');
     const teamMemberId = document.getElementById('alMember').value;
@@ -3768,6 +3874,7 @@ const CONSOLE_JS = `
     myArticles: { panel: 'myArticlesView', title: 'My Articles', toolbar: false },
     editArticle: { panel: 'editArticleView', title: 'Article Detail', toolbar: false },
     adminLink: { panel: 'adminLinkView', title: 'Link Team Members', toolbar: false },
+    aiUsageReport: { panel: 'aiUsageReportView', title: 'AI Usage Report', toolbar: false },
   });
   [
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
@@ -3910,6 +4017,7 @@ const CONSOLE_JS = `
     }
     if(view === 'editArticle') populateSelect('eaWorlds', worlds, 'name');
     if(view === 'adminLink'){ document.getElementById('alFlag').className = 'savedflag'; loadAdminMembers(); }
+    if(view === 'aiUsageReport') loadAiUsageReport();
   };
 
   renderGrid();

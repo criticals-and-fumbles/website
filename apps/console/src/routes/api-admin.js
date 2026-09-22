@@ -62,4 +62,78 @@ app.post("/unlink-team-member", async (c) => {
   }
 });
 
+const USAGE_LOG_QUERY = `*[_type == "aiUsageLog" && _createdAt > $since]{
+  _createdAt, gmEmailHash, success, costUsd
+}`;
+const TEAM_MEMBER_HASHES_QUERY = `*[_type == "teamMember" && defined(ownerEmailHash)]{
+  handle, ownerEmailHash
+}`;
+
+// GET /api/admin/ai-usage-report — Horsemen-only (see requireAdmin).
+// Aggregates apps/console/src/routes/api-dossier-ai-format.js's
+// aiUsageLog records into: top 5 DMs by estimated cost, and a per-month
+// cost trend. Aggregation happens in JS, not GROQ — call volume here is
+// tiny (tens to low hundreds a month, see issue #29's cost projection),
+// so fetching raw records and reducing them is simpler and plenty fast,
+// not worth fighting GROQ's limited grouping for. costUsd is an
+// ESTIMATE computed at log time from published per-token pricing, not
+// pulled from Cloudflare's own billing — there is no billing-
+// authoritative API this Worker can reach without a dedicated Cloudflare
+// API token it doesn't have (see that route's file comment).
+app.get("/ai-usage-report", async (c) => {
+  const { error } = await requireAdmin(c);
+  if (error) return error;
+
+  const sinceDays = Number(c.req.query("days") || 180);
+  const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000).toISOString();
+
+  const [logs, members] = await Promise.all([
+    query(c.env, USAGE_LOG_QUERY, { since }),
+    query(c.env, TEAM_MEMBER_HASHES_QUERY),
+  ]);
+
+  const handleByHash = new Map(members.map((m) => [m.ownerEmailHash, m.handle]));
+
+  const byUser = new Map();
+  const byMonth = new Map();
+  let totalCost = 0;
+  let totalCalls = 0;
+  let failedCalls = 0;
+
+  for (const log of logs) {
+    const cost = Number(log.costUsd) || 0;
+    totalCost += cost;
+    totalCalls += 1;
+    if (!log.success) failedCalls += 1;
+
+    const label = handleByHash.get(log.gmEmailHash) || `Unlinked (${String(log.gmEmailHash || "").slice(0, 8)}…)`;
+    const userEntry = byUser.get(label) || { label, cost: 0, calls: 0 };
+    userEntry.cost += cost;
+    userEntry.calls += 1;
+    byUser.set(label, userEntry);
+
+    const month = String(log._createdAt || "").slice(0, 7); // "YYYY-MM"
+    if (month) byMonth.set(month, (byMonth.get(month) || 0) + cost);
+  }
+
+  const topUsers = [...byUser.values()]
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, 5)
+    .map((u) => ({ ...u, cost: Number(u.cost.toFixed(4)) }));
+
+  const monthlyTrend = [...byMonth.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([month, cost]) => ({ month, cost: Number(cost.toFixed(4)) }));
+
+  return c.json({
+    ok: true,
+    sinceDays,
+    totalCost: Number(totalCost.toFixed(4)),
+    totalCalls,
+    failedCalls,
+    topUsers,
+    monthlyTrend,
+  });
+});
+
 export default app;
