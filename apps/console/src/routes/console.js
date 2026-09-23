@@ -4,6 +4,7 @@ import { renderConsolePage } from "../templates/console.js";
 import {
   DOSSIER_XML_TEMPLATE,
   DOSSIER_XML_PROMPT,
+  DOSSIER_JSON_TEMPLATE,
   OBJECTIVES_CSV_TEMPLATE,
   WIKI_JSON_TEMPLATE,
   WIKI_IMPORT_PROMPT,
@@ -21,14 +22,14 @@ const app = new Hono();
 // needs every field it can PATCH, not just what the read-only table
 // displays.
 const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmailHash == $hash] | order(title asc){
-  _id, title, slug, genre, system, status, classification, distribution,
+  _id, title, slug, genre, system, status, classification, distribution, roster,
   gmNames, hook, motto, signOff, visible, heroImage, "theme": theme._ref
 }`;
 
 // Same reasoning — the single dossier editor edits every schema field
 // (see schema/dossier.js), so it needs every field fetched up front.
 const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $hash] | order(_createdAt desc){
-  _id, code, title, classification, distribution, sessionLabel, location,
+  _id, code, title, classification, distribution, sessionLabel, partyLevel, location,
   overview, heroImage, headerImage, quickFacts, locationFacts, statTiles,
   threatAssessment, objectives, log,
   "campaignId": campaign._ref, "campaignTitle": campaign->title
@@ -186,6 +187,16 @@ app.get("/templates/dossiers.xml", (c) =>
   c.body(DOSSIER_XML_TEMPLATE, 200, {
     "content-type": "application/xml",
     "content-disposition": 'attachment; filename="dossier-import-template.xml"',
+  }),
+);
+
+// JSON counterpart, with the AI prompt embedded as _instructions (not a
+// separate "Copy AI Prompt" button like the XML pair above) — see
+// DOSSIER_JSON_TEMPLATE's own comment for why.
+app.get("/templates/dossiers.json", (c) =>
+  c.body(DOSSIER_JSON_TEMPLATE, 200, {
+    "content-type": "application/json",
+    "content-disposition": 'attachment; filename="dossier-import-template.json"',
   }),
 );
 

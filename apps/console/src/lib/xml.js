@@ -31,6 +31,7 @@ export function dossierToXml(d) {
   xml += `<classification>${esc(d.classification)}</classification>`;
   xml += `<distribution>${esc(d.distribution)}</distribution>`;
   xml += `<sessionLabel>${esc(d.sessionLabel)}</sessionLabel>`;
+  xml += `<partyLevel>${esc(d.partyLevel)}</partyLevel>`;
   xml += `<location>${esc(d.location)}</location>`;
   xml += `</meta>\n`;
   xml += `    <overview><![CDATA[${d.overview || ""}]]></overview>\n`;
@@ -162,6 +163,7 @@ export function parseDossiersXml(xmlText) {
       classification: n.meta?.classification ?? "",
       distribution: n.meta?.distribution ?? "",
       sessionLabel: n.meta?.sessionLabel ?? "",
+      partyLevel: n.meta?.partyLevel ?? "",
       location: n.meta?.location ?? "",
       overview: n.overview?.__cdata ?? n.overview ?? "",
       quickFacts,

@@ -59,6 +59,7 @@ app.post("/", async (c) => {
     system: body.system || undefined,
     classification: body.classification || undefined,
     distribution: body.distribution || undefined,
+    roster: Array.isArray(body.roster) && body.roster.length > 0 ? body.roster : undefined,
     status: body.status || "active",
     gmNames: Array.isArray(body.gmNames) ? body.gmNames : undefined,
     theme: { _type: "reference", _ref: body.theme },

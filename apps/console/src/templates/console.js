@@ -125,6 +125,11 @@ export function renderConsolePage({
         <input type="file" id="importXml" accept=".xml" multiple>
         <button class="btn primary" id="exportXml">Export XML</button>
       </div>
+      <div class="toolbar" id="bulkToolbarJson" style="margin-top:8px;">
+        <a class="btn secondary" href="/templates/dossiers.json">Download JSON Template (AI prompt included)</a>
+        <button class="btn" id="importJsonBtn">Import JSON</button>
+        <input type="file" id="importJson" accept=".json" multiple>
+      </div>
     </div>
     <p class="hint" id="bulkHint">
       Download the template, fill in one &lt;dossier&gt; block per session (campaignSlug must
@@ -136,6 +141,12 @@ export function renderConsolePage({
       updates threatAssessment/status fields to reflect how the session moved the world state
       forward. You can select multiple XML files at once in Import XML — each is imported in
       its own transaction, so one session's file failing doesn't block the others.
+    </p>
+    <p class="hint" id="bulkHintJson">
+      Prefer to use your own AI agent instead of the built-in AI Format Dossier tool? The JSON
+      Template has the same AI instructions built right into the file — paste the whole thing
+      plus your notes into any agent, save its output as .json, and Import JSON. Same
+      create-or-update-by-code behavior and multi-file support as XML above.
     </p>
 
     <div class="status" id="statusLine">Ready.</div>
@@ -206,6 +217,12 @@ export function renderConsolePage({
         <label>Default Distribution</label>
         <input type="text" id="ecDistribution" placeholder="e.g. PLAYER-FACING">
       </div>
+      <div class="field">
+        <label>Player Roster</label>
+        <p class="field-tip">Set once here, not per-dossier — also given to the AI Format Dossier tool so it can recognize character names/classes instead of guessing.</p>
+        <div class="repeater" id="ecRoster"></div>
+        <button type="button" class="btn small" data-add-row="ecRoster:rosterMember">+ Add Character</button>
+      </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ecGmNames"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ecHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ecMotto"></div>
@@ -252,6 +269,12 @@ export function renderConsolePage({
         <label>Default Distribution</label>
         <input type="text" id="ccDistribution" placeholder="e.g. PLAYER-FACING">
       </div>
+      <div class="field">
+        <label>Player Roster</label>
+        <p class="field-tip">Set once here, not per-dossier — also given to the AI Format Dossier tool so it can recognize character names/classes instead of guessing.</p>
+        <div class="repeater" id="ccRoster"></div>
+        <button type="button" class="btn small" data-add-row="ccRoster:rosterMember">+ Add Character</button>
+      </div>
       <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ccGmNames" placeholder="e.g. Alex, Sam"></div>
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ccMotto"></div>
@@ -289,11 +312,18 @@ export function renderConsolePage({
         locationFacts/statTiles/threatAssessment/objectives and turns your
         recap into paragraphed overview text — see the "What Your Dossier
         Actually Needs" DM Advice article for what these actually mean.
-        Nothing is saved here: you'll land on the normal Create Dossier form
-        with everything pre-filled, review/edit as needed (pick the Campaign
-        and Code there too — the AI has no way to know those), then save it
-        the same way as any manual entry.
+        Picking a Campaign below lets it use that campaign's Player Roster
+        (to recognize character names/classes) and its Genre Theme's
+        section-label wording, instead of guessing. Nothing is saved here:
+        you'll land on the normal Create Dossier form with everything
+        pre-filled (Campaign already set, Code still yours to fill in),
+        review/edit as needed, then save it the same way as any manual
+        entry.
       </p>
+      <div class="field">
+        <label>Campaign (optional — improves accuracy, not required)</label>
+        <select id="afCampaign"></select>
+      </div>
       <div class="field">
         <label>Session Notes * (<span id="afCharCount">0</span> / 8000 characters)</label>
         <textarea id="afProse" rows="16" maxlength="8000" placeholder="Paste your raw session recap/notes here..."></textarea>
@@ -459,6 +489,37 @@ export function renderConsolePage({
         billing (this Worker has no API token for that). See cnf-website
         issue #29.
       </p>
+
+      <h3>Feature Control</h3>
+      <div class="status" id="aurFeatureStatus">Loading…</div>
+      <div class="field">
+        <label id="aurToggleLabel">Disable this feature</label>
+        <p class="field-tip" id="aurToggleTip">In case of abuse, or if costs cross a threshold you're not comfortable with.</p>
+        <textarea id="aurDisableReason" rows="2" placeholder="Optional reason (shown to any DM who tries to use it while disabled)" style="display:none;"></textarea>
+        <button type="button" class="btn danger" id="aurToggleBtn">Disable AI Dossier Import</button>
+        <span class="savedflag" id="aurToggleFlag"></span>
+      </div>
+
+      <h3 style="margin-top:24px;">Spend Threshold Monitor</h3>
+      <p class="hint">
+        Set this to match whatever spend limit is actually configured on the
+        "cnf-ai-gateway" AI Gateway in the Cloudflare dashboard — there's no
+        API this Worker can use to read that value automatically, and it may
+        change at any time, so keep the two in sync by hand. Alerts at 80% of
+        this value, based on THIS report's own estimated month-to-date cost
+        (not Cloudflare's real billing).
+      </p>
+      <div class="field">
+        <label>Spend Limit (USD/month)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="number" id="aurSpendLimit" min="0" step="0.01" placeholder="e.g. 5.00" style="max-width:160px;">
+          <button type="button" class="btn small" id="aurSaveSpendLimit">Save</button>
+          <span class="savedflag" id="aurSpendLimitFlag"></span>
+        </div>
+      </div>
+      <div class="status err" id="aurSpendAlert" style="display:none;"></div>
+
+      <h3 style="margin-top:24px;">Usage</h3>
       <div class="status" id="aurSummary">Loading…</div>
       <h3 style="margin-top:24px;">Top 5 DMs by Estimated Cost</h3>
       <table>
@@ -780,6 +841,11 @@ function dossierFieldsBlock(prefix) {
         <p class="field-tip">However your table tracks sessions — a number, an in-world date, whatever the players would recognize.</p>
         <label>Session Label</label>
         <input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41">
+      </div>
+      <div class="field">
+        <p class="field-tip">The party's level as of this session — shown in the header alongside Session/Code. Leave blank for systems that don't track levels.</p>
+        <label>Party Level</label>
+        <input type="text" id="${prefix}PartyLevel" placeholder="e.g. 5, 5-6">
       </div>
       <div class="field"><label>Location</label><input type="text" id="${prefix}Location"></div>
       <div class="field">
@@ -1238,12 +1304,15 @@ const CONSOLE_JS = `
     else el.style.display = '';
     viewTitle.textContent = target.title;
     bulkToolbar.style.display = target.toolbar ? '' : 'none';
+    document.getElementById('bulkToolbarJson').style.display = target.toolbar ? '' : 'none';
     document.getElementById('bulkHint').style.display = target.toolbar ? '' : 'none';
+    document.getElementById('bulkHintJson').style.display = target.toolbar ? '' : 'none';
     document.getElementById('xmlResults').style.display = target.toolbar ? '' : 'none';
     document.querySelectorAll('.navitem[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
     if(view === 'campaigns') renderCampaignGrid();
     if(view === 'createCampaign') populateThemeSelect('ccTheme', 'ccGenrePreview');
     if(view === 'createDossier') populateCampaignSelect();
+    if(view === 'aiFormat') populateAiFormatCampaignSelect();
   }
 
   document.querySelectorAll('.navitem[data-view]').forEach(item=>{
@@ -1432,6 +1501,7 @@ const CONSOLE_JS = `
     document.getElementById('ecSystem').value = cmp.system || '';
     document.getElementById('ecClassification').value = cmp.classification || '';
     document.getElementById('ecDistribution').value = cmp.distribution || '';
+    populateRepeater('ecRoster', 'rosterMember', cmp.roster);
     document.getElementById('ecStatus').value = cmp.status || 'active';
     populateThemeSelect('ecTheme', 'ecGenrePreview');
     document.getElementById('ecTheme').value = cmp.theme || '';
@@ -1463,6 +1533,7 @@ const CONSOLE_JS = `
       system: document.getElementById('ecSystem').value.trim(),
       classification: document.getElementById('ecClassification').value.trim(),
       distribution: document.getElementById('ecDistribution').value.trim(),
+      roster: collectRepeaterRows('ecRoster'),
       status: document.getElementById('ecStatus').value,
       theme: document.getElementById('ecTheme').value,
       gmNames: document.getElementById('ecGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -1561,6 +1632,7 @@ const CONSOLE_JS = `
       system: document.getElementById('ccSystem').value.trim(),
       classification: document.getElementById('ccClassification').value.trim(),
       distribution: document.getElementById('ccDistribution').value.trim(),
+      roster: collectRepeaterRows('ccRoster'),
       status: document.getElementById('ccStatus').value,
       theme: document.getElementById('ccTheme').value,
       gmNames: document.getElementById('ccGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -1585,10 +1657,11 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, classification: body.classification, distribution: body.distribution, visible: body.visible, heroImage: body.heroImage });
+      campaigns.push({ _id: result.id, title: body.title, genre: result.genre, status: body.status, classification: body.classification, distribution: body.distribution, roster: body.roster, visible: body.visible, heroImage: body.heroImage });
       flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
       ['ccTitle','ccSystem','ccClassification','ccDistribution','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
+      clearRepeater('ccRoster');
       document.getElementById('ccVisible').checked = false;
       ccHeroImageAsset = null;
       renderExistingThumb('cc', null);
@@ -1626,6 +1699,12 @@ const CONSOLE_JS = `
       { key: 'ts', ph: 'Timestamp (e.g. Day 41, 22:04 IC)' },
       { key: 'entry', ph: 'Entry', type: 'textarea' },
     ],
+    rosterMember: [
+      { key: 'characterName', ph: 'Character Name' },
+      { key: 'level', ph: 'Level', type: 'number' },
+      { key: 'race', ph: 'Race' },
+      { key: 'characterClass', ph: 'Class' },
+    ],
   };
 
   // Suggested labels for the free-form kv boxes (quickFacts/locationFacts
@@ -1649,6 +1728,7 @@ const CONSOLE_JS = `
     row.innerHTML = shape.map(f=>{
       if(f.type === 'textarea') return \`<textarea data-key="\${f.key}" placeholder="\${f.ph}" rows="2"></textarea>\`;
       if(f.type === 'select') return \`<select data-key="\${f.key}">\${f.options.map(o=>\`<option value="\${o}">\${o}</option>\`).join('')}</select>\`;
+      if(f.type === 'number') return \`<input type="number" data-key="\${f.key}" placeholder="\${f.ph}">\`;
       const listAttr = (listId && f.key === 'label') ? \` list="\${listId}"\` : '';
       return \`<input type="text" data-key="\${f.key}" placeholder="\${f.ph}"\${listAttr}>\`;
     }).join('') + '<button type="button" class="rm">Remove</button>';
@@ -1659,10 +1739,18 @@ const CONSOLE_JS = `
   function collectRepeaterRows(containerId){
     const container = document.getElementById(containerId);
     return Array.from(container.querySelectorAll('.repeater-row')).map(row=>{
+      const shape = REPEATER_SHAPES[row.dataset.shape] || [];
       const obj = { _key: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).slice(0, 12), _type: row.dataset.shape };
-      row.querySelectorAll('[data-key]').forEach(input=>{ obj[input.dataset.key] = input.value.trim(); });
+      row.querySelectorAll('[data-key]').forEach(input=>{
+        const fieldDef = shape.find(f=>f.key === input.dataset.key);
+        const raw = input.value.trim();
+        // number-typed repeater fields (e.g. rosterMember.level) store as
+        // a real number, matching their Sanity schema type — everything
+        // else stays a trimmed string, same as always.
+        obj[input.dataset.key] = (fieldDef && fieldDef.type === 'number' && raw !== '') ? Number(raw) : raw;
+      });
       return obj;
-    }).filter(obj => Object.keys(obj).some(k => k !== '_key' && k !== '_type' && obj[k]));
+    }).filter(obj => Object.keys(obj).some(k => k !== '_key' && k !== '_type' && obj[k] !== '' && obj[k] !== undefined));
   }
 
   function clearRepeater(containerId){
@@ -1709,6 +1797,17 @@ const CONSOLE_JS = `
     syncDossierDefaultsPlaceholder('cd');
   }
 
+  // Optional — the server-side /api/dossier/ai-format route uses this to
+  // pull the campaign's roster + genre labels into the prompt (issue #29
+  // addendum). Blank option kept selectable since picking a campaign is
+  // explicitly optional here (unlike the Create Dossier form, where it's
+  // required to actually save).
+  function populateAiFormatCampaignSelect(){
+    const sel = document.getElementById('afCampaign');
+    sel.innerHTML = '<option value="">— No campaign context —</option>' +
+      campaigns.map(c=> \`<option value="\${c._id}">\${c.title}</option>\`).join('');
+  }
+
   document.getElementById('cdSubmit').addEventListener('click', async ()=>{
     const flag = document.getElementById('cdFlag');
     const body = {
@@ -1718,6 +1817,7 @@ const CONSOLE_JS = `
       classification: document.getElementById('cdClassification').value.trim(),
       distribution: document.getElementById('cdDistribution').value.trim(),
       sessionLabel: document.getElementById('cdSessionLabel').value.trim(),
+      partyLevel: document.getElementById('cdPartyLevel').value.trim(),
       location: document.getElementById('cdLocation').value.trim(),
       overview: getRichTextHtml('cdOverview'),
       quickFacts: collectRepeaterRows('cdQuickFacts'),
@@ -1750,7 +1850,7 @@ const CONSOLE_JS = `
       dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, headerImage: body.headerImage, objectives: body.objectives, media: body.media, campaignId: body.campaign });
       flag.textContent = '✓ Created.';
       flag.className = 'savedflag show';
-      ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation'].forEach(id=>document.getElementById(id).value='');
+      ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdPartyLevel','cdLocation'].forEach(id=>document.getElementById(id).value='');
       setRichTextHtml('cdOverview', '');
       ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdMedia','cdLog'].forEach(clearRepeater);
       cdHeroImageAsset = null;
@@ -1838,6 +1938,7 @@ const CONSOLE_JS = `
       flag.className = 'savedflag show err';
       return;
     }
+    const campaignId = document.getElementById('afCampaign').value;
     flag.textContent = 'Generating — this can take a few seconds…';
     flag.className = 'savedflag show';
     btn.disabled = true;
@@ -1845,7 +1946,7 @@ const CONSOLE_JS = `
       const res = await fetch('/api/dossier/ai-format', {
         method: 'POST',
         headers: {'content-type':'application/json'},
-        body: JSON.stringify({ prose }),
+        body: JSON.stringify({ prose, campaignId: campaignId || undefined }),
       });
       const result = await res.json().catch(()=>null);
       if(!result) throw new Error('Server returned an unreadable response (HTTP ' + res.status + ').');
@@ -1856,8 +1957,14 @@ const CONSOLE_JS = `
       flag.textContent = '';
       flag.className = 'savedflag';
       switchView('createDossier');
+      if(campaignId){
+        document.getElementById('cdCampaign').value = campaignId;
+        document.getElementById('cdCampaign').onchange && document.getElementById('cdCampaign').onchange();
+      }
       const cdFlag = document.getElementById('cdFlag');
-      cdFlag.textContent = '✓ Draft generated — review before saving. Pick the Campaign and Code above.';
+      cdFlag.textContent = campaignId
+        ? '✓ Draft generated using this campaign\\u2019s roster/labels — review before saving. Pick the Code above.'
+        : '✓ Draft generated — review before saving. Pick the Campaign and Code above.';
       cdFlag.className = 'savedflag show';
     }catch(err){
       flag.textContent = 'AI formatting failed: ' + err.message;
@@ -1890,6 +1997,7 @@ const CONSOLE_JS = `
     { field: 'classification', id: 'edClassification', kind: 'text' },
     { field: 'distribution', id: 'edDistribution', kind: 'text' },
     { field: 'sessionLabel', id: 'edSessionLabel', kind: 'text' },
+    { field: 'partyLevel', id: 'edPartyLevel', kind: 'text' },
     { field: 'location', id: 'edLocation', kind: 'text' },
     { field: 'overview', id: 'edOverview', kind: 'richtext-html' },
     { field: 'quickFacts', id: 'edQuickFacts', kind: 'factRow' },
@@ -2302,15 +2410,16 @@ const CONSOLE_JS = `
   document.getElementById('exportXml').addEventListener('click', async ()=>{
     window.location.href = '/api/export.xml';
   });
-  document.getElementById('importXmlBtn').addEventListener('click', ()=> document.getElementById('importXml').click());
-  document.getElementById('importXml').addEventListener('change', async (e)=>{
-    const files = Array.from(e.target.files || []); if(!files.length) return;
+  // Shared by both Import XML and Import JSON (added for issue #29's
+  // addendum — same server-side contract on both endpoints, see
+  // lib/dossier-bulk-import.js) — only the endpoint URL differs.
+  async function runBulkDossierImport(endpoint, files){
     clearXmlResults();
-    // Each file is its own /api/import call (own Sanity transaction) —
-    // one session's malformed XML shouldn't block the rest of the batch.
-    // Sequential, not Promise.all, so the status line can report progress
-    // and so two files importing the same dossier code apply in the
-    // order the GM picked them rather than racing.
+    // Each file is its own POST (own Sanity transaction) — one session's
+    // malformed file shouldn't block the rest of the batch. Sequential,
+    // not Promise.all, so the status line can report progress and so
+    // two files importing the same dossier code apply in the order the
+    // GM picked them rather than racing.
     const totals = { imported: 0, created: 0, updated: 0, failed: 0, failures: [] };
     let hadError = false;
     for(let i=0; i<files.length; i++){
@@ -2320,7 +2429,7 @@ const CONSOLE_JS = `
       try{
         const form = new FormData();
         form.append('file', file);
-        const res = await fetch('/api/import', { method:'POST', body: form });
+        const res = await fetch(endpoint, { method:'POST', body: form });
         // A 502/500 from an upstream failure (or any non-JSON error page)
         // must not surface as a raw "Unexpected token < in JSON" — that's
         // exactly the kind of non-actionable message this fix is for.
@@ -2353,6 +2462,19 @@ const CONSOLE_JS = `
       flashStatus(\`Imported \${totals.imported} dossiers (\${totals.created} created, \${totals.updated} updated)\${files.length>1 ? \` across \${files.length} files\` : ''}.\`, 'ok');
       window.location.reload();
     }
+  }
+
+  document.getElementById('importXmlBtn').addEventListener('click', ()=> document.getElementById('importXml').click());
+  document.getElementById('importXml').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []); if(!files.length) return;
+    await runBulkDossierImport('/api/import', files);
+    e.target.value = '';
+  });
+
+  document.getElementById('importJsonBtn').addEventListener('click', ()=> document.getElementById('importJson').click());
+  document.getElementById('importJson').addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []); if(!files.length) return;
+    await runBulkDossierImport('/api/import-json', files);
     e.target.value = '';
   });
 
@@ -2692,7 +2814,42 @@ const CONSOLE_JS = `
     return '$' + Number(n||0).toFixed(4);
   }
 
+  let aiFeatureEnabled = true;
+
+  function renderAiFeatureControl(data){
+    aiFeatureEnabled = data.featureEnabled !== false;
+    const status = document.getElementById('aurFeatureStatus');
+    const btn = document.getElementById('aurToggleBtn');
+    const reasonBox = document.getElementById('aurDisableReason');
+    if(aiFeatureEnabled){
+      status.textContent = '\\u2713 AI Dossier Import is currently ENABLED.';
+      status.className = 'status';
+      btn.textContent = 'Disable AI Dossier Import';
+      btn.className = 'btn danger';
+      reasonBox.style.display = '';
+    } else {
+      status.textContent = '\\u26a0 AI Dossier Import is currently DISABLED' + (data.disabledReason ? ': ' + data.disabledReason : '.') + ' DMs see this reason when they try to use it.';
+      status.className = 'status err';
+      btn.textContent = 'Re-enable AI Dossier Import';
+      btn.className = 'btn primary';
+      reasonBox.style.display = 'none';
+    }
+
+    const spendInput = document.getElementById('aurSpendLimit');
+    if(document.activeElement !== spendInput) spendInput.value = data.spendLimitUsd ?? '';
+
+    const alertBox = document.getElementById('aurSpendAlert');
+    if(data.spendAlert && data.spendAlert.active){
+      alertBox.style.display = '';
+      alertBox.textContent = '\\u26a0 Month-to-date estimated spend (' + formatUsd(data.spendAlert.monthToDateCost) + ') is at ' + data.spendAlert.percentUsed + '% of the ' + formatUsd(data.spendAlert.spendLimitUsd) + ' threshold — consider disabling the feature above or checking the actual Cloudflare Gateway spend.';
+    } else {
+      alertBox.style.display = 'none';
+    }
+  }
+
   function renderAiUsageReport(data){
+    renderAiFeatureControl(data);
+
     const summary = document.getElementById('aurSummary');
     summary.textContent = 'Last ' + data.sinceDays + ' days — ' + data.totalCalls + ' calls (' + data.failedCalls + ' failed), estimated total cost ' + formatUsd(data.totalCost) + '.';
     summary.className = 'status';
@@ -2749,6 +2906,68 @@ const CONSOLE_JS = `
       });
     }
   }
+
+  document.getElementById('aurToggleBtn').addEventListener('click', async ()=>{
+    const flag = document.getElementById('aurToggleFlag');
+    const btn = document.getElementById('aurToggleBtn');
+    const body = { enabled: !aiFeatureEnabled };
+    if(aiFeatureEnabled){
+      // currently enabled, about to disable — carry the optional reason
+      body.disabledReason = document.getElementById('aurDisableReason').value.trim();
+    }
+    if(aiFeatureEnabled && !confirm('Disable AI Dossier Import for all DMs? They can still use manual entry, XML, or JSON import.')){
+      return;
+    }
+    btn.disabled = true;
+    flag.textContent = 'Saving…';
+    flag.className = 'savedflag show';
+    try{
+      const res = await fetch('/api/admin/ai-feature-config', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      flag.textContent = '\\u2713 Saved.';
+      flag.className = 'savedflag show';
+      document.getElementById('aurDisableReason').value = '';
+      await loadAiUsageReport();
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('aurSaveSpendLimit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('aurSpendLimitFlag');
+    const raw = document.getElementById('aurSpendLimit').value.trim();
+    const spendLimitUsd = raw === '' ? null : Number(raw);
+    if(raw !== '' && (!Number.isFinite(spendLimitUsd) || spendLimitUsd < 0)){
+      flag.textContent = 'Enter a non-negative number, or leave blank to clear.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    flag.textContent = 'Saving…';
+    flag.className = 'savedflag show';
+    try{
+      const res = await fetch('/api/admin/ai-feature-config', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ spendLimitUsd }),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      flag.textContent = '\\u2713 Saved.';
+      flag.className = 'savedflag show';
+      await loadAiUsageReport();
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
 
   // Plain inline SVG, no charting library — consistent with this app's
   // minimal-dependency bundle-size discipline (see cnf-website

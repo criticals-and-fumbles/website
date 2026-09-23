@@ -20,6 +20,7 @@
 # cloudflare / opennext
 /.open-next/
 /.wrangler/
+apps/console/.wrangler/
 
 # sanity studio build output (from `sanity deploy` / `npm run studio:deploy`)
 /dist/

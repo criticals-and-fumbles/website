@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
 import { hashEmail } from "../lib/identity.js";
 import { requireAdmin } from "../lib/admin.js";
+import { getAiFeatureConfig, setAiFeatureConfig } from "../lib/ai-feature-config.js";
 
 const app = new Hono();
 
@@ -142,6 +143,25 @@ app.get("/ai-usage-report", async (c) => {
     .sort((a, b) => b.cost - a.cost)
     .map((m) => ({ ...m, cost: Number(m.cost.toFixed(4)), avgCostPerCall: Number((m.cost / m.calls).toFixed(6)) }));
 
+  // Spend threshold monitor (issue #29 addendum, item 6) — 80% of
+  // spendLimitUsd, a value a Horseman manually keeps in sync with
+  // whatever's actually configured in the Cloudflare AI Gateway
+  // dashboard (see lib/ai-feature-config.js's file comment for why this
+  // can't be read live from Cloudflare). Compared against THIS route's
+  // own monthToDateCost, computed the same estimated way as everything
+  // else here — not Cloudflare's real billing.
+  const config = await getAiFeatureConfig(c.env);
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthToDateCost = byMonth.get(currentMonth) || 0;
+  const spendAlert = config.spendLimitUsd
+    ? {
+        spendLimitUsd: config.spendLimitUsd,
+        monthToDateCost: Number(monthToDateCost.toFixed(4)),
+        percentUsed: Number(((monthToDateCost / config.spendLimitUsd) * 100).toFixed(1)),
+        active: monthToDateCost / config.spendLimitUsd >= 0.8,
+      }
+    : null;
+
   return c.json({
     ok: true,
     sinceDays,
@@ -151,7 +171,70 @@ app.get("/ai-usage-report", async (c) => {
     topUsers,
     monthlyTrend,
     byModel: byModelBreakdown,
+    featureEnabled: config.enabled,
+    disabledReason: config.disabledReason,
+    spendLimitUsd: config.spendLimitUsd,
+    spendAlert,
   });
+});
+
+// GET /api/admin/ai-feature-config — Horsemen-only. Current kill-switch
+// + spend-limit state, so the console UI can render the right toggle
+// label/spend-limit input without an extra round trip.
+app.get("/ai-feature-config", async (c) => {
+  const { error } = await requireAdmin(c);
+  if (error) return error;
+  const config = await getAiFeatureConfig(c.env);
+  return c.json({ ok: true, config });
+});
+
+// POST /api/admin/ai-feature-config — Horsemen-only. body: any subset of
+// { enabled, disabledReason, spendLimitUsd }. Used for both the kill
+// switch (item 5 — a Horseman flips `enabled` off, with an optional
+// reason, e.g. "abuse" or "approaching spend limit") and the spend
+// threshold's own limit value (item 6). disabledAt/disabledByHash are
+// always server-set here, never client-supplied, same pattern as every
+// other server-managed field in this app (ownerEmailHash, lastEditedBy,
+// etc.) — a client could lie about who/when otherwise.
+app.post("/ai-feature-config", async (c) => {
+  const { member, error } = await requireAdmin(c);
+  if (error) return error;
+
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body !== "object") return c.json({ error: "Invalid request body" }, 400);
+
+  const patch = {};
+  if (typeof body.enabled === "boolean") {
+    patch.enabled = body.enabled;
+    if (body.enabled) {
+      patch.disabledAt = null;
+      patch.disabledByHash = null;
+      patch.disabledReason = null;
+    } else {
+      patch.disabledAt = new Date().toISOString();
+      patch.disabledByHash = await hashEmail(c.env, c.get("gmEmail"));
+      patch.disabledReason = typeof body.disabledReason === "string" ? body.disabledReason.trim() || null : null;
+    }
+  }
+  if (body.spendLimitUsd !== undefined) {
+    const limit = Number(body.spendLimitUsd);
+    if (body.spendLimitUsd !== null && (!Number.isFinite(limit) || limit < 0)) {
+      return c.json({ error: "spendLimitUsd must be a non-negative number or null" }, 400);
+    }
+    patch.spendLimitUsd = body.spendLimitUsd === null ? null : limit;
+    patch.spendLimitUpdatedAt = new Date().toISOString();
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return c.json({ error: "Nothing to update — pass enabled and/or spendLimitUsd" }, 400);
+  }
+
+  try {
+    const config = await setAiFeatureConfig(c.env, patch);
+    return c.json({ ok: true, config, updatedBy: member.handle });
+  } catch (err) {
+    return c.json({ error: err.message }, 502);
+  }
 });
 
 export default app;

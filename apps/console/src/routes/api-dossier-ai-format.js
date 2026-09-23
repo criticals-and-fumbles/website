@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { DOSSIER_AI_SYSTEM_PROMPT } from "../lib/import-templates.js";
-import { mutate } from "../lib/sanity.js";
+import { mutate, query } from "../lib/sanity.js";
 import { hashEmail } from "../lib/identity.js";
+import { getAiFeatureConfig } from "../lib/ai-feature-config.js";
 
 const app = new Hono();
 
@@ -222,15 +223,74 @@ function normalizeDraft(raw) {
   };
 }
 
-// POST /api/dossier/ai-format — body: { prose }. Returns a structured
-// dossier DRAFT for the console to pre-fill into the existing Create
-// Dossier form — never writes to Sanity itself. The DM reviews/edits
-// the pre-filled form same as any manual entry, then saves through the
-// existing POST /api/dossier route (api-dossier.js) — no new write
-// path, no new trust boundary, same ownership/sanitizeHtml as always.
+const CAMPAIGN_CONTEXT_QUERY = `*[_id == $id][0]{
+  title, roster,
+  "genre": theme->genre
+}`;
+
+// Issue #29 addendum: the AI has no way to know a campaign's player
+// characters or genre on its own — this fetches just enough campaign
+// metadata to ground it, so it can attribute session events to real
+// character names instead of inventing/misattributing them. Returns ""
+// (no extra message) when campaignId is omitted or the campaign has
+// nothing useful to add — picking a campaign in the console UI is
+// explicitly optional, this must degrade cleanly to the no-context
+// behavior that already worked before this feature existed.
+async function buildCampaignContext(env, campaignId) {
+  if (!campaignId) return "";
+  const campaign = await query(env, CAMPAIGN_CONTEXT_QUERY, { id: campaignId });
+  if (!campaign) return "";
+
+  const lines = [`This session belongs to the campaign "${campaign.title || "Untitled"}"${campaign.genre ? ` (${campaign.genre})` : ""}.`];
+
+  if (Array.isArray(campaign.roster) && campaign.roster.length > 0) {
+    lines.push(
+      "Known player characters — use these exact names for the party's own characters, and don't invent a new character name for someone who is actually one of these:",
+    );
+    for (const member of campaign.roster) {
+      if (!member?.characterName) continue;
+      const details = [
+        member.level ? `Level ${member.level}` : null,
+        member.race || null,
+        member.characterClass || null,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      lines.push(`- ${member.characterName}${details ? ` (${details})` : ""}`);
+    }
+  }
+
+  return lines.length > 1 || campaign.genre ? lines.join("\n") : "";
+}
+
+// POST /api/dossier/ai-format — body: { prose, campaignId? }. Returns a
+// structured dossier DRAFT for the console to pre-fill into the
+// existing Create Dossier form — never writes to Sanity itself. The DM
+// reviews/edits the pre-filled form same as any manual entry, then
+// saves through the existing POST /api/dossier route (api-dossier.js)
+// — no new write path, no new trust boundary, same ownership/
+// sanitizeHtml as always.
 app.post("/", async (c) => {
+  // Kill switch (issue #29 addendum, item 5) — checked before anything
+  // else, including input validation below, so a disabled feature never
+  // reaches the model regardless of what else is wrong with the
+  // request. Any DM can be told it's off; only a Horseman can toggle it
+  // (see requireAdmin-gated routes in api-admin.js).
+  const featureConfig = await getAiFeatureConfig(c.env);
+  if (!featureConfig.enabled) {
+    return c.json(
+      {
+        error: featureConfig.disabledReason
+          ? `AI dossier formatting is currently disabled: ${featureConfig.disabledReason}`
+          : "AI dossier formatting is currently disabled by a Horseman. Use manual entry, the XML template, or the JSON template in the meantime.",
+      },
+      503,
+    );
+  }
+
   const body = await c.req.json().catch(() => null);
   const prose = body?.prose;
+  const campaignId = body?.campaignId;
 
   if (!prose || typeof prose !== "string" || !prose.trim()) {
     return c.json({ error: "prose is required" }, 400);
@@ -244,6 +304,9 @@ app.post("/", async (c) => {
     );
   }
 
+  const campaignContext = await buildCampaignContext(c.env, campaignId);
+  const userMessage = campaignContext ? `${campaignContext}\n\n---\n\nSession notes:\n${prose}` : prose;
+
   let result;
   try {
     result = await c.env.AI.run(
@@ -251,7 +314,7 @@ app.post("/", async (c) => {
       {
         messages: [
           { role: "system", content: DOSSIER_AI_SYSTEM_PROMPT },
-          { role: "user", content: prose },
+          { role: "user", content: userMessage },
         ],
         response_format: { type: "json_object" },
         max_tokens: 2048,
