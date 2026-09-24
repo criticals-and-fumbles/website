@@ -9,7 +9,7 @@ bucket_name = "cnf-website-og-images"
 
 [[rules]]
 type = "Data"
-globs = ["**/*.ttf"]
+globs = ["**/*.ttf", "**/*.png"]
 fallthrough = true
 
 # WEBHOOK_SECRET is set via `wrangler secret put WEBHOOK_SECRET` — never

@@ -5,7 +5,16 @@
  * of on every request inside the main site's Worker.
  */
 
-export function defaultImageElement() {
+/**
+ * logoDataUri: the mascot logo (public/logo.png, resized + base64-inlined
+ * by index.ts — satori has no network access, so <img src> must already
+ * be a data URI). Shown instead of the old plain-text wordmark: Google's
+ * SERP thumbnail crops this 1200x630 image to a near-square centered
+ * region, which used to clip the leading/trailing letters of a
+ * full-width text lockup — the logo is square and naturally sits inside
+ * that crop with margin to spare.
+ */
+export function defaultImageElement(logoDataUri: string) {
   return (
     <div
       style={{
@@ -18,15 +27,11 @@ export function defaultImageElement() {
         background: "#111111",
       }}
     >
-      <div style={{ display: "flex", fontSize: 80, fontWeight: 700 }}>
-        <span style={{ color: "#2EC56B" }}>Criticals</span>
-        <span style={{ color: "#C8893A", margin: "0 20px" }}>&amp;</span>
-        <span style={{ color: "#D946A8" }}>Fumbles</span>
-      </div>
+      <img src={logoDataUri} width={340} height={341} />
       <div
         style={{
-          marginTop: 24,
-          fontSize: 28,
+          marginTop: 20,
+          fontSize: 24,
           color: "#F0EAE0",
           fontFamily: "monospace",
         }}

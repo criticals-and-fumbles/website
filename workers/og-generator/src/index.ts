@@ -13,7 +13,23 @@ import resvgWasmModule from "@resvg/resvg-wasm/index_bg.wasm";
 // copy — satori has no built-in font, it needs real font bytes to render
 // any text at all.
 import notoSansRegular from "../assets/noto-sans-regular.ttf";
+// Resized from the source public/logo.png (572x573 -> 400x401) before
+// being copied in here, to keep this Worker's bundle size down — see
+// defaultImageElement's doc comment for why it's embedded at all.
+import logoPng from "../assets/logo.png";
 import { defaultImageElement, eventImageElement } from "./templates";
+
+function toBase64(bytes: ArrayBuffer): string {
+  const arr = new Uint8Array(bytes);
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    binary += String.fromCharCode(...arr.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+const LOGO_DATA_URI = `data:image/png;base64,${toBase64(logoPng)}`;
 
 export interface Env {
   OG_IMAGES_BUCKET: R2Bucket;
@@ -97,7 +113,7 @@ export default {
     }
 
     if (url.pathname === "/generate/default") {
-      const buffer = await renderPng(defaultImageElement());
+      const buffer = await renderPng(defaultImageElement(LOGO_DATA_URI));
       await env.OG_IMAGES_BUCKET.put("og-default.png", buffer, {
         httpMetadata: { contentType: "image/png" },
       });
