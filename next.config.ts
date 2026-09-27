@@ -25,6 +25,25 @@ const nextConfig: NextConfig = {
   // exact-case string comparison is straightforward.
   async redirects() {
     return [
+      // Exact-root rules, evaluated before the wildcard ones below (Next
+      // uses the first matching entry). Needed because ":path*" matches
+      // zero segments on a bare "/" request, and the destination's
+      // ":path*" placeholder doesn't get substituted for that empty-match
+      // case under this OpenNext/Cloudflare setup — it was left in
+      // literally, sending "/" to ".../:path*", which 404s. Confirmed via
+      // curl on both hosts (2026-09-27) before adding this fix.
+      {
+        source: "/",
+        has: [{ type: "host", value: "^criticalsandfumbles\\.com$" }],
+        destination: "https://www.criticalsandfumbles.com/",
+        permanent: true,
+      },
+      {
+        source: "/",
+        has: [{ type: "host", value: "^cnf-sg\\.criticalsandfumbles\\.workers\\.dev$" }],
+        destination: "https://www.criticalsandfumbles.com/",
+        permanent: true,
+      },
       {
         // Anchored exact match — unanchored "criticalsandfumbles.com" also
         // matches "www.criticalsandfumbles.com" as a substring, which
