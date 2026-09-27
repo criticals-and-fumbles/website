@@ -61,6 +61,16 @@ export default defineType({
                   // one more community-invite link, not something with
                   // its own site-wide CTA treatment yet.
                   "WhatsApp",
+                  // "Google Reviews" added 2026-09-27 — additive, same
+                  // pattern as Facebook/WhatsApp above. Links to the
+                  // org's Google Business Profile review share link
+                  // (https://g.page/r/...  /review), so members can leave
+                  // a review directly; its URL also flows into
+                  // OrganizationStructuredData's sameAs (see
+                  // components/seo/OrganizationStructuredData.tsx), which
+                  // helps Google associate this site with that Business
+                  // Profile for Knowledge Panel purposes.
+                  "Google Reviews",
                 ].map((p) => ({ title: p, value: p })),
               },
             }),
