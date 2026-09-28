@@ -262,7 +262,7 @@ adapter/framework feature with multiple required config pieces (here:
 live page change) at least once after building the feature, not just
 that the route itself doesn't error.
 
-## `next.config.ts` redirects() drops a wildcard's zero-match case — apex/workers.dev root 404'd instead of redirecting (2026-09-27, closed issue #31)
+## `next.config.ts` redirects() drops a wildcard's zero-match case — apex/workers.dev root 404'd instead of redirecting (2026-09-27, closed issue #30)
 
 The apex/workers.dev → `www` host-redirect rules added for the earlier
 "Duplicate, Google chose different canonical" GSC issue (see the
