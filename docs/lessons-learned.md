@@ -262,6 +262,45 @@ adapter/framework feature with multiple required config pieces (here:
 live page change) at least once after building the feature, not just
 that the route itself doesn't error.
 
+## `next.config.ts` redirects() drops a wildcard's zero-match case — apex/workers.dev root 404'd instead of redirecting (2026-09-27, closed issue #31)
+
+The apex/workers.dev → `www` host-redirect rules added for the earlier
+"Duplicate, Google chose different canonical" GSC issue (see the
+unanchored-host-regex entry above) used `source: "/:path*"` →
+`destination: "https://www.criticalsandfumbles.com/:path*"`. This worked
+correctly for every real path — confirmed `/about` 308s to `/about` as
+expected — but `:path*` matches **zero** segments on a bare `/` request,
+and this OpenNext/Cloudflare setup doesn't substitute the destination's
+`:path*` placeholder for that empty-match case: it's left in literally,
+so `criticalsandfumbles.com/` and the old `cnf-sg.criticalsandfumbles.workers.dev/`
+308-redirected to the non-existent `https://www.criticalsandfumbles.com/:path*`,
+which 404'd. Anyone linking or typing the bare apex domain — exactly the
+form a plain-text mention or an external backlink is likely to use — hit
+a 404 on the homepage instead of landing on the site.
+
+Found while auditing the site for ranking blockers (not reported by a
+user) — checking each canonical-domain variant's root path with `curl
+-sI` (no `-L`, to see the raw redirect target rather than the final
+followed result) is what surfaced the literal `:path*` in the `location`
+header.
+
+**Fix:** added explicit exact-root rules (`source: "/"`, no wildcard) for
+each host, placed *before* the wildcard rules in the array Next.js
+evaluates in order — the exact match now wins for `/` specifically, while
+the wildcard rule still handles every other path unchanged. Verified live
+after deploy: both hosts' bare root now 308 straight to
+`https://www.criticalsandfumbles.com/`, and `/about` still works via the
+wildcard rule.
+
+**General lesson:** a wildcard path-matcher (`:path*`, zero-or-more) can
+have an empty-match case that behaves differently from every non-empty
+case — don't assume "the wildcard rule works" from testing only non-root
+paths. When adding or auditing a host/domain redirect rule, explicitly
+check the bare root (`/`) of every affected host, not just one example
+sub-path, and check the raw `Location` header (not just the final
+followed URL) so a broken placeholder-substitution shows up directly
+instead of being masked by whatever the browser or `curl -L` does next.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
