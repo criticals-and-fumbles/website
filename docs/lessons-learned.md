@@ -301,6 +301,52 @@ sub-path, and check the raw `Location` header (not just the final
 followed URL) so a broken placeholder-substitution shows up directly
 instead of being masked by whatever the browser or `curl -L` does next.
 
+## "Boomba" has no separate codebase — it's the Discord Application/bot token `app/api/sanity-webhook/route.ts` already authenticates as (2026-09-29, closed issue #31)
+
+While scoping a Discord-bot onboarding-features request (welcome flow,
+`/guide`, `/roles`, an "Introduce Yourself" modal), the user referred to
+"Boomba, the events bot" as something to extend or reuse, and asked to
+find its GitHub repo. An exhaustive search — every repo in both GitHub
+orgs this account has access to (`criticals-and-fumbles`,
+`Criticals-and-Fumbles-SG`), a GitHub-wide public search, and every
+directory on the local machine — found no Discord bot codebase anywhere.
+
+Root cause of the confusion: there isn't one. "Boomba" is the **Discord
+Application** (and its bot token, stored as the `DISCORD_BOT_TOKEN`
+Worker secret) that `app/api/sanity-webhook/route.ts` authenticates as
+to make outbound REST calls — `POST /guilds/.../scheduled-events` and
+`POST /channels/.../messages` — when an editor checks "Publish to
+Discord" on a `majorEvent`/`regularEvent` (see that route's own top
+comment, and the schema addition in commit `52934a6`). It never opens a
+gateway (WebSocket) connection, never listens for events, and has no
+command handler or client of its own — it's pure outbound HTTP calls
+from this Worker. Confirmed directly with the user ("Boomba only posts
+events, no other logic") rather than left as an inference.
+
+**Why this matters for future bot work**: a gateway-dependent feature
+(anything reacting to `guildMemberAdd`, message events, or needing a
+live connection — e.g. the onboarding welcome flow that prompted this
+investigation) categorically cannot be added to this "bot," because
+there is no process to add it to, and Cloudflare Workers (where
+`cnf-website` and `campaigns` both run) can't hold a persistent gateway
+connection regardless. Anything gateway-dependent needs a genuinely new,
+separately-hosted Node.js/discord.js (or equivalent) service — which
+CAN still authenticate as the same Discord Application/bot token, so it
+shows up as "Boomba" in the server's member list, but that's identity
+reuse only, not code reuse. Re-enabling privileged intents (e.g. Server
+Members Intent) on that Application in the Developer Portal is safe and
+has zero effect on the existing REST-only publishing flow, since that
+flow never touches the gateway or intents at all.
+
+**General lesson**: when a "bot" or "service" is mentioned by name but
+its actual implementation can't be located, check for an
+identity-vs-process mix-up before assuming a missing/inaccessible repo
+— a Discord Application (or similarly, an API key, a service account, a
+webhook endpoint) can be "used by" existing code without itself being a
+separate deployable thing. Confirm scope directly with whoever knows the
+system ("does X do anything beyond Y?") rather than continuing to search
+for code that may not exist.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
