@@ -58,11 +58,23 @@ import { projectId, dataset, apiVersion } from "@/sanity/lib/client";
  *       {
  *         _id, _type, title, tagline, startDate, endDate, location,
  *         capacity, registrationUrl, publishToDiscord,
- *         publishToEventbrite, discordEventId, eventbriteEventId,
+ *         publishToEventbrite, discordEventId, eventbriteEventId, status,
  *         "slug": slug.current,
  *         "photoUrl": splashImage.asset->url,
  *         "descriptionText": pt::text(description)
  *       }
+ *     (status added 2026-09-30, request: "publish the status of the
+ *     event in Discord, whether full or otherwise" — this is a MANUAL
+ *     edit to the live webhook's projection in the Studio dashboard
+ *     (manage.sanity.io → this project → API → Webhooks → the
+ *     "Cloudflare OG Image Generator" webhook), not something the CLI's
+ *     `sanity hooks` commands can script — `hooks create` is
+ *     interactive-only and there is no `hooks update`, so re-running it
+ *     risks creating a duplicate webhook or losing the existing filter/
+ *     URL config rather than just adding one field. Until that manual
+ *     edit is made, body.status arrives undefined and the status field
+ *     below is silently omitted — not an error, just not yet wired up
+ *     server-side.)
  *   - URL: https://www.criticalsandfumbles.com/api/sanity-webhook
  *     (was: https://cnf-og-generator.criticalsandfumbles.workers.dev/generate/event)
  *   - HTTP method: POST
@@ -118,6 +130,12 @@ interface WebhookPayload {
   // channel announcement embed's image.
   slug?: string;
   photoUrl?: string;
+  // majorEvent's status is a lowercase-hyphenated slug ("registration-open",
+  // "full", ...); regularEvent's is already Title Case ("Active", "Full",
+  // ...) — two different fields on two different schemas, same name,
+  // deliberately not normalized at the schema level (out of scope here).
+  // formatStatus() below normalizes either shape for display.
+  status?: string;
 }
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -234,6 +252,19 @@ function previewDescription(body: WebhookPayload): string {
     : text;
 }
 
+/** Normalizes majorEvent's lowercase-hyphenated status ("registration-open")
+ * and regularEvent's already-Title-Case status ("Full") into one display
+ * shape, and flags whether the event is full — both schemas use "full"/
+ * "Full" for that case, so a simple case-insensitive match covers both
+ * without needing to know which _type produced the value. */
+function formatStatus(status: string): { display: string; isFull: boolean } {
+  const display = status
+    .split(/[-\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+  return { display, isFull: status.toLowerCase() === "full" };
+}
+
 /** Posts an announcement to #events-and-happenings using the bot itself
  * (DISCORD_BOT_TOKEN), now that it's been granted Send Messages
  * alongside its existing Manage Events/Create Events permissions.
@@ -242,6 +273,7 @@ function previewDescription(body: WebhookPayload): string {
  * Eventbrite below. */
 async function postChannelAnnouncement(env: CloudflareEnv, body: WebhookPayload) {
   try {
+    const status = body.status ? formatStatus(body.status) : null;
     const response = await fetch(
       `https://discord.com/api/v10/channels/${env.DISCORD_EVENTS_CHANNEL_ID}/messages`,
       {
@@ -268,8 +300,15 @@ async function postChannelAnnouncement(env: CloudflareEnv, body: WebhookPayload)
                   : undefined,
                 body.location ? { name: "📍 Where", value: body.location, inline: true } : undefined,
                 body.capacity ? { name: "🎟️ Spots", value: String(body.capacity), inline: true } : undefined,
+                // "publish the status of the event in Discord, whether
+                // full or otherwise" — shown as its own field rather than
+                // folded into the title/description so it's scannable at
+                // a glance in a channel someone's just skimming.
+                status ? { name: "📋 Status", value: status.isFull ? "🔴 FULL" : `🟢 ${status.display}`, inline: true } : undefined,
               ].filter(Boolean),
-              color: 0xd4af37, // celestial gold, matching the site's accent colour
+              // Red instead of the usual celestial gold when full — a
+              // clear at-a-glance signal, not just text you have to read.
+              color: status?.isFull ? 0xe74c3c : 0xd4af37,
             },
           ],
         }),

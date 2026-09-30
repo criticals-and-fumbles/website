@@ -35,10 +35,21 @@ export default defineType({
       type: "string",
       description: "Inferred default list — adjust in Studio if needed",
       options: {
-        list: ["Campaign", "One-Shot Series", "Drop-In"].map((v) => ({
-          title: v,
-          value: v,
-        })),
+        list: [
+          "Campaign",
+          "One-Shot Series",
+          "Drop-In",
+          // Added 2026-09-30 — additive, alongside the existing 3 above
+          // (Campaign/One-Shot Series are both in active use on live
+          // events, kept untouched; not a replacement).
+          "Learn to Play",
+          "Playtest",
+          "One-shot",
+          "Workshop",
+          "Podcast",
+          "Painting Session",
+          "Others",
+        ].map((v) => ({ title: v, value: v })),
       },
     }),
     defineField({

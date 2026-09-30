@@ -39,6 +39,17 @@ export default defineType({
           "Social",
           "Charity",
           "Community",
+          // Added 2026-09-30 — additive, alongside the existing list
+          // above (not a replacement; no existing majorEvent document
+          // used eventType yet, but this list is shared additively with
+          // regularEvent.eventType's own list too, so "Workshop" isn't
+          // repeated here).
+          "Learn to Play",
+          "Playtest",
+          "One-shot",
+          "Podcast",
+          "Painting Session",
+          "Others",
         ].map((v) => ({ title: v, value: v })),
       },
     }),
