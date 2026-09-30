@@ -347,6 +347,38 @@ separate deployable thing. Confirm scope directly with whoever knows the
 system ("does X do anything beyond Y?") rather than continuing to search
 for code that may not exist.
 
+## Manually deleting a Discord event/announcement doesn't let you republish it — the stale `discordEventId` blocks every retry (2026-09-30)
+
+`app/api/sanity-webhook/route.ts`'s Discord publish is guarded against
+creating duplicates: `wantsDiscord = body.publishToDiscord &&
+!body.discordEventId`. That guard has no way to know a Discord-side
+delete happened — if an editor manually deletes the scheduled event
+and/or channel announcement directly in Discord (rather than through
+this pipeline), Sanity's `discordEventId` field still holds the
+now-dead ID, so every subsequent save/re-publish attempt gets silently
+skipped (`results.discord = { skipped: "discordEventId already set" }`
+— returned in the HTTP response, but Studio has no UI showing an
+editor that response, so from their side it just looks like nothing
+happens).
+
+**Fix**: clear the `discordEventId` field on the document (Studio:
+open the event, clear that field, save) and it republishes on the very
+next save — no need to re-toggle "Publish to Discord" or anything else,
+since Sanity's webhook fires on any mutation to the document, not just
+specific field changes. Confirmed live: patched the field via the raw
+mutate API, and within seconds a fresh scheduled event AND a fresh
+channel announcement both appeared, verified directly against Discord's
+API (not just trusting the Sanity-side write).
+
+**General lesson**: any integration that stores "already created
+externally" state (an ID, a flag) to prevent duplicates has no way to
+detect the external side being deleted out from under it — that state
+can only go stale in one direction (it correctly prevents dupes, but
+can never self-heal from an out-of-band delete). If this pattern
+appears elsewhere (Eventbrite's `eventbriteEventId` has the exact same
+shape), the fix is the same: clear the stored ID to force a fresh
+create, don't expect the integration to detect the deletion on its own.
+
 ## Two-tier risk tracking
 
 This file is the permanent record of CLOSED incidents and the rules they
