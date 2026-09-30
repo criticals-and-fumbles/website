@@ -177,13 +177,17 @@ export default defineType({
       name: "discordEventId",
       title: "Discord Event ID",
       type: "string",
-      readOnly: true,
       description:
-        "Set automatically by app/api/publish-event/route.ts the first " +
+        "Set automatically by app/api/sanity-webhook/route.ts the first " +
         "time Publish to Discord is checked with a Start Date set — " +
         "its presence is what stops that integration from creating a " +
-        "duplicate Discord event on every later edit. Don't set this " +
-        "by hand.",
+        "duplicate Discord event on every later edit. Not readOnly " +
+        "(2026-09-30) — normally you should never type into this field, " +
+        "BUT if the Discord event/announcement was deleted manually in " +
+        "Discord (rather than by unchecking Publish to Discord here), " +
+        "this field still holds the old ID and silently blocks every " +
+        "republish attempt. Clear it (delete the text, leave blank) and " +
+        "save to force a fresh republish on the next webhook delivery.",
     }),
     defineField({
       name: "eventbriteEventId",
