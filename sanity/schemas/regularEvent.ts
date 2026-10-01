@@ -192,10 +192,16 @@ export default defineType({
       name: "eventbriteEventId",
       title: "Eventbrite Event ID",
       type: "string",
-      readOnly: true,
       description:
         "Set automatically the first time Publish to Eventbrite is " +
-        "checked with a Start Date set. Don't set this by hand.",
+        "checked with a Start Date set. Not readOnly (2026-09-30), " +
+        "same reasoning as discordEventId above — if the Eventbrite " +
+        "listing was deleted manually (not by unchecking Publish to " +
+        "Eventbrite here), this field still blocks every republish " +
+        "attempt. Clear it to force a fresh republish — AND also " +
+        "clear Registration URL below if it was filled in by that " +
+        "same Eventbrite publish (the republish guard checks both " +
+        "fields, not just this one).",
     }),
     defineField({
       name: "sessionCount",
