@@ -13,18 +13,55 @@ export default defineType({
       type: "text",
     }),
     defineField({
-      name: "heroHeadline",
-      title: "Homepage Hero Headline",
-      type: "string",
+      name: "hero",
+      title: "Homepage Hero",
+      type: "object",
       description:
-        'The big headline on the homepage hero (e.g. "Every Roll Tells a Story."). Previously hardcoded in components/celestial/CelestialHero.tsx — made editable 2026-10-02. Leave blank to fall back to that component\'s built-in default.',
-    }),
-    defineField({
-      name: "heroEyebrow",
-      title: "Homepage Hero Eyebrow",
-      type: "string",
-      description:
-        'The small line above the headline (e.g. "Singapore\'s home for new tabletop RPG players & lifelong game masters"). Same component/history as Hero Headline above. Leave blank to fall back to the built-in default.',
+        "All copy for the homepage hero (components/celestial/CelestialHero.tsx). heroHeadline/heroEyebrow used to be flat top-level fields on this document (2026-10-02) — restructured into this object the same day, before anything else referenced the flat names, so no migration concerns beyond this document's own data (handled directly via the API, not left as orphaned fields).",
+      fields: [
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "array",
+          description:
+            'The big headline (e.g. "Every Roll Tells a Story."). Rich text so Bold/Italic are available, but deliberately restricted to those — no headings, lists, or links; this renders inside the page\'s one real <h1>. Rendered inline inside that <h1>, so it inherits the heading\'s own font — nothing here sets a font family of its own. Leave empty to fall back to the component\'s built-in default (which includes a line break and an italic "Story." that a blank rich-text field can\'t express — see that component\'s comment).',
+          of: [
+            {
+              type: "block",
+              styles: [{ title: "Normal", value: "normal" }],
+              lists: [],
+              marks: {
+                decorators: [
+                  { title: "Bold", value: "strong" },
+                  { title: "Italic", value: "em" },
+                ],
+                annotations: [],
+              },
+            },
+          ],
+        }),
+        defineField({
+          name: "eyebrow",
+          title: "Eyebrow",
+          type: "string",
+          description:
+            'The small line above the headline (e.g. "Singapore\'s home for new tabletop RPG players & lifelong game masters"). Leave blank to fall back to the built-in default.',
+        }),
+        defineField({
+          name: "tagline",
+          title: "Tagline",
+          type: "string",
+          description:
+            "Short line shown as an <h3>, just after the headline (same font as Eyebrow). Optional — renders nothing at all when blank, unlike Headline/Eyebrow which fall back to built-in copy; there is no default tagline.",
+        }),
+        defineField({
+          name: "homeDescription",
+          title: "Home Description",
+          type: "text",
+          description:
+            "Replaces Short Description (below) for the homepage hero's paragraph specifically. Short Description itself is unchanged and still used elsewhere (About page, both footers) — this field exists so the homepage can say something different from those without affecting them. Falls back to Short Description, then to a built-in default, if left blank.",
+        }),
+      ],
     }),
     defineField({
       name: "foundedYear",

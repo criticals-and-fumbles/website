@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PortableText, type PortableTextComponents } from "@portabletext/react";
 import type { PinnedEvent, RssFeedItem, SiteSettings } from "@/sanity/lib/types";
 import { itemHref, timeAgo, TYPE_BADGE } from "@/components/celestial/feedHelpers";
 import { PinnedEventCard } from "@/components/home/HeroRightPanel";
@@ -9,18 +10,24 @@ import { PinnedEventCard } from "@/components/home/HeroRightPanel";
  * mockup's own name for this same panel; reuses the real merged RSS
  * feed, same as every other homepage-preview in this project has).
  *
- * The headline ("Every Roll Tells a Story.") and eyebrow line
- * ("Singapore's home for...") are editable via siteSettings.heroHeadline/
- * heroEyebrow (added 2026-10-02, resolving the TODOs that used to be
- * here) — both fall back to this component's own built-in copy
- * (including the headline's italic "Story." treatment) when left blank
- * in Studio, so an empty field never produces a blank-looking hero. A
- * custom heroHeadline renders as plain text, not the original's
- * multi-line/italic markup — that specific styling was unique to the
- * original hardcoded copy, not something a plain Sanity string field
- * can reproduce automatically. The brand wordmark itself stays in the
- * nav, matching the mockup's own layout (headline is themed tagline
- * copy, not the brand name repeated).
+ * All hero copy is editable via siteSettings.hero (added 2026-10-02,
+ * resolving TODOs that used to be here; restructured into a nested
+ * `hero` object the same day — see that schema field's own comment):
+ * - hero.headline: rich text (Bold/Italic only), rendered INLINE inside
+ *   the page's one real <h1> via HEADLINE_COMPONENTS below, which strips
+ *   PortableText's default <p> wrapper (invalid nested inside <h1>
+ *   anyway) so the content inherits the <h1>'s own font-serif — nothing
+ *   here sets a font of its own. Falls back to this component's built-in
+ *   copy (including a line break and an italic "Story." that a blank
+ *   rich-text field can't express) when empty.
+ * - hero.eyebrow: falls back the same way, plain string, no styling
+ *   concerns.
+ * - hero.tagline: new, no fallback — renders nothing when blank.
+ * - hero.homeDescription: falls back to siteSettings.shortDescription
+ *   (used elsewhere — About page, both footers — so left untouched),
+ *   then to a built-in default.
+ * The brand wordmark itself stays in the nav, matching the mockup's own
+ * layout (headline is themed tagline copy, not the brand name repeated).
  *
  * 2026-09-15: gained an optional `pinnedEvent` prop when this became the
  * real homepage's hero (not just the /celestial preview) — reuses
@@ -28,6 +35,17 @@ import { PinnedEventCard } from "@/components/home/HeroRightPanel";
  * colour through sitewide tokens, not celestial-only ones, so it drops
  * in above the Live Realm Dispatches panel with no restyling needed).
  */
+
+// Strips PortableText's default block-level wrapper (normally a <p>,
+// which can't legally nest inside the <h1> this renders into) so the
+// headline's rich text flows as plain inline content — marks (Bold/
+// Italic) still work via @portabletext/react's own built-in defaults,
+// only the block wrapper is overridden here.
+const HEADLINE_COMPONENTS: PortableTextComponents = {
+  block: {
+    normal: ({ children }) => <>{children}</>,
+  },
+};
 export function CelestialHero({
   siteSettings,
   rssFeed,
@@ -62,7 +80,7 @@ export function CelestialHero({
                 <path d="M12 2 21 7.5v9L12 22 3 16.5v-9L12 2Z" />
                 <path d="M12 2v20M3 7.5l9 5 9-5M3 16.5l9-5 9 5" />
               </svg>
-              {siteSettings?.heroEyebrow ??
+              {siteSettings?.hero?.eyebrow ??
                 "Singapore's home for new tabletop RPG players & lifelong game masters"}
             </span>
             <span className="inline-flex items-center gap-1 text-gold-500">
@@ -72,8 +90,8 @@ export function CelestialHero({
             </span>
           </div>
           <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl font-semibold leading-[1.08] text-[var(--celestial-ink)] mb-6 drop-shadow-lg">
-            {siteSettings?.heroHeadline ? (
-              siteSettings.heroHeadline
+            {siteSettings?.hero?.headline?.length ? (
+              <PortableText value={siteSettings.hero.headline} components={HEADLINE_COMPONENTS} />
             ) : (
               <>
                 Every Roll Tells
@@ -81,25 +99,38 @@ export function CelestialHero({
               </>
             )}
           </h1>
+          {siteSettings?.hero?.tagline && (
+            <h3 className="font-cinzel text-xl sm:text-2xl tracking-[0.08em] text-[var(--celestial-gold-400-90)] mb-4">
+              {siteSettings.hero.tagline}
+            </h3>
+          )}
           <p className="text-[var(--celestial-ink-muted)] font-sans text-sm sm:text-base leading-relaxed tracking-wide mb-8 max-w-md opacity-90">
-            {siteSettings?.shortDescription ??
+            {siteSettings?.hero?.homeDescription ??
+              siteSettings?.shortDescription ??
               "Original adventures. Familiar systems. Unexpected worlds. Join our community for immersive TTRPG campaigns, creative encounters, and unforgettable moments at the table."}
           </p>
           <div className="flex flex-col items-start gap-4">
-            <a
-              href="https://campaigns.criticalsandfumbles.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-[#0a3532]/90 hover:bg-[#0d4541] border border-[var(--celestial-gold-400-70)] rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(0,180,150,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
+            {/* Was "Enter the Campaign" linking externally to
+                campaigns.criticalsandfumbles.com — changed 2026-10-02 to
+                link internally to /events instead, hence next/link (not
+                a plain <a target="_blank">) matching the Explore the
+                Archive link below. Colour changed from the original dark
+                teal fill to the same pink-500 family the live feed's
+                Event badges use (TYPE_BADGE in feedHelpers.ts) at higher
+                opacity for a solid button fill, per request — gold
+                text/border/hover-glow unchanged, already complementary. */}
+            <Link
+              href="/events"
+              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-pink-500/90 hover:bg-pink-400 border border-[var(--celestial-gold-400-70)] rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(236,72,153,0.25)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
             >
               <div className="absolute inset-[3px] border border-[var(--celestial-gold-500-40)] rounded-sm pointer-events-none" />
               <span className="font-cinzel tracking-[0.2em] text-xs sm:text-sm font-bold text-gold-200 group-hover:text-yellow-100">
-                ENTER THE CAMPAIGN
+                FIND A GAME
               </span>
               <svg className="w-4 h-4 text-gold-300 transform group-hover:translate-x-1.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-            </a>
+            </Link>
             <div className="w-full flex justify-start pl-3 pt-1">
               <Link
                 href="/articles"

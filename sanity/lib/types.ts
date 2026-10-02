@@ -562,12 +562,18 @@ export interface HistoryEntry {
   tag?: string;
 }
 
+export interface SiteSettingsHero {
+  headline?: PortableTextBlock[];
+  eyebrow?: string;
+  tagline?: string;
+  homeDescription?: string;
+}
+
 export interface SiteSettings {
   title?: string;
   tagline?: string;
   shortDescription?: string;
-  heroHeadline?: string;
-  heroEyebrow?: string;
+  hero?: SiteSettingsHero;
   foundedYear?: number;
   basedIn?: string;
   contactEmail?: string;
