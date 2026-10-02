@@ -221,17 +221,32 @@ export default defineType({
     }),
     defineField({
       name: "quickFacts",
-      title: "Quick Facts",
+      title: "Campaign Facts",
       type: "array",
       of: [factRow],
-      description: "The kv-panel beside Overview — fully free-form per campaign.",
+      description:
+        "Campaign- and party-wide impact from this session — deaths, " +
+        "drop-in players, roster/party changes, and anything that " +
+        "affects the wider world beyond this session's own location " +
+        "(the opposite scope from Location Facts below). Relabeled " +
+        "from 'Quick Facts' 2026-10-01 — field name (quickFacts) kept " +
+        "unchanged for data compatibility, only the Studio-facing " +
+        "title changed. Free-form, fully optional — use as many or as " +
+        "few as make sense for this session; the goal is training DMs " +
+        "to think about world state, not completeness for its own sake.",
     }),
     defineField({
       name: "locationFacts",
       title: "Location Facts",
       type: "array",
       of: [factRow],
-      description: "Same free-form pattern as Quick Facts, scoped to the location section.",
+      description:
+        "This session's impact ON the specific location — socio-" +
+        "economic shifts, trade, faction/NPC attitudes toward the " +
+        "party (wanted, grateful, suspicious...), status of a place " +
+        "mentioned this session. Scoped to this location specifically " +
+        "(contrast with Campaign Facts above, which is wider-world). " +
+        "Free-form, fully optional, same reasoning as Campaign Facts.",
     }),
     defineField({
       name: "statTiles",
@@ -239,19 +254,37 @@ export default defineType({
       type: "array",
       of: [statTile],
       description:
-        'Optional 4-tile status strip under the meters section (e.g. fantasy\'s Party Status, horror\'s Survivor Status). Leave empty for genres/campaigns that don\'t use one — the section only renders when non-empty.',
+        "Numeric highlights, free text label (same free-form pattern " +
+        "as the two Facts fields above) — but a tile whose label " +
+        "case-insensitively matches one of the campaignStatCategory " +
+        "documents in Studio gets automatically totalled on this " +
+        "campaign's Overview page; anything else still displays here, " +
+        "just isn't counted campaign-wide. The console's label field " +
+        "suggests those category names so reuse is easy. Leave empty " +
+        "for sessions that don't need one — the section only renders " +
+        "when non-empty.",
     }),
     defineField({
       name: "threatAssessment",
       title: "Threat Assessment",
       type: "array",
       of: [meterRow],
+      description:
+        "A row can represent either an ongoing world-state threat (a " +
+        "faction's general danger level, evolving session to session) " +
+        "or a threat specific to this session's encounters/location — " +
+        "mix both in the same list as needed, DM's call per row.",
     }),
     defineField({
       name: "objectives",
       title: "Objectives",
       type: "array",
       of: [objective],
+      description:
+        "Retrospective, not forward-looking: what the party attempted " +
+        "THIS session and what happened — succeeded, failed, or " +
+        "abandoned. Not a running list of someday-goals carried " +
+        "forward across sessions.",
     }),
     defineField({
       name: "media",

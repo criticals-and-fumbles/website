@@ -42,6 +42,10 @@ const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $
 // GM can see what they're actually getting (colors, section-label copy)
 // before committing, without opening Sanity Studio.
 const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride, colors, labels, classification, distribution }`;
+// Shared reference data (same scoping as genreTheme, no per-DM
+// ownership) — drives the dossier Stat Tiles field's suggestion
+// dropdown. Studio-maintained: see schema/campaignStatCategory.js.
+const STAT_CATEGORIES_QUERY = `*[_type == "campaignStatCategory"] | order(group asc, order asc, name asc){ _id, name, group }`;
 
 // ---- Wiki manual builder data (unscoped — shared content, any console
 // GM may edit any of it, see lib/wiki-audit.js) ----
@@ -114,6 +118,7 @@ app.get("/", async (c) => {
     campaigns,
     dossiers,
     genreThemes,
+    statCategories,
     worlds,
     teamMembers,
     worldUnits,
@@ -127,6 +132,7 @@ app.get("/", async (c) => {
     query(c.env, MY_CAMPAIGNS_QUERY, { hash }),
     query(c.env, MY_DOSSIERS_QUERY, { hash }),
     query(c.env, GENRE_THEMES_QUERY),
+    query(c.env, STAT_CATEGORIES_QUERY),
     query(c.env, WORLDS_QUERY),
     query(c.env, TEAM_MEMBERS_QUERY),
     query(c.env, WORLD_UNITS_QUERY),
@@ -161,6 +167,7 @@ app.get("/", async (c) => {
     campaigns,
     dossiers,
     genreThemes,
+    statCategories,
     worlds,
     teamMembers,
     worldUnits,

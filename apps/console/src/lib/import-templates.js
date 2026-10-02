@@ -51,14 +51,14 @@ export const DOSSIER_XML_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
     <meta><title>Example Session Title</title><classification>TOP SECRET</classification><distribution>PLAYER-FACING</distribution><sessionLabel>1</sessionLabel><partyLevel>5</partyLevel><location>The Steps</location></meta>
     <overview><![CDATA[What happened this session — the main recap players will read first.]]></overview>
     <quickFacts>
-      <fact label="STATUS" value="Active"/>
-      <fact label="LOOT" value="A rusted key of unknown origin"/>
+      <fact label="DROP-IN PLAYERS" value="One guest player joined for this session"/>
+      <fact label="WIDER WORLD IMPACT" value="News of the courier's rescue is spreading beyond the Steps"/>
     </quickFacts>
     <locationFacts>
-      <fact label="REGION" value="Northern Reach"/>
+      <fact label="FACTION ATTITUDE" value="The Northern Reach garrison now trusts the party"/>
     </locationFacts>
     <statTiles>
-      <tile value="12" label="Party Morale"/>
+      <tile value="1" label="Locations Visited"/>
     </statTiles>
     <threatAssessment>
       <meter label="Local Faction Tension" level="medium"/>
@@ -104,20 +104,34 @@ Rules — follow exactly, do not deviate:
 
 3. This is the core judgment call: don't just log what happened, work out
    what CHANGED in the world state and record the facts a reader needs to
-   track it going forward.
+   track it going forward. The point of these fields is building a habit
+   of thinking about world state, not just mechanical logging — favor
+   facts that show how this session rippled outward.
    - overview is the narrative recap — what happened, in order.
-   - quickFacts / locationFacts / statTiles / threatAssessment are the
-     STATE the session left behind, not a retelling of the recap — e.g.
-     if the party toppled a faction leader, a threatAssessment <meter>
-     for that faction's tension should now read lower than last session,
-     and a quickFacts <fact> should record the leadership vacuum this
-     creates. If a fact was true last session and nothing in my notes
-     changed it, leave it out rather than repeating it unchanged — only
-     include facts that are new, changed, or essential to understanding
-     THIS session's dossier on its own.
-   - objectives are forward-looking: what's now open (unresolved threads,
-     new leads) and what's now done (resolved this session). Don't
-     restate objectives that were already done in a previous session.
+   - quickFacts ("Campaign Facts" — a campaign's genre theme may display
+     this under a different name, e.g. "Court Whispers"; same meaning
+     regardless of label): campaign- and PARTY-wide impact — deaths,
+     drop-in players, roster/party changes, anything affecting the wider
+     world beyond this session's own location.
+   - locationFacts: this session's impact ON the specific location —
+     faction/NPC attitudes toward the party, trade, economy, local
+     reputation, status of a place mentioned. Scoped to here, not the
+     wider world (contrast with quickFacts above).
+   - statTiles: short numeric highlights, plain label/value pairs — no
+     fixed list to match, just a sensible label and usually a number.
+   - threatAssessment: either an ongoing world-state threat (e.g. if the
+     party toppled a faction leader, that faction's tension meter should
+     now read lower than last session) OR a threat specific to this
+     session's encounters/location — mix both in the same list as
+     needed.
+   - If a fact was true last session and nothing in my notes changed it,
+     leave it out rather than repeating it unchanged — only include
+     facts that are new, changed, or essential to understanding THIS
+     session's dossier on its own.
+   - objectives are RETROSPECTIVE, not forward-looking: what the party
+     attempted this session and what happened — "done" if resolved
+     (successfully or not) this session, "open" if still unresolved
+     after this session. Not a running list of someday-goals.
    - If my notes don't give you enough to state a fact confidently, leave
      it out rather than inventing or guessing a plausible-sounding value —
      an absent fact is safe, a wrong one misleads whoever reads the
@@ -195,18 +209,39 @@ export const DOSSIER_JSON_TEMPLATE = JSON.stringify(
       "",
       "4. This is the core judgment call: don't just log what happened, work",
       "   out what CHANGED in the world state and record the facts a reader",
-      "   needs to track it going forward.",
+      "   needs to track it going forward. The point of these fields is",
+      "   training a habit of thinking about world state, not just",
+      "   mechanical logging — favor facts that show how this session",
+      "   rippled outward over purely combat/loot ones.",
       "   - overview: the narrative recap, in order, as plain text (blank",
       "     line between paragraphs).",
-      "   - quickFacts / locationFacts / statTiles / threatAssessment are",
-      "     the STATE the session left behind, not a retelling of the",
-      "     overview — only include an entry if it's new, changed, or",
-      "     essential to understanding this session's dossier on its own.",
-      "     If nothing changed, leave the array empty rather than repeating",
-      "     an unchanged fact.",
-      "   - objectives are forward-looking: \"open\" for newly-surfaced",
-      "     threads, \"done\" for objectives resolved THIS session. Don't",
-      "     restate an objective already resolved in an earlier session.",
+      "   - quickFacts (\"Campaign Facts\" — a campaign's genre theme may",
+      "     display this under a different name, e.g. \"Court Whispers\" or",
+      "     \"Case Notes\"; the meaning below is the same regardless of the",
+      "     label shown): campaign- and PARTY-wide impact — deaths, drop-in",
+      "     players, roster/party changes, anything affecting the wider",
+      "     world BEYOND this session's own location.",
+      "   - locationFacts: this session's impact ON the specific location —",
+      "     faction/NPC attitudes toward the party (wanted, grateful,",
+      "     suspicious...), trade, economy, local reputation, status of a",
+      "     place mentioned. Scoped to here, not the wider world.",
+      "   - statTiles: short numeric highlights, plain {label, value} pairs.",
+      "     No fixed list to match — pick a sensible label, usually with a",
+      "     numeric value.",
+      "   - threatAssessment: either an ongoing world-state threat (a",
+      "     faction's general danger level, evolving session to session) OR",
+      "     a threat specific to this session's encounters/location — mix",
+      "     both in the same array as needed.",
+      "   - Only include a quickFacts/locationFacts/statTiles/",
+      "     threatAssessment entry if it's new, changed, or essential to",
+      "     understanding this session's dossier on its own. If nothing",
+      "     changed, leave the array empty rather than repeating an",
+      "     unchanged fact.",
+      "   - objectives are RETROSPECTIVE, not forward-looking: what the",
+      "     party attempted this session and what happened. \"done\" if",
+      "     resolved (successfully or not) THIS session, \"open\" if still",
+      "     unresolved after this session. Not a running list of someday-",
+      "     goals carried forward.",
       "   - If the notes don't give enough to state something confidently,",
       "     leave it out rather than inventing a plausible-sounding value —",
       "     an absent fact is safe, a wrong one misleads whoever reads the",
@@ -246,9 +281,9 @@ export const DOSSIER_JSON_TEMPLATE = JSON.stringify(
         partyLevel: "5",
         location: "The Steps",
         overview: "What happened this session — the main recap players will read first.",
-        quickFacts: [{ label: "STATUS", value: "Active" }],
-        locationFacts: [{ label: "REGION", value: "Northern Reach" }],
-        statTiles: [{ value: "12", label: "Party Morale" }],
+        quickFacts: [{ label: "DROP-IN PLAYERS", value: "One guest player joined for this session" }],
+        locationFacts: [{ label: "FACTION ATTITUDE", value: "The Northern Reach garrison now trusts the party after the courier rescue" }],
+        statTiles: [{ value: "1", label: "Locations Visited" }],
         threatAssessment: [{ label: "Local Faction Tension", level: "medium" }],
         objectives: [
           {
@@ -663,12 +698,33 @@ Rules — follow exactly:
    everything mentioned in the story. If nothing in the notes clearly
    indicates a fact changed, leave the relevant array empty rather than
    inventing one. An empty array is a correct, complete answer when the
-   notes don't support more.
+   notes don't support more. The whole point of these fields is training
+   a DM habit of thinking about world state, not just logging combat/
+   loot — favor facts that show how this session rippled outward over
+   purely mechanical ones. Each field has a distinct scope:
+   - quickFacts ("Campaign Facts" — a campaign's genre theme may display
+     this under a different name, e.g. "Court Whispers" or "Case Notes";
+     the meaning below is the same regardless of what it's labeled):
+     campaign- and PARTY-wide impact — deaths, drop-in players, roster/
+     party changes, and anything affecting the wider world BEYOND this
+     session's own location.
+   - locationFacts: this session's impact ON the specific location —
+     faction/NPC attitudes toward the party (wanted, grateful,
+     suspicious...), trade, economy, local reputation, status of a
+     place mentioned. Scoped to here, not the wider world.
+   - statTiles: short numeric highlights, each a {label, value} pair
+     (value is usually a number as a string, e.g. "3"). Give each a
+     plain, sensible label — you do not need to match any specific
+     predefined list.
+   - threatAssessment: either an ongoing world-state threat (a faction's
+     general danger level) or a threat specific to this session's
+     encounters/location — both kinds can appear in the same array.
 
-3. objectives are forward-looking only: status "open" for newly-
-   surfaced threads/leads/threats, "done" for objectives the notes show
-   were resolved THIS session specifically. Do not restate an objective
-   the notes make clear was already resolved in an earlier session.
+3. objectives are RETROSPECTIVE, not forward-looking: record what the
+   party attempted THIS session and what happened — status "done" if it
+   was resolved (successfully or not) this session, "open" if it's still
+   unresolved/ongoing after this session. This is a record of attempts
+   and results, not a running list of someday-goals carried forward.
 
 4. threatAssessment level must be exactly one of: low, medium, high,
    very-high — never a synonym, never a different case. If unsure which

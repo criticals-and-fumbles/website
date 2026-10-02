@@ -27,6 +27,7 @@ import galleryPhoto from "./galleryPhoto";
 import genreTheme from "./genreTheme";
 import campaign from "./campaign";
 import dossier from "./dossier";
+import campaignStatCategory from "./campaignStatCategory";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -58,6 +59,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     genreTheme,
     campaign,
     dossier,
+    campaignStatCategory,
     // Reusable objects
     calloutBlock,
     mediaGalleryItem,

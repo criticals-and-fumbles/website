@@ -21,13 +21,23 @@
 import { FAVICON_DATA_URI } from "../lib/favicon.js";
 
 export function renderConsolePage({
-  campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset,
+  campaigns, dossiers, genreThemes, statCategories, gmEmail, sanityProjectId, sanityDataset,
   worlds, teamMembers, worldUnits, factions, keyFigures, magicItems, notablePlaces, loreEntries,
   myTeamMember, myArticles,
 }) {
   const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
   const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
   const initialThemes = JSON.stringify(genreThemes).replace(/</g, "\\u003c");
+  // Stat Tiles' suggestion dropdown — server-rendered directly from
+  // Studio-maintained campaignStatCategory docs (see
+  // schema/campaignStatCategory.js), same "plain server-rendered
+  // <option> list" approach quickFactSuggestions/locationFactSuggestions
+  // below already use, just sourced from live data instead of a
+  // hardcoded list. No client JS variable needed — nothing else reads
+  // this list at runtime besides the datalist itself.
+  const statCategoryOptionsHtml = (statCategories || [])
+    .map((c) => `<option value="${String(c.name || "").replace(/"/g, "&quot;")}">`)
+    .join("");
   const initialWorlds = JSON.stringify(worlds).replace(/</g, "\\u003c");
   const initialTeamMembers = JSON.stringify(teamMembers).replace(/</g, "\\u003c");
   const initialWorldUnits = JSON.stringify(worldUnits).replace(/</g, "\\u003c");
@@ -708,14 +718,28 @@ export function renderConsolePage({
   </main>
 </div>
 
+<!-- Suggestions updated 2026-10-01 for Campaign Facts' new scope
+     (campaign/party-wide impact, not session highlights in general —
+     see schema/dossier.js's quickFacts description). -->
 <datalist id="quickFactSuggestions">
-  <option value="STATUS"><option value="THREAT LEVEL"><option value="FACTION">
-  <option value="OBJECTIVE COUNT"><option value="RESOURCES"><option value="MORALE">
+  <option value="PARTY STATUS"><option value="CASUALTIES"><option value="DROP-IN PLAYERS">
+  <option value="PARTY CHANGES"><option value="WIDER WORLD IMPACT"><option value="CAMPAIGN REPUTATION">
+  <option value="RESOURCES"><option value="TIME ELAPSED">
 </datalist>
+<!-- Suggestions updated 2026-10-01 for Location Facts' new scope (this
+     session's IMPACT on the location, not static worldbuilding
+     description — see schema/dossier.js's locationFacts description). -->
 <datalist id="locationFactSuggestions">
-  <option value="REGION"><option value="POPULATION"><option value="GOVERNANCE">
-  <option value="CLIMATE"><option value="NOTABLE NPCS"><option value="DEFENSES">
+  <option value="FACTION ATTITUDE"><option value="NPC DISPOSITION"><option value="TRADE STATUS">
+  <option value="ECONOMIC IMPACT"><option value="LOCAL REPUTATION"><option value="BOUNTY/WANTED STATUS">
+  <option value="LOCATION STATUS">
 </datalist>
+<!-- Added 2026-10-01 — see schema/campaignStatCategory.js. Sourced from
+     live Studio-maintained data (statCategoryOptionsHtml above), not a
+     hardcoded list like the two datalists above, since this one also
+     drives the Campaign Overview rollup matching and needs to stay in
+     sync with whatever categories actually get totalled. -->
+<datalist id="statTileSuggestions">${statCategoryOptionsHtml}</datalist>
 
 <!-- Shared image preview lightbox — see openImageLightbox() in
      CONSOLE_JS. One instance, reused by every image thumbnail across
@@ -857,31 +881,31 @@ function dossierFieldsBlock(prefix) {
       ${heroImageFieldBlock(prefix + "Header", "Header Image")}
       ${heroImageFieldBlock(prefix)}
       <div class="field">
-        <p class="field-tip">Any highlights of this session? Loot, Key Moments, Implications, Aftermath facts, etc.</p>
-        <label>Quick Facts</label>
+        <p class="field-tip">Campaign- and party-wide impact — deaths, drop-in players, roster/party changes, and anything that ripples beyond this session's own location. Think about how this session moved the wider world forward, not just what happened here. Use as many or as few as make sense — not every session needs all of these.</p>
+        <label>Campaign Facts</label>
         <div class="repeater" id="${prefix}QuickFacts"></div>
         <button type="button" class="btn small" data-add-row="${prefix}QuickFacts:factRow">+ Add Fact</button>
       </div>
       <div class="field">
-        <p class="field-tip">In-world items, places, people, things — whatever's tied to this session's location specifically.</p>
+        <p class="field-tip">This session's impact ON this specific location — faction/NPC attitudes toward the party (wanted, grateful, suspicious...), trade, economy, local reputation. What changed here, not a static description of the place.</p>
         <label>Location Facts</label>
         <div class="repeater" id="${prefix}LocationFacts"></div>
         <button type="button" class="btn small" data-add-row="${prefix}LocationFacts:factRow">+ Add Fact</button>
       </div>
       <div class="field">
-        <p class="field-tip">World conditions or news affecting this location. Complications, city feel, news, political or trade tensions or conflicts.</p>
+        <p class="field-tip">Numeric highlights. A tile labeled to match one of the suggested categories (start typing to see them) is automatically totalled on this campaign's Overview page — anything else still displays here, just isn't counted campaign-wide.</p>
         <label>Stat Tiles</label>
         <div class="repeater" id="${prefix}StatTiles"></div>
         <button type="button" class="btn small" data-add-row="${prefix}StatTiles:statTile">+ Add Tile</button>
       </div>
       <div class="field">
-        <p class="field-tip">Risks that are pertinent to this session, scored from Low to Very High.</p>
+        <p class="field-tip">Either an ongoing world-state threat (a faction's general danger level, evolving session to session) or a threat specific to this session's encounters/location — mix both in the same list as needed.</p>
         <label>Threat Assessment</label>
         <div class="repeater" id="${prefix}ThreatAssessment"></div>
         <button type="button" class="btn small" data-add-row="${prefix}ThreatAssessment:meterRow">+ Add Row</button>
       </div>
       <div class="field">
-        <p class="field-tip">What is the party actively trying to achieve? Mark each Open or Done, and rank by priority so players see what matters most right now.</p>
+        <p class="field-tip">Retrospective: what did the party attempt this session, and what happened — succeeded, failed, or abandoned? Mark each Open or Done. Not a running list of someday-goals carried forward from session to session.</p>
         <label>Objectives</label>
         <div class="repeater" id="${prefix}Objectives"></div>
         <button type="button" class="btn small" data-add-row="${prefix}Objectives:objective">+ Add Objective</button>
@@ -1581,7 +1605,7 @@ const CONSOLE_JS = `
   // purely so a GM can see what they're picking before committing.
   const THEME_LABEL_TITLES = {
     dossier: 'Dossier', overview: 'Overview', location: 'Location',
-    quickFactsPanel: 'Quick Facts', locationFactsPanel: 'Location Facts',
+    quickFactsPanel: 'Campaign Facts', locationFactsPanel: 'Location Facts',
     meterSection: 'Threat Meter', meterItem: 'Meter Item',
     objectives: 'Objectives', objectivePriorityHigh: 'Priority — High',
     objectivePriorityMid: 'Priority — Mid', objectivePriorityLow: 'Priority — Low',
@@ -1715,6 +1739,9 @@ const CONSOLE_JS = `
   const KV_SUGGESTIONS = {
     QuickFacts: 'quickFactSuggestions',
     LocationFacts: 'locationFactSuggestions',
+    // Added 2026-10-01 — see statTileSuggestions' own comment near the
+    // datalist markup for why this one is Studio-sourced, not hardcoded.
+    StatTiles: 'statTileSuggestions',
   };
 
   function addRepeaterRow(containerId, shapeName){
