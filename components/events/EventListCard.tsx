@@ -93,36 +93,45 @@ export function EventListCard({ event }: { event: EventListItem }) {
               )}
             </>
           ) : (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 font-ui text-xs text-text-muted sm:grid-cols-3">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 font-ui text-xs text-text-muted sm:grid-cols-2 lg:grid-cols-3">
+              {/* Each dt/dd PAIR is wrapped in its own div so it's one
+                  grid item — previously they were loose siblings
+                  directly in the grid, so with a varying number of
+                  fields per card, auto-placement scattered labels and
+                  values across mismatched columns instead of keeping
+                  each pair together (reported illegible 2026-10-02).
+                  A fixed label width keeps every value's start position
+                  aligned within a column too, not just label/value
+                  paired within their own row. */}
               {event.dm && (
-                <>
-                  <dt>DM</dt>
+                <div className="flex gap-1.5">
+                  <dt className="w-16 flex-shrink-0">DM</dt>
                   <dd className="text-text">{event.dm.handle}</dd>
-                </>
+                </div>
               )}
               {event.world && (
-                <>
-                  <dt>World</dt>
+                <div className="flex gap-1.5">
+                  <dt className="w-16 flex-shrink-0">World</dt>
                   <dd className="text-text">{event.world.name}</dd>
-                </>
+                </div>
               )}
               {event.schedule && (
-                <>
-                  <dt>Schedule</dt>
+                <div className="flex gap-1.5">
+                  <dt className="w-16 flex-shrink-0">Schedule</dt>
                   <dd className="text-text">{event.schedule}</dd>
-                </>
+                </div>
               )}
               {event.system && (
-                <>
-                  <dt>System</dt>
+                <div className="flex gap-1.5">
+                  <dt className="w-16 flex-shrink-0">System</dt>
                   <dd className="text-text">{event.system}</dd>
-                </>
+                </div>
               )}
               {event.playerCount && (
-                <>
-                  <dt>Players</dt>
+                <div className="flex gap-1.5">
+                  <dt className="w-16 flex-shrink-0">Players</dt>
                   <dd className="text-text">{event.playerCount}</dd>
-                </>
+                </div>
               )}
             </dl>
           )}
