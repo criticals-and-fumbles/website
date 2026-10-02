@@ -115,15 +115,19 @@ export function CelestialHero({
                 link internally to /events instead, hence next/link (not
                 a plain <a target="_blank">) matching the Explore the
                 Archive link below. Colour changed from the original dark
-                teal fill to the same pink/magenta family the live feed's
-                Event badges use (TYPE_BADGE in feedHelpers.ts), at a
-                darker shade (pink-700, matching --celestial-magenta's
-                own light-mode value) and higher opacity for a solid
-                button fill — gold text/border/hover-glow unchanged,
-                already complementary. */}
+                teal fill to the EXACT same treatment the live feed's
+                Event badges use (TYPE_BADGE in feedHelpers.ts):
+                bg-pink-500/20, translucent pink-500 over this dark
+                page's own background — composites to a deep, almost-
+                purple magenta, which is the "box colour" being matched
+                here, not pink-500's own (much lighter) text colour.
+                Tried pink-700 solid first; this is a closer, more
+                literal match to the badge's actual look since both sit
+                on the same dark background. Gold text/border/hover-glow
+                unchanged, already complementary. */}
             <Link
               href="/events"
-              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-pink-700/90 hover:bg-pink-600 border border-[var(--celestial-gold-400-70)] rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(190,24,93,0.3)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
+              className="group relative inline-flex items-center justify-between gap-6 px-7 py-3.5 bg-pink-500/20 hover:bg-pink-500/30 border border-[var(--celestial-gold-400-70)] rounded-md transition-all duration-300 shadow-[0_0_20px_rgba(236,72,153,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)]"
             >
               <div className="absolute inset-[3px] border border-[var(--celestial-gold-500-40)] rounded-sm pointer-events-none" />
               <span className="font-cinzel tracking-[0.2em] text-xs sm:text-sm font-bold text-gold-200 group-hover:text-yellow-100">
