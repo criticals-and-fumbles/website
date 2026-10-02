@@ -114,7 +114,18 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1 flex flex-col">{children}</main>
           <ToastHost />
         </ThemeProvider>
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID ?? "G-JS983LB341"} />
+        {/* .trim() guards against a stray trailing space in the env var's
+            stored value (confirmed live, 2026-10-02 — view-source showed
+            "...gtag/js?id=G-JS983LB341 " with a trailing space before the
+            closing quote). Neither this file's fallback nor .env.local
+            has one, so it's coming from wherever NEXT_PUBLIC_GA_ID is
+            actually set for production builds — Cloudflare Workers
+            Builds' Settings → Build variables panel (distinct from
+            Runtime, see docs/lessons-learned.md's "Build vs Runtime"
+            entry) is the likely place to also fix the stored value
+            itself; this trim() just stops it from reaching gtag's script
+            URL regardless of where the space actually lives. */}
+        <GoogleAnalytics gaId={(process.env.NEXT_PUBLIC_GA_ID ?? "G-JS983LB341").trim()} />
       </body>
     </html>
   );
