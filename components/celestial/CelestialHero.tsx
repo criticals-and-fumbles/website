@@ -9,18 +9,18 @@ import { PinnedEventCard } from "@/components/home/HeroRightPanel";
  * mockup's own name for this same panel; reuses the real merged RSS
  * feed, same as every other homepage-preview in this project has).
  *
- * The mockup's headline ("Every Roll Tells a Story.") and subheading
- * copy don't correspond to any existing siteSettings field — kept as
- * hardcoded marketing copy, flagged as a candidate for a future
- * siteSettings.heroHeadline field rather than invented as a permanent
- * fixture. The brand wordmark itself stays in the nav, matching the
- * mockup's own layout (headline is themed tagline copy, not the brand
- * name repeated).
- *
- * TODO(sanity): the eyebrow line below ("Singapore's home for...") is
- * also hardcoded, same as the headline — add a siteSettings.heroEyebrow
- * (or similar) field so this is editable from Studio without a code
- * change, per the 2026-09-13 request. Not added this session.
+ * The headline ("Every Roll Tells a Story.") and eyebrow line
+ * ("Singapore's home for...") are editable via siteSettings.heroHeadline/
+ * heroEyebrow (added 2026-10-02, resolving the TODOs that used to be
+ * here) — both fall back to this component's own built-in copy
+ * (including the headline's italic "Story." treatment) when left blank
+ * in Studio, so an empty field never produces a blank-looking hero. A
+ * custom heroHeadline renders as plain text, not the original's
+ * multi-line/italic markup — that specific styling was unique to the
+ * original hardcoded copy, not something a plain Sanity string field
+ * can reproduce automatically. The brand wordmark itself stays in the
+ * nav, matching the mockup's own layout (headline is themed tagline
+ * copy, not the brand name repeated).
  *
  * 2026-09-15: gained an optional `pinnedEvent` prop when this became the
  * real homepage's hero (not just the /celestial preview) — reuses
@@ -62,7 +62,8 @@ export function CelestialHero({
                 <path d="M12 2 21 7.5v9L12 22 3 16.5v-9L12 2Z" />
                 <path d="M12 2v20M3 7.5l9 5 9-5M3 16.5l9-5 9 5" />
               </svg>
-              Singapore&apos;s home for new tabletop RPG players &amp; lifelong game masters
+              {siteSettings?.heroEyebrow ??
+                "Singapore's home for new tabletop RPG players & lifelong game masters"}
             </span>
             <span className="inline-flex items-center gap-1 text-gold-500">
               <span className="w-6 h-[1px] bg-gradient-to-l from-transparent to-gold-400" />
@@ -71,8 +72,14 @@ export function CelestialHero({
             </span>
           </div>
           <h1 className="font-serif text-5xl sm:text-6xl xl:text-7xl font-semibold leading-[1.08] text-[var(--celestial-ink)] mb-6 drop-shadow-lg">
-            Every Roll Tells
-            <br />a <span className="italic font-normal text-[var(--celestial-ink)]">Story.</span>
+            {siteSettings?.heroHeadline ? (
+              siteSettings.heroHeadline
+            ) : (
+              <>
+                Every Roll Tells
+                <br />a <span className="italic font-normal text-[var(--celestial-ink)]">Story.</span>
+              </>
+            )}
           </h1>
           <p className="text-[var(--celestial-ink-muted)] font-sans text-sm sm:text-base leading-relaxed tracking-wide mb-8 max-w-md opacity-90">
             {siteSettings?.shortDescription ??

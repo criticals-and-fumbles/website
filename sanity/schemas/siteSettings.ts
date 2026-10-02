@@ -13,6 +13,20 @@ export default defineType({
       type: "text",
     }),
     defineField({
+      name: "heroHeadline",
+      title: "Homepage Hero Headline",
+      type: "string",
+      description:
+        'The big headline on the homepage hero (e.g. "Every Roll Tells a Story."). Previously hardcoded in components/celestial/CelestialHero.tsx — made editable 2026-10-02. Leave blank to fall back to that component\'s built-in default.',
+    }),
+    defineField({
+      name: "heroEyebrow",
+      title: "Homepage Hero Eyebrow",
+      type: "string",
+      description:
+        'The small line above the headline (e.g. "Singapore\'s home for new tabletop RPG players & lifelong game masters"). Same component/history as Hero Headline above. Leave blank to fall back to the built-in default.',
+    }),
+    defineField({
       name: "foundedYear",
       title: "Founded Year",
       type: "number",

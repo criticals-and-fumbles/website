@@ -566,6 +566,8 @@ export interface SiteSettings {
   title?: string;
   tagline?: string;
   shortDescription?: string;
+  heroHeadline?: string;
+  heroEyebrow?: string;
   foundedYear?: number;
   basedIn?: string;
   contactEmail?: string;
