@@ -294,8 +294,8 @@ export const ARTICLES_BY_MEMBER_QUERY = groq`
 export const MAJOR_EVENTS_UPCOMING_QUERY = groq`
   *[_type == "majorEvent" && status != "completed" && status != "cancelled"]
     | order(startDate asc) {
-    _id, title, "slug": slug.current, tagline, eventType, status,
-    eventDate, startDate, location, coverImage, registrationUrl, recommendedFor
+    _id, _type, _updatedAt, title, "slug": slug.current, tagline, eventType, status,
+    eventDate, startDate, location, coverImage, splashImage, registrationUrl, recommendedFor
   }
 `;
 
@@ -307,8 +307,8 @@ export const MAJOR_EVENTS_PAST_QUERY = groq`
 
 export const REGULAR_EVENTS_QUERY = groq`
   *[_type == "regularEvent" && status != "Ended"] | order(title asc) {
-    _id, title, "slug": slug.current, campaignName, schedule, system,
-    playerCount, status, registrationUrl, recommendedFor,
+    _id, _type, _updatedAt, title, "slug": slug.current, campaignName, schedule, system,
+    playerCount, status, registrationUrl, recommendedFor, coverImage,
     "dm": dm->{ ${teamMemberRefFields} },
     "world": world->{ _id, name, "slug": slug.current, colourAccent }
   }

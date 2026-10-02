@@ -51,6 +51,8 @@ export interface Article extends ArticleCard {
 
 export interface MajorEventCardData {
   _id: string;
+  _type: "majorEvent";
+  _updatedAt: string;
   title: string;
   slug: string;
   tagline?: string;
@@ -150,6 +152,8 @@ export interface MajorEvent extends MajorEventCardData {
 
 export interface RegularEvent {
   _id: string;
+  _type: "regularEvent";
+  _updatedAt: string;
   title: string;
   slug: string;
   campaignName?: string;
@@ -161,7 +165,10 @@ export interface RegularEvent {
   world?: WorldRef;
   registrationUrl?: string;
   recommendedFor?: string[];
-  /** Detail-page-only fields — undefined on the card-query shape above. */
+  /** Detail-page-only fields — undefined on the card-query shape above.
+   * coverImage USED to be detail-only too, but REGULAR_EVENTS_QUERY now
+   * selects it as well (2026-10-02, for EventListCard's image) — left
+   * in this group for now since the other fields here still are. */
   eventType?: string;
   frequency?: string;
   location?: string;
@@ -171,6 +178,15 @@ export interface RegularEvent {
   coverImage?: SanityImage;
   pageFooterCTA?: PortableTextBlock[];
 }
+
+/** The combined, single-column /events list (added 2026-10-02) merges
+ * both event document types into one sorted/filtered feed — this union
+ * is what EventsList/EventListCard actually render, discriminated on
+ * `_type` since the two source types share no other reliable common
+ * shape (status's own value sets don't even overlap — see
+ * components/events/EventListCard.tsx's STATUS_META for the mapping
+ * both use to render a consistent badge). */
+export type EventListItem = MajorEventCardData | RegularEvent;
 
 /**
  * Homepage "Upcoming Events" strip item — flattened union of majorEvent/

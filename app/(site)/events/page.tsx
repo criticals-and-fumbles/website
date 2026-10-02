@@ -9,10 +9,10 @@ import {
   SITE_SETTINGS_QUERY,
 } from "@/sanity/lib/queries";
 import { urlForImage } from "@/sanity/lib/image";
-import type { MajorEventCardData, RegularEvent, SiteSettings } from "@/sanity/lib/types";
+import type { EventListItem, MajorEventCardData, RegularEvent, SiteSettings } from "@/sanity/lib/types";
 import { buildMetadata } from "@/lib/metadata";
-import { MajorEventCard } from "@/components/events/MajorEventCard";
-import { EventCard } from "@/components/events/EventCard";
+import { EventsList } from "@/components/events/EventsList";
+import { isRecruiting } from "@/components/events/EventListCard";
 import { Footer } from "@/components/layout/Footer";
 import { PageBackdrop } from "@/components/layout/PageBackdrop";
 import { SectionCrest } from "@/components/celestial/ChroniclesGrid";
@@ -43,6 +43,22 @@ export default async function EventsPage() {
     client.fetch<SiteSettings | null>(SITE_SETTINGS_QUERY),
   ]);
 
+  // Single combined, sorted feed (2026-10-02) — replaces the old two
+  // separately-styled sections (major events as full-width cards,
+  // regular events as a 3-col grid) with one list of page-width cards.
+  // Sort is Recruiting-equivalent status first (see isRecruiting in
+  // EventListCard.tsx — it's the single source of truth for what counts
+  // as "Recruiting" across both document types' different status
+  // vocabularies), then most-recently-updated first within each group.
+  // Done once here, server-side; EventsList's client-side filtering
+  // only narrows the list, it never reorders it.
+  const events: EventListItem[] = [...upcomingMajor, ...regularEvents].sort((a, b) => {
+    const aRecruiting = isRecruiting(a);
+    const bRecruiting = isRecruiting(b);
+    if (aRecruiting !== bRecruiting) return aRecruiting ? -1 : 1;
+    return new Date(b._updatedAt).getTime() - new Date(a._updatedAt).getTime();
+  });
+
   return (
     <>
       <PageBackdrop tier="full" />
@@ -55,23 +71,9 @@ export default async function EventsPage() {
           <h2 className="mb-6 font-display text-3xl text-text">
             Upcoming Events
           </h2>
-          {upcomingMajor.length > 0 && (
-            <div className="mb-8 flex flex-col gap-6">
-              {upcomingMajor.map((event) => (
-                <MajorEventCard key={event._id} event={event} />
-              ))}
-            </div>
-          )}
-
-          {regularEvents.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {regularEvents.map((event) => (
-                <EventCard key={event._id} event={event} />
-              ))}
-            </div>
-          )}
-
-          {upcomingMajor.length === 0 && regularEvents.length === 0 && (
+          {events.length > 0 ? (
+            <EventsList events={events} />
+          ) : (
             <p className="text-sm text-text-muted">
               Nothing on the calendar right now — check back soon.
             </p>
