@@ -387,6 +387,72 @@ labelled `known-risk` — run `gh issue list --label known-risk --state
 open`. When an issue is resolved, its lesson should be added here as a new
 entry and the issue closed.
 
+## A manually-typed dotted document `_id` silently vanishes from anonymous reads — third occurrence, closed 2026-10-05
+
+`help-us-playtest-temasek-tales` wasn't appearing on the live site despite
+having `status: "published"` and a past `publishedAt`. Root cause: its
+document had a human-typed custom id, `article.help-us-playtest-temasek-tales`,
+instead of a normal Sanity-generated one. Confirmed live (with and without
+an API token) that **any** document whose `_id` contains a dot is silently
+excluded from an anonymous/no-token GROQ read on this dataset, even though
+the dataset's `aclMode` is `"public"` and the same document reads back
+completely normally with a token — Sanity's anonymous "published"
+perspective appears to treat a dotted id as colliding with its own
+internal namespacing (`drafts.<id>`, `versions.<bundle>.<id>`) and hides
+it rather than erroring. No warning anywhere in Studio or the API
+response; the document just never matches a no-token query.
+
+This is the **third** time this exact bug has hit this project —
+`campaign` and `dossier` document ids had the identical problem and were
+migrated off dotted ids (see `api-campaign.js`'s comment: "had to migrate
+5 live campaigns + 26 dossiers off dotted ids once this page shipped and
+came up empty"), and `apps/console/src/routes/api-me-articles.js` was
+already written (2026-09-15) to never assign a deterministic id for
+exactly this reason. `genreTheme` documents are the one type that still
+uses dotted ids on purpose — safe only because they're never read
+anonymously, always through the console's or campaigns-subsite's
+token-authenticated client.
+
+**This specific article predates the console entirely** — its
+`_createdAt` (2026-09-14) is a day before the console's first commit
+(2026-09-15), so it wasn't created through the console's (already-safe)
+form. **Correction from an earlier draft of this entry:** it was NOT
+created via Sanity Studio's own UI or via Vision — Studio's "+ Create"
+and "Duplicate" actions both always auto-generate a random, non-dotted
+id with no field exposed to type a custom one, and Vision is read-only
+(it only runs GROQ queries; it has no create/mutate capability at all).
+The only way to produce a dotted id is a script or a direct API/CLI call
+that explicitly sets `_id` on a create mutation — the same mechanism
+that caused the original `campaign`/`dossier` version of this bug (a
+line of console code building `` `campaign.${slug}` ``). So this
+article's dotted id almost certainly came from a one-off script or
+direct API call, deliberately imitating the `<type>.<slug>` convention
+used (at the time) by `campaign`/`dossier`/`genreTheme`, before that
+convention was identified as broken for anything read anonymously —
+not from a content editor clicking around in Studio.
+
+**Fix applied:** recreated the document under a normal auto-generated
+`_id` (same content, same slug) with a script using the write-token
+client, verified an anonymous no-token query could see the new document,
+then deleted the old dotted-id original. Confirmed live afterward: public
+GROQ read, the actual page (200, real content), and the `/articles`
+listing all picked it up.
+
+**General rule going forward:** never explicitly set a custom/deterministic
+`_id` (migration script, seed script, or raw API/CLI call) when creating
+a document of a type that `cnf-website`'s pages read without a token —
+currently `article`, `campaign`, `dossier`. Let Sanity auto-generate the
+id. A deterministic id is fine (and sometimes wanted, e.g. for
+idempotent re-submission) ONLY for types that are exclusively read via a
+token-authenticated client, like `genreTheme`. Since this can only
+happen through code/API access (never through Studio's own UI), the
+realistic guard is code-review discipline on any future script that
+calls `.create()`/mutate with an explicit `_id`, plus a periodic audit
+query — not a Studio-side control, since Studio never offers this
+capability to begin with. See known-risk issue tracking the open,
+unresolved half of this (no automated detection/validation yet, only
+the three now-fixed call sites and this written record).
+
 ## Process note — workflow & ownership (known-risk issues)
 
 Claude Code maintains known-risk issue hygiene autonomously — creating
