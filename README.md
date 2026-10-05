@@ -14,6 +14,98 @@ history, lessons learned) lives in `CLAUDE.md` and the `docs/*.md`
 modules it indexes — read those before making non-trivial changes,
 especially anything touching a Sanity schema.
 
+## Tech stack (this app)
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16.3 (App Router, TypeScript, no `src/` directory) |
+| UI | React 19.2, Tailwind CSS v4 (CSS-variable theme), `@portabletext/react` for Sanity rich text |
+| CMS | Sanity v6 (`next-sanity` client) — Studio hosted separately, never bundled into this app |
+| Hosting | Cloudflare Workers, via `@opennextjs/cloudflare` (not Vercel, not Cloudflare Pages) |
+| Caching | ISR backed by Cloudflare R2 (`cnf-website-cache`) + KV tag cache (`NEXT_TAG_CACHE_KV`) for on-demand invalidation |
+| Runtime pins | Node 20 LTS, Wrangler `4.86.0`, `@sanity/cli` `7.2.3` — all three pinned because every version past these requires Node ≥22 (see `docs/seo-and-infra.md`) |
+| CI | GitHub Actions, used only for scheduled jobs (`sanity-backup.yml`, `dotted-id-audit.yml`) — deploys themselves go through Cloudflare's git-integrated Workers Builds, not Actions |
+
+See `docs/seo-and-infra.md` for the full detail (bundle-size budget,
+env vars, pinned-version rationale).
+
+## Architecture — the whole system
+
+`criticalsandfumbles.com` isn't one app — it's four independently
+deployed Cloudflare Workers plus Sanity Studio, all sharing a single
+Sanity project/dataset (`grfq47ig` / `production`) as the one source of
+truth. Two of the four live in *this* repo (this Next.js app, and
+`apps/console`); `workers/og-generator` also lives in this repo but
+deploys as its own separate Worker; the `campaigns` subsite is a fully
+separate GitHub repo.
+
+```mermaid
+flowchart TB
+    Studio["Sanity Studio\ncnf-website.sanity.studio\n(schema editing, hosted separately)"]
+    Dataset[("Sanity Content Lake\nproject grfq47ig / dataset production\n(single shared dataset)")]
+
+    Studio -- "schema deploy + manual edits" --> Dataset
+
+    subgraph MainSite["THIS REPO — www.criticalsandfumbles.com\nNext.js 16 on Cloudflare Workers (OpenNext)"]
+        NextApp["Public pages\n(SSR + ISR)"]
+        SanityWebhookRoute["/api/sanity-webhook"]
+        RevalidateRoute["/api/revalidate"]
+        R2Cache[("R2: cnf-website-cache\nISR incremental cache")]
+        KVTag[("KV: NEXT_TAG_CACHE_KV\nISR tag cache")]
+    end
+
+    subgraph ConsoleWorker["THIS REPO (apps/console) — console.criticalsandfumbles.com\nHono Worker, Cloudflare Access-gated, SEPARATE deploy"]
+        ConsoleApp["GM console\narticle/campaign/dossier/wiki editing,\nuploads, XML/CSV import"]
+        WorkersAI["Workers AI binding\n(dossier AI-format)"]
+    end
+
+    subgraph OGWorker["THIS REPO (workers/og-generator) — cnf-og-generator\nstandalone Worker, SEPARATE deploy"]
+        OGGen["satori + resvg-wasm\nrenders branded OG PNGs"]
+        R2OG[("R2: cnf-website-og-images")]
+    end
+
+    subgraph CampaignsRepo["SEPARATE REPO — campaigns.criticalsandfumbles.com\nHono Worker, public read-only"]
+        CampaignsApp["Dossier pages\n/:campaignSlug/:dossierCode"]
+    end
+
+    NextApp -- "read, NO auth token\n(public dataset reads only)" --> Dataset
+    CampaignsApp -- "read, token" --> Dataset
+    ConsoleApp -- "read + write, token" --> Dataset
+    WorkersAI --- ConsoleApp
+
+    Dataset -- "Sanity webhook\n(majorEvent/regularEvent, no drafts)" --> SanityWebhookRoute
+    SanityWebhookRoute -- "forward" --> OGGen
+    SanityWebhookRoute -- "create scheduled event\n+ channel announcement" --> Discord["Discord API"]
+    SanityWebhookRoute -- "create draft listing" --> Eventbrite["Eventbrite API"]
+    SanityWebhookRoute -- "patch discordEventId etc\n(write token)" --> Dataset
+
+    OGGen -- "write PNG" --> R2OG
+    NextApp -- "read generated PNGs" --> R2OG
+    NextApp <--> R2Cache
+    NextApp <--> KVTag
+    RevalidateRoute --> KVTag
+    RevalidateRoute --> R2Cache
+```
+
+**Why split this way** — each piece exists to stay inside Cloudflare
+Workers' free-tier 3 MiB gzip bundle limit, which a single app
+couldn't hit while also embedding Sanity Studio (~21 MB) or
+`next/og`'s WASM renderer (doubled the main bundle). See
+`docs/seo-and-infra.md` → "Known Risks → Bundle size" and "OG image
+generation" for the incidents that produced this shape.
+
+| Piece | Where it lives | Deploys as | Reads/writes Sanity |
+|---|---|---|---|
+| Main site | this repo, root | Cloudflare Worker `cnf-sg` (`npm run deploy`) | Reads only, **no auth token** (public dataset) |
+| GM console | this repo, `apps/console/` | Cloudflare Worker `console` (`cd apps/console && npm run deploy`) | Reads + writes, token-authenticated |
+| OG image generator | this repo, `workers/og-generator/` | Cloudflare Worker `cnf-og-generator` (`cd workers/og-generator && npm run deploy`) | No Sanity access — receives data via webhook forward, writes only to its own R2 bucket |
+| Campaigns subsite | **separate repo** (`campaigns`) | Cloudflare Worker `campaigns` (`npm run deploy` in that repo) | Reads, token-authenticated |
+
+All four are independent deploys — there is no single "deploy
+everything" command, and a push to this repo's `main` does **not**
+redeploy `apps/console`, `workers/og-generator`, or the `campaigns`
+repo.
+
 ## Local setup
 
 1. `npm install`
