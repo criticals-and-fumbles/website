@@ -1,0 +1,112 @@
+name: Dotted-ID Audit
+
+# Scheduled guard for the bug tracked in issue #32 and documented in
+# docs/lessons-learned.md (2026-10-05 entry): a document of a type read
+# anonymously by cnf-website (article/campaign/dossier) can only get a
+# dotted _id from a script or direct API/CLI call that explicitly sets
+# one — never from Studio's own UI — but when it happens, the document
+# silently stops appearing on the public site with no error anywhere.
+# This can't be caught by looking at the live site (it just looks like
+# "missing content"), so it's checked from the data side instead, on a
+# schedule, independent of any particular script ever being reviewed
+# carefully enough to catch it.
+#
+# Same "first GitHub Actions workflow only for a scheduled job, deploys
+# stay on Cloudflare Workers Builds" situation as sanity-backup.yml —
+# this is the second one, same reasoning applies.
+#
+# Required repo secret (already exists, same one sanity-backup.yml
+# uses): SANITY_API_READ_TOKEN.
+on:
+  schedule:
+    # Weekly is plenty — this isn't something that changes minute to
+    # minute, and the only way it happens at all is a script/API call,
+    # not routine editing. 03:00 Singapore Time (SGT, UTC+8) Mondays =
+    # 19:00 UTC Sundays.
+    - cron: "0 19 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Not a project dependency (only used by this one scheduled
+      # script, same "don't add it to package.json for this" reasoning
+      # as sanity-backup.yml's ad-hoc Sanity CLI install) — pinned to
+      # the exact version already in node_modules locally when this
+      # workflow was written.
+      - name: Install @sanity/client
+        run: npm install --no-save @sanity/client@7.26.2
+
+      - name: Run dotted-id audit
+        id: audit
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: grfq47ig
+          NEXT_PUBLIC_SANITY_DATASET: production
+          NEXT_PUBLIC_SANITY_API_VERSION: "2026-06-01"
+          SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
+        run: node scripts/audit-dotted-ids.mjs 2>&1 | tee audit-output.txt
+        continue-on-error: true
+
+      # Auto-files (or updates, if one's already open) a known-risk
+      # issue when the audit finds something — this is the "someone has
+      # to actually see this" step; a red X in the Actions tab alone is
+      # easy to miss on a low-traffic repo. Doesn't close anything on a
+      # clean run — a human closes it once the offending doc is fixed,
+      # same as every other known-risk issue in this repo's workflow.
+      - name: File or update known-risk issue on failure
+        if: steps.audit.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BODY_FILE=$(mktemp)
+          {
+            echo "## What was found"
+            echo
+            echo "The scheduled dotted-id audit (\`.github/workflows/dotted-id-audit.yml\`, run $GITHUB_RUN_ID) found one or more documents violating the rule in docs/lessons-learned.md / issue #32:"
+            echo
+            echo '```'
+            cat audit-output.txt
+            echo '```'
+            echo
+            echo "## Impact"
+            echo
+            echo "Each listed document is currently invisible on cnf-website's public pages, listing pages, and sitemap — silently, with no error."
+            echo
+            echo "## Recommendation"
+            echo
+            echo "Recreate each listed document under a normal Sanity-generated id (same script pattern as the 2026-10-05 fix in docs/lessons-learned.md), verify an anonymous query finds it, then delete the dotted-id original."
+            echo
+            echo "## Checklist"
+            echo
+            echo "- [ ] Recreate each offending document under a normal id and verify anonymous read"
+            echo "- [ ] Identify which script/API call created it and fix that call site"
+          } > "$BODY_FILE"
+
+          EXISTING=$(gh issue list --label known-risk --state open --search "Dotted-ID Audit found" --json number --jq '.[0].number' || true)
+          if [ -n "${EXISTING:-}" ]; then
+            gh issue comment "$EXISTING" --body-file "$BODY_FILE"
+          else
+            gh issue create \
+              --title "Dotted-ID Audit found a document hidden from anonymous reads" \
+              --label "known-risk,risk-high" \
+              --body-file "$BODY_FILE"
+          fi
+
+      # The audit step above uses continue-on-error so this step can
+      # still run (file/update the issue) even on a failing audit — but
+      # that means the job itself would otherwise report green. Fail it
+      # for real here so a red run in the Actions tab isn't masked too.
+      - name: Fail the job if the audit found anything
+        if: steps.audit.outcome == 'failure'
+        run: exit 1

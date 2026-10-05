@@ -2,6 +2,20 @@ import { defineField, defineType } from "sanity";
 import { ARTICLE_CATEGORIES, RECOMMENDED_FOR } from "./constants";
 import { RichTextSourceToggle } from "../components/RichTextSourceToggle";
 
+/**
+ * article is read by cnf-website's public pages WITHOUT an auth token
+ * (sanity/lib/client.ts's public `client`). NEVER create an `article`
+ * document with an explicit/custom `_id` (e.g. "article.<slug>") from
+ * a script, migration, or raw API/CLI call — Sanity's anonymous
+ * "published" perspective silently excludes any document whose `_id`
+ * contains a dot, regardless of its `status` field or the dataset's
+ * public ACL. This isn't reachable from Studio's own UI (Create/
+ * Duplicate always auto-generate a random id) — only from code with
+ * API access. Always let Sanity auto-generate the id. Third occurrence
+ * of this exact bug (campaign/dossier had it too) — see
+ * docs/lessons-learned.md (2026-10-05 entry) and issue #32.
+ * `scripts/audit-dotted-ids.mjs` checks for this periodically.
+ */
 export default defineType({
   name: "article",
   title: "Article",

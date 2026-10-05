@@ -21,6 +21,17 @@ import { defineField, defineType } from "sanity";
  * `file`) on the mediaItem object, each hidden unless `kind` matches —
  * same conditional-field pattern the main site already uses for
  * keyFigure.statBlock (hidden unless keyFigure.hasStatBlock).
+ *
+ * dossier is read by cnf-website's public /campaigns pages WITHOUT an
+ * auth token. NEVER create a `dossier` document with an explicit/custom
+ * `_id` from a script, migration, or raw API/CLI call if it contains a
+ * dot (api-dossier.js's own `dossier--<slug>--<code>` scheme is fine —
+ * it deliberately uses "--", not "."). Sanity's anonymous "published"
+ * perspective silently excludes any document whose `_id` contains a dot.
+ * This already happened once and required migrating 26 live dossiers
+ * off dotted ids (see api-campaign.js's doc comment). See
+ * docs/lessons-learned.md and issue #32; `scripts/audit-dotted-ids.mjs`
+ * checks for this periodically.
  */
 
 const factRow = {

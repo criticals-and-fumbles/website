@@ -9,6 +9,16 @@ import { defineField, defineType } from "sanity";
  * (confirmed against the actual registered schema — the original scaffold
  * spec's placeholder name "wikiWorld" doesn't exist in that schema, the
  * real type is `world`; see cnf-website/sanity/schemas/world.ts).
+ *
+ * campaign is read by cnf-website's public /campaigns pages WITHOUT an
+ * auth token. NEVER create a `campaign` document with an explicit/custom
+ * `_id` (e.g. "campaign.<slug>") from a script, migration, or raw API/
+ * CLI call — Sanity's anonymous "published" perspective silently
+ * excludes any document whose `_id` contains a dot. This already
+ * happened once and required migrating 5 live campaigns off dotted ids
+ * (see api-campaign.js's doc comment) — always let Sanity auto-generate
+ * the id. See docs/lessons-learned.md and issue #32;
+ * `scripts/audit-dotted-ids.mjs` checks for this periodically.
  */
 export default defineType({
   name: "campaign",
