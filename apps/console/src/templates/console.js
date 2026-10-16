@@ -23,7 +23,7 @@ import { FAVICON_DATA_URI } from "../lib/favicon.js";
 export function renderConsolePage({
   campaigns, dossiers, genreThemes, statCategories, gmEmail, sanityProjectId, sanityDataset,
   worlds, teamMembers, worldUnits, factions, keyFigures, magicItems, notablePlaces, loreEntries,
-  myTeamMember, myArticles,
+  myTeamMember, myArticles, myEvents, venues,
 }) {
   const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
   const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
@@ -48,6 +48,8 @@ export function renderConsolePage({
   const initialLoreEntries = JSON.stringify(loreEntries).replace(/</g, "\\u003c");
   const initialMyTeamMember = JSON.stringify(myTeamMember || null).replace(/</g, "\\u003c");
   const initialMyArticles = JSON.stringify(myArticles || []).replace(/</g, "\\u003c");
+  const initialMyEvents = JSON.stringify(myEvents || []).replace(/</g, "\\u003c");
+  const initialVenues = JSON.stringify(venues || []).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -83,6 +85,8 @@ export function renderConsolePage({
       <div class="navitem" data-view="myProfile">Edit My Bio</div>
       <div class="navitem" data-view="createArticle">+ Write Article</div>
       <div class="navitem" data-view="myArticles">My Articles <span class="n" id="myArticleCountTag">0</span></div>
+      <div class="navitem" data-view="createEvent">+ Post Event to Discord</div>
+      <div class="navitem" data-view="myEvents">My Events <span class="n" id="myEventCountTag">0</span></div>
     </div>
     ${myTeamMember?.tier === "Horsemen" ? `
     <div class="navgroup">
@@ -429,6 +433,44 @@ export function renderConsolePage({
       </table>
     </div>
 
+    <div id="myEventsView" style="display:none;">
+      <p class="hint" id="meUnlinkedHint" style="display:none;">
+        No profile is linked to your login yet — ask an admin to link
+        your account before you can post events.
+      </p>
+      <table>
+        <thead><tr><th>Title</th><th>Starts</th><th>Where</th><th>Status</th><th>Discord</th><th></th></tr></thead>
+        <tbody id="myEventGridBody"></tbody>
+      </table>
+    </div>
+
+    <div class="editor" id="editEventView">
+      <h2>EDIT EVENT</h2>
+      <p class="field-tip">Saves to the website straight away. Changes do <strong>not</strong> update the Discord event or announcement that was already posted — if the date or place changed, tell people in Discord yourself.</p>
+      ${eventFieldsBlock("ee")}
+      <div class="field">
+        <label>Status</label>
+        <select id="eeStatus">
+          ${["Active", "Recruiting", "Full", "Hiatus", "Ended"].map((t) => `<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="savebar">
+        <button class="btn" id="eeCancel">Cancel</button>
+        <button class="btn primary" id="eeSave">Save Changes</button>
+        <span class="savedflag" id="eeFlag"></span>
+      </div>
+    </div>
+
+    <div class="editor" id="createEventView">
+      <h2>POST EVENT TO DISCORD</h2>
+      <p class="field-tip">Posts immediately: this creates the event on criticalsandfumbles.com <em>and</em> announces it in Discord. You are set as the DM automatically. Eventbrite listings are not available here.</p>
+      ${eventFieldsBlock("ce")}
+      <div class="savebar">
+        <button class="btn primary" id="ceSubmit">Post Event</button>
+        <span class="savedflag" id="ceFlag"></span>
+      </div>
+    </div>
+
     <div class="editor" id="createArticleView">
       <h2>NEW ARTICLE</h2>
       ${articleFieldsBlock("ca")}
@@ -760,6 +802,8 @@ export function renderConsolePage({
   const INITIAL_LORE_ENTRIES = ${initialLoreEntries};
   const INITIAL_MY_TEAM_MEMBER = ${initialMyTeamMember};
   const INITIAL_MY_ARTICLES = ${initialMyArticles};
+  const INITIAL_MY_EVENTS = ${initialMyEvents};
+  const INITIAL_VENUES = ${initialVenues};
   const SANITY_PROJECT_ID = ${JSON.stringify(sanityProjectId || "")};
   const SANITY_DATASET = ${JSON.stringify(sanityDataset || "")};
   ${CONSOLE_JS}
@@ -790,6 +834,39 @@ function escapeHtml(s) {
 // Shared by every form with a hero image (campaign create/edit, dossier
 // create/edit) — one upload/preview/replace widget, `prefix`-addressed so
 // wireImageUpload() (client-side) can hook up any of them generically.
+// Mirrors cnf-website's regularEvent.eventType list and
+// routes/api-me-events.js's EVENT_TYPES — kept in sync by hand.
+const EVENT_TYPES = [
+  "Campaign", "One-Shot Series", "Drop-In", "Learn to Play", "Playtest",
+  "One-shot", "Workshop", "Podcast", "Painting Session", "Others",
+];
+
+function eventFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Title *</label><input type="text" id="${prefix}Title"></div>
+      <div class="field"><label>Campaign Name</label><input type="text" id="${prefix}CampaignName"></div>
+      <div class="field">
+        <label>Event Type</label>
+        <select id="${prefix}EventType">
+          <option value="">—</option>
+          ${EVENT_TYPES.map((t) => `<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field"><label>Starts *</label><input type="datetime-local" id="${prefix}StartDate"></div>
+      <div class="field"><label>Ends (optional — defaults to start + 4 hours)</label><input type="datetime-local" id="${prefix}EndDate"></div>
+      <div class="field"><label>Schedule (display text)</label><input type="text" id="${prefix}Schedule" placeholder="e.g. Every Tuesday 7:30pm"></div>
+      <div class="field">
+        <label>Venue</label>
+        <select id="${prefix}Venue"></select>
+      </div>
+      <div class="field"><label>Or type a location (used only if no venue is picked)</label><input type="text" id="${prefix}Location"></div>
+      <div class="field"><label>System</label><input type="text" id="${prefix}System" placeholder="e.g. D&amp;D 5e"></div>
+      <div class="field"><label>Player Count</label><input type="text" id="${prefix}PlayerCount" placeholder="e.g. 0/5 seats filled"></div>
+      <div class="field"><label>World</label><select id="${prefix}World"></select></div>
+      <div class="field"><label>Description</label><textarea id="${prefix}Description" rows="6" placeholder="What is this session about? Who is it for? Blank line = new paragraph."></textarea></div>
+  `;
+}
+
 // Mirrors cnf-website's sanity/schemas/constants.ts ARTICLE_CATEGORIES —
 // no shared package between the two repos (same situation as the design
 // tokens, see CLAUDE.md § Visual design), kept in sync by hand.
@@ -1274,6 +1351,7 @@ const CONSOLE_JS = `
   const themes = INITIAL_THEMES;
   let myTeamMember = INITIAL_MY_TEAM_MEMBER;
   let myArticles = INITIAL_MY_ARTICLES;
+  let myEvents = INITIAL_MY_EVENTS;
   let activeId = null;
 
   const gridBody = document.getElementById('gridBody');
@@ -2611,6 +2689,151 @@ const CONSOLE_JS = `
     { field: 'worlds', idSuffix: 'Worlds', kind: 'multiSelect' },
     { field: 'body', idSuffix: 'Body', kind: 'richtext-blocks' },
   ];
+
+  function renderMyEventGrid(){
+    const tbody = document.getElementById('myEventGridBody');
+    document.getElementById('meUnlinkedHint').style.display = myTeamMember ? 'none' : '';
+    tbody.innerHTML = '';
+    const mono = 'font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);';
+    myEvents.forEach(e=>{
+      const tr = document.createElement('tr');
+      const starts = e.startDate ? new Date(e.startDate).toLocaleString('en-SG', { timeZone: 'Asia/Singapore', dateStyle: 'medium', timeStyle: 'short' }) : '';
+      tr.innerHTML = \`
+        <td>\${escapeHtmlClient(e.title)}</td>
+        <td style="\${mono}">\${starts}</td>
+        <td style="\${mono}">\${escapeHtmlClient(e.location||'')}</td>
+        <td style="\${mono}">\${escapeHtmlClient(e.status||'')}</td>
+        <td style="\${mono}">\${e.discordPosted ? '✓ posted' : 'pending'}</td>
+        <td><button class="rowbtn" data-edit-event="\${e._id}">EDIT →</button> <a class="rowbtn" target="_blank" rel="noreferrer" href="https://www.criticalsandfumbles.com/events/\${encodeURIComponent(e.slug||'')}">VIEW →</a></td>
+      \`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('myEventCountTag').textContent = myEvents.length;
+    tbody.querySelectorAll('[data-edit-event]').forEach(btn=>{
+      btn.addEventListener('click', ()=>openEventEditor(btn.dataset.editEvent));
+    });
+  }
+
+  // ISO instant -> value for <input type="datetime-local"> in Singapore
+  // time (the API treats those inputs as +08:00, see api-me-events.js).
+  function isoToSgLocal(iso){
+    if(!iso) return '';
+    return new Date(iso).toLocaleString('sv-SE', { timeZone: 'Asia/Singapore' }).replace(' ', 'T').slice(0, 16);
+  }
+
+  let activeEventId = null;
+
+  function openEventEditor(id){
+    const ev = myEvents.find(e=>e._id===id);
+    if(!ev) return;
+    activeEventId = id;
+    populateSelect('eeVenue', INITIAL_VENUES, 'name', true);
+    populateSelect('eeWorld', worlds, 'name', true);
+    const set = (suffix, v)=>{ document.getElementById('ee' + suffix).value = v || ''; };
+    set('Title', ev.title); set('CampaignName', ev.campaignName); set('EventType', ev.eventType);
+    set('StartDate', isoToSgLocal(ev.startDate)); set('EndDate', isoToSgLocal(ev.endDate));
+    set('Schedule', ev.schedule);
+    // If a venue is linked its name/address is what location holds, so
+    // only surface location as free text when there is no venue.
+    set('Venue', ev.venueId); set('Location', ev.venueId ? '' : ev.location);
+    set('System', ev.system); set('PlayerCount', ev.playerCount); set('World', ev.worldId);
+    set('Description', ev.description); set('Status', ev.status || 'Recruiting');
+    document.getElementById('eeFlag').className = 'savedflag';
+    switchView('editEvent');
+  }
+
+  document.getElementById('eeCancel').addEventListener('click', ()=> switchView('myEvents'));
+
+  document.getElementById('eeSave').addEventListener('click', async ()=>{
+    const flag = document.getElementById('eeFlag');
+    const btn = document.getElementById('eeSave');
+    const val = id=> document.getElementById(id).value.trim();
+    if(!val('eeTitle') || !val('eeStartDate')){
+      flag.textContent = 'Title and start date/time are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    const fields = {
+      title: val('eeTitle'), campaignName: val('eeCampaignName'), eventType: val('eeEventType'),
+      startDate: val('eeStartDate'), endDate: val('eeEndDate'), schedule: val('eeSchedule'),
+      venueId: val('eeVenue'), location: val('eeLocation'), system: val('eeSystem'),
+      playerCount: val('eePlayerCount'), worldId: val('eeWorld'),
+      description: val('eeDescription'), status: val('eeStatus'),
+    };
+    btn.disabled = true;
+    try{
+      const res = await fetch('/api/me/events/' + encodeURIComponent(activeEventId), {
+        method: 'PATCH',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ fields }),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      const ev = myEvents.find(e=>e._id===activeEventId);
+      if(ev){
+        const venue = INITIAL_VENUES.find(v=>v._id===fields.venueId);
+        Object.assign(ev, {
+          title: fields.title, campaignName: fields.campaignName, eventType: fields.eventType,
+          startDate: new Date(fields.startDate + ':00+08:00').toISOString(),
+          endDate: fields.endDate ? new Date(fields.endDate + ':00+08:00').toISOString() : null,
+          schedule: fields.schedule, venueId: fields.venueId || null,
+          location: venue ? venue.name : fields.location, system: fields.system,
+          playerCount: fields.playerCount, worldId: fields.worldId || null,
+          description: fields.description, status: fields.status,
+        });
+      }
+      flag.textContent = '✓ Saved.';
+      flag.className = 'savedflag show';
+    }catch(err){
+      flag.textContent = err.message;
+      flag.className = 'savedflag show err';
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('ceSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('ceFlag');
+    const btn = document.getElementById('ceSubmit');
+    const val = id=> document.getElementById(id).value.trim();
+    if(!myTeamMember){
+      flag.textContent = 'No profile linked to your login yet — ask an admin to link one.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    if(!val('ceTitle') || !val('ceStartDate')){
+      flag.textContent = 'Title and start date/time are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    const body = {
+      title: val('ceTitle'), campaignName: val('ceCampaignName'), eventType: val('ceEventType'),
+      startDate: val('ceStartDate'), endDate: val('ceEndDate'), schedule: val('ceSchedule'),
+      venueId: val('ceVenue'), location: val('ceLocation'), system: val('ceSystem'),
+      playerCount: val('cePlayerCount'), worldId: val('ceWorld'), description: val('ceDescription'),
+    };
+    btn.disabled = true;
+    try{
+      const res = await fetch('/api/me/events', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      myEvents.unshift({ _id: result.id, title: body.title, slug: result.slug, startDate: new Date(body.startDate + ':00+08:00').toISOString(), status: 'Recruiting', location: body.location, discordPosted: false });
+      flag.textContent = '✓ Posted. It will appear in Discord within a few seconds.';
+      flag.className = 'savedflag show';
+      ['ceTitle','ceCampaignName','ceStartDate','ceEndDate','ceSchedule','ceLocation','ceSystem','cePlayerCount','ceDescription'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('ceEventType').value = '';
+      renderMyEventGrid();
+    }catch(err){
+      flag.textContent = err.message;
+      flag.className = 'savedflag show err';
+    }finally{
+      btn.disabled = false;
+    }
+  });
 
   function renderMyArticleGrid(){
     const tbody = document.getElementById('myArticleGridBody');
@@ -4247,6 +4470,9 @@ const CONSOLE_JS = `
     myProfile: { panel: 'myProfileView', title: 'My Bio', toolbar: false },
     createArticle: { panel: 'createArticleView', title: 'New Article', toolbar: false },
     myArticles: { panel: 'myArticlesView', title: 'My Articles', toolbar: false },
+    createEvent: { panel: 'createEventView', title: 'Post Event', toolbar: false },
+    myEvents: { panel: 'myEventsView', title: 'My Events', toolbar: false },
+    editEvent: { panel: 'editEventView', title: 'Edit Event', toolbar: false },
     editArticle: { panel: 'editArticleView', title: 'Article Detail', toolbar: false },
     adminLink: { panel: 'adminLinkView', title: 'Link Team Members', toolbar: false },
     aiUsageReport: { panel: 'aiUsageReportView', title: 'AI Usage Report', toolbar: false },
@@ -4255,7 +4481,7 @@ const CONSOLE_JS = `
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
     'createKeyFigureView','editKeyFigureView','createMagicItemView','editMagicItemView',
     'createLoreEntryView','editLoreEntryView','createNotablePlaceView','editNotablePlaceView',
-    'myProfileView','createArticleView','editArticleView',
+    'myProfileView','createArticleView','editArticleView','createEventView','editEventView',
   ].forEach(p=> EDITOR_PANELS.add(p));
 
   document.getElementById('bwCopyPrompt').addEventListener('click', async ()=>{
@@ -4380,6 +4606,12 @@ const CONSOLE_JS = `
     if(view === 'bulkWiki'){ populateSelect('bwWorld', worlds, 'name'); document.getElementById('bwResults').innerHTML = ''; document.getElementById('bwFlag').textContent = ''; }
     if(view === 'myProfile') renderMyProfileForm();
     if(view === 'myArticles') renderMyArticleGrid();
+    if(view === 'myEvents') renderMyEventGrid();
+    if(view === 'createEvent'){
+      populateSelect('ceVenue', INITIAL_VENUES, 'name', true);
+      populateSelect('ceWorld', worlds, 'name', true);
+      document.getElementById('ceFlag').className = 'savedflag';
+    }
     if(view === 'createArticle'){
       populateSelect('caWorlds', worlds, 'name');
       ['caTitle','caExcerpt','caTags'].forEach(id=>document.getElementById(id).value='');

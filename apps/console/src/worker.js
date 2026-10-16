@@ -20,6 +20,7 @@ import apiNotablePlaceRoutes from "./routes/api-notable-place.js";
 import apiImportWikiRoutes from "./routes/api-import-wiki.js";
 import apiMeTeamMemberRoutes from "./routes/api-me-team-member.js";
 import apiMeArticlesRoutes from "./routes/api-me-articles.js";
+import apiMeEventsRoutes from "./routes/api-me-events.js";
 import apiAdminRoutes from "./routes/api-admin.js";
 
 // Split out of the old "campaigns" Worker, 2026-09-15 — this Worker is
@@ -70,6 +71,7 @@ app.route("/api/notable-place", apiNotablePlaceRoutes);
 app.route("/api/import/wiki", apiImportWikiRoutes);
 app.route("/api/me/team-member", apiMeTeamMemberRoutes);
 app.route("/api/me/articles", apiMeArticlesRoutes);
+app.route("/api/me/events", apiMeEventsRoutes);
 app.route("/api/admin", apiAdminRoutes);
 
 // Catches anything a route didn't handle itself (e.g. a Sanity API call

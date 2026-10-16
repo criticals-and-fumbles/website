@@ -12,6 +12,7 @@ import {
 } from "../lib/import-templates.js";
 import { blocksToMarkdown } from "../lib/portable-text.js";
 import { resolveMyTeamMember, hashEmail } from "../lib/identity.js";
+import { MY_EVENTS_QUERY } from "./api-me-events.js";
 
 const app = new Hono();
 
@@ -111,6 +112,8 @@ const MY_ARTICLES_QUERY = `*[_type == "article" && author._ref == $authorId] | o
   "worlds": worlds[]._ref
 }`;
 
+const VENUES_QUERY = `*[_type == "venue"] | order(name asc){ _id, name }`;
+
 app.get("/", async (c) => {
   const email = c.get("gmEmail");
   const hash = await hashEmail(c.env, email);
@@ -127,6 +130,7 @@ app.get("/", async (c) => {
     magicItems,
     notablePlaces,
     loreEntries,
+    venues,
     myTeamMember,
   ] = await Promise.all([
     query(c.env, MY_CAMPAIGNS_QUERY, { hash }),
@@ -141,6 +145,7 @@ app.get("/", async (c) => {
     query(c.env, MAGIC_ITEMS_QUERY),
     query(c.env, NOTABLE_PLACES_QUERY),
     query(c.env, LORE_ENTRIES_QUERY),
+    query(c.env, VENUES_QUERY),
     // Not every DM is linked to a teamMember doc yet (see lib/identity.js)
     // — the console has to render fine either way, so this resolves to
     // null rather than throwing, and myArticles is fetched only if it did.
@@ -150,6 +155,10 @@ app.get("/", async (c) => {
   const myArticles = myTeamMember
     ? await query(c.env, MY_ARTICLES_QUERY, { authorId: myTeamMember._id })
     : [];
+  const myEvents = myTeamMember
+    ? await query(c.env, MY_EVENTS_QUERY, { memberId: myTeamMember._id })
+    : [];
+  convertBlocksToMarkdown(myEvents, ["description"]);
 
   convertBlocksToMarkdown(worldUnits, ["overview", "pageFooterCTA"]);
   convertBlocksToMarkdown(factions, ["description", "dmNotes"]);
@@ -178,6 +187,8 @@ app.get("/", async (c) => {
     loreEntries,
     myTeamMember,
     myArticles,
+    myEvents,
+    venues,
     gmEmail: email,
     sanityProjectId: c.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
     sanityDataset: c.env.NEXT_PUBLIC_SANITY_DATASET,

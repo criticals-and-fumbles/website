@@ -110,3 +110,31 @@ arrays, easy to change):
 - `majorEvent.status` — this one **was** specified: `watch-this-space | coming-soon | registration-open | full | completed | cancelled`
 - `sessionLog.tone` — Epic, Comedic, Tragic, Tense, Investigative, Social, Combat-Heavy, Mixed
 - `article.category` — 10 values, taken from the homepage category strip (the spec text said "11 categories" but only listed 10 — used the 10 that were actually named: Campaign Craft, Classes, Combat, Reviews, World Building, Player Tips, DM Advice, Lore & Theory, Indie TTRPGs, Community)
+
+## `venue` (added 2026-10-15)
+
+Real-world event locations. Additive: `regularEvent.venue` / `majorEvent.venue`
+are new optional references; the legacy `location` string stays on both and is
+the render fallback until every event is linked. Type is named `venue` (not
+`location`) to avoid clashing with that string field and the in-fiction
+`notablePlace`. `visibility: "private"` hides address + Google Maps URL on the
+site and in `venueFields` (sanity/lib/queries.ts), but the dataset is
+public-read — leave Address blank on private venues.
+`teamMember.bio` (new, optional, ≤500 chars) feeds the "About the author" /
+"About the DM" blurbs, falling back to `backstory`. Seed existing events with
+`sanity/migrations/seed-venues-from-event-locations.ts` (dry-run by default).
+
+## DM-posted events via the console (added 2026-10-15)
+
+`apps/console/src/routes/api-me-events.js` (`POST /api/me/events`) lets a linked
+DM create a *published* `regularEvent` that appears on the site normally and is
+announced in Discord immediately via the existing Sanity webhook
+(`app/api/sanity-webhook/route.ts`; no webhook change needed — regularEvent
+creates already pass its filter). Server-forced: `dm` = caller, `status` =
+"Recruiting", `publishToDiscord` = true, `publishToEventbrite` = false;
+`discordEventId`/`eventbriteEventId`/`registrationUrl` are never written.
+Eventbrite stays Studio-only. Capped at 3 events per DM per 24h. The route also
+fills the legacy `location` string from the chosen venue (name + address for
+public venues, name only for private) because the webhook projection reads
+`location`, not the `venue` reference. Editing a DM-posted event afterwards is
+done in Studio; later edits don't update the Discord event (existing behaviour).
