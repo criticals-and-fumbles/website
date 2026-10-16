@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Renderer } from "@/components/portable-text/Renderer";
 import { ArticleStructuredData } from "@/components/seo/ArticleStructuredData";
 import { ShareButtons } from "@/components/ui/ShareButtons";
+import { AboutBlurb } from "@/components/team/AboutBlurb";
 
 /**
  * The actual article render — extracted from app/(site)/articles/[slug]/
@@ -75,6 +76,12 @@ export function ArticleContent({ article, shareUrl }: { article: Article; shareU
         <div className="mt-10">
           <Renderer value={article.body} />
         </div>
+
+        {article.author && (
+          <div className="mt-12">
+            <AboutBlurb member={article.author} heading="About the author" />
+          </div>
+        )}
 
         {article.worlds && article.worlds.length > 0 && (
           <div className="mt-10 flex flex-wrap gap-2 border-t border-border pt-6">

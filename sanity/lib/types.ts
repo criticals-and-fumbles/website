@@ -13,6 +13,17 @@ export interface TeamMemberRef {
   avatar?: SanityImage;
 }
 
+/** Superset of TeamMemberRef used by the About-the-author/DM blurb cards. */
+export interface TeamMemberBlurb extends TeamMemberRef {
+  realName?: string;
+  roles?: string[];
+  bio?: string;
+  backstory?: string;
+  dndClass?: string;
+  race?: string;
+  signatureMove?: string;
+}
+
 export interface WorldRef {
   _id: string;
   name: string;
@@ -40,6 +51,7 @@ export interface ArticleCard {
 }
 
 export interface Article extends ArticleCard {
+  author?: TeamMemberBlurb;
   body?: PortableTextBlock[];
   tags?: string[];
   featured?: boolean;
@@ -235,6 +247,7 @@ export interface TeamMember {
     intelligence?: number;
     luck?: number;
   };
+  bio?: string;
   backstory?: string;
   signatureMove?: string;
   avatar?: SanityImage;

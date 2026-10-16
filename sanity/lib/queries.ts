@@ -13,6 +13,14 @@ const articleCardFields = groq`
 
 const teamMemberRefFields = groq`_id, handle, "slug": slug.current, avatar`;
 
+// Extra fields for the "About the author" / "About the DM" blurb cards.
+// Kept separate from teamMemberRefFields so the many card/list queries
+// that only need handle+avatar don't pay for the longer text fields.
+const teamMemberBlurbFields = groq`
+  ${teamMemberRefFields}, realName, roles, bio, backstory, dndClass, race,
+  signatureMove
+`;
+
 /**
  * Wiki entry meta panel (Phase 1.5) — "In this unit"/"In this world" list.
  * Named "siblingEntries" (not "relatedEntries") specifically to avoid
@@ -259,7 +267,7 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
   *[_type == "article" && slug.current == $slug && status == "published"][0] {
     ...,
     "slug": slug.current,
-    "author": author->{ ${teamMemberRefFields}, realName, roles },
+    "author": author->{ ${teamMemberBlurbFields} },
     "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
   }
 `;
@@ -275,7 +283,7 @@ export const ARTICLE_PREVIEW_QUERY = groq`
   *[_type == "article" && _id == $id][0] {
     ...,
     "slug": slug.current,
-    "author": author->{ ${teamMemberRefFields}, realName, roles },
+    "author": author->{ ${teamMemberBlurbFields} },
     "worlds": worlds[]->{ _id, name, "slug": slug.current, colourAccent }
   }
 `;

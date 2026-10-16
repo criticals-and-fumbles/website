@@ -123,6 +123,17 @@ export default defineType({
       ],
     }),
     defineField({
+      name: "bio",
+      title: "Bio",
+      type: "text",
+      rows: 4,
+      description:
+        "Short real-world blurb (2–3 sentences) shown as \"About the " +
+        "author\" under articles and \"About the DM\" on events. Falls " +
+        "back to the in-character Backstory below when empty.",
+      validation: (rule) => rule.max(500),
+    }),
+    defineField({
       name: "backstory",
       title: "Backstory",
       type: "text",
