@@ -24,6 +24,21 @@ export interface TeamMemberBlurb extends TeamMemberRef {
   signatureMove?: string;
 }
 
+/** See sanity/schemas/venue.ts. address/googleMapsUrl are null for private venues. */
+export interface Venue {
+  _id: string;
+  name: string;
+  slug: string;
+  visibility: "public" | "private";
+  address?: string | null;
+  googleMapsUrl?: string | null;
+  nearestTransit?: string;
+  directions?: PortableTextBlock[];
+  accessNotes?: string;
+  privateNote?: string;
+  coverImage?: SanityImage;
+}
+
 export interface WorldRef {
   _id: string;
   name: string;
@@ -158,7 +173,8 @@ export interface MajorEvent extends MajorEventCardData {
   description?: PortableTextBlock[];
   watchThisSpaceTeaser?: PortableTextBlock[];
   schedule?: PortableTextBlock[];
-  dms?: TeamMemberRef[];
+  dms?: TeamMemberBlurb[];
+  venue?: Venue;
   pageFooterCTA?: PortableTextBlock[];
 }
 
@@ -173,7 +189,8 @@ export interface RegularEvent {
   system?: string;
   playerCount?: string;
   status?: string;
-  dm?: TeamMemberRef;
+  dm?: TeamMemberBlurb;
+  venue?: Venue;
   world?: WorldRef;
   registrationUrl?: string;
   recommendedFor?: string[];

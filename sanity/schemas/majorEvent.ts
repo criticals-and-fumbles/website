@@ -96,6 +96,16 @@ export default defineType({
         }),
     }),
     defineField({ name: "location", title: "Location", type: "string" }),
+    defineField({
+      name: "venue",
+      title: "Venue",
+      type: "reference",
+      to: [{ type: "venue" }],
+      description:
+        "Preferred — pick a saved venue so address, map and directions " +
+        "show on the event page. The plain Location text above is only " +
+        "used as a fallback when this is empty.",
+    }),
     defineField({ name: "capacity", title: "Capacity", type: "number" }),
     defineField({
       name: "recommendedFor",

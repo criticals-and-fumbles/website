@@ -25,6 +25,8 @@ import { Renderer } from "@/components/portable-text/Renderer";
 import { Footer } from "@/components/layout/Footer";
 import { EventStructuredData } from "@/components/seo/EventStructuredData";
 import { ShareButtons } from "@/components/ui/ShareButtons";
+import { AboutBlurb } from "@/components/team/AboutBlurb";
+import { GettingThere } from "@/components/events/GettingThere";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.criticalsandfumbles.com").replace(/\/$/, "");
 
@@ -201,22 +203,21 @@ async function MajorEventDetail({ event }: { event: MajorEvent }) {
               </div>
             )}
 
-            {event.dms && event.dms.length > 0 && (
-              <div className="mt-10">
-                <h2 className="font-display text-2xl text-text">
-                  Dungeon Master{event.dms.length > 1 ? "s" : ""}
-                </h2>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {event.dms.map((dm) => (
-                    <Link
-                      key={dm._id}
-                      href={`/team/${dm.slug}`}
-                      className="rounded-full border border-border px-4 py-2 font-ui text-xs text-text hover:border-emerald hover:text-emerald"
-                    >
-                      {dm.handle}
-                    </Link>
-                  ))}
-                </div>
+            {(event.dms?.length || event.venue || event.location) && (
+              <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {event.dms?.map((dm) => (
+                  <AboutBlurb
+                    key={dm._id}
+                    member={dm}
+                    heading={event.dms!.length > 1 ? "About the DMs" : "About the DM"}
+                    id={`dm-${dm.slug}`}
+                  />
+                ))}
+                <GettingThere
+                  venue={event.venue}
+                  fallbackLocation={event.location}
+                  id="getting-there"
+                />
               </div>
             )}
 
@@ -362,17 +363,16 @@ async function RegularEventDetail({ event }: { event: RegularEvent }) {
 
           {event.description && <Renderer value={event.description} />}
 
-          {event.dm && (
-            <div className="mt-10">
-              <h2 className="font-display text-2xl text-text">Dungeon Master</h2>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Link
-                  href={`/team/${event.dm.slug}`}
-                  className="rounded-full border border-border px-4 py-2 font-ui text-xs text-text hover:border-emerald hover:text-emerald"
-                >
-                  {event.dm.handle}
-                </Link>
-              </div>
+          {(event.dm || event.venue || event.location) && (
+            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+              {event.dm && (
+                <AboutBlurb member={event.dm} heading="About the DM" id="about-the-dm" />
+              )}
+              <GettingThere
+                venue={event.venue}
+                fallbackLocation={event.location}
+                id="getting-there"
+              />
             </div>
           )}
 

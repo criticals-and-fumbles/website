@@ -21,6 +21,15 @@ const teamMemberBlurbFields = groq`
   signatureMove
 `;
 
+// Private venues never expose address/maps URL through the public site's
+// queries (the render also ignores them) — see sanity/schemas/venue.ts.
+const venueFields = groq`
+  _id, name, "slug": slug.current, visibility, nearestTransit, directions,
+  accessNotes, privateNote, coverImage,
+  "address": select(visibility == "private" => null, address),
+  "googleMapsUrl": select(visibility == "private" => null, googleMapsUrl)
+`;
+
 /**
  * Wiki entry meta panel (Phase 1.5) — "In this unit"/"In this world" list.
  * Named "siblingEntries" (not "relatedEntries") specifically to avoid
@@ -326,7 +335,8 @@ export const MAJOR_EVENT_BY_SLUG_QUERY = groq`
   *[_type == "majorEvent" && slug.current == $slug][0] {
     ...,
     "slug": slug.current,
-    "dms": dms[]->{ ${teamMemberRefFields} }
+    "dms": dms[]->{ ${teamMemberBlurbFields} },
+    "venue": venue->{ ${venueFields} }
   }
 `;
 
@@ -334,7 +344,8 @@ export const REGULAR_EVENT_BY_SLUG_QUERY = groq`
   *[_type == "regularEvent" && slug.current == $slug][0] {
     ...,
     "slug": slug.current,
-    "dm": dm->{ ${teamMemberRefFields} },
+    "dm": dm->{ ${teamMemberBlurbFields} },
+    "venue": venue->{ ${venueFields} },
     "world": world->{ _id, name, "slug": slug.current, colourAccent }
   }
 `;

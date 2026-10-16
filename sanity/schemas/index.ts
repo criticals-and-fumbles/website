@@ -15,6 +15,7 @@ import teamMember from "./teamMember";
 import article from "./article";
 import regularEvent from "./regularEvent";
 import majorEvent from "./majorEvent";
+import venue from "./venue";
 import loreEntry from "./loreEntry";
 import sessionLog from "./sessionLog";
 import keyFigure from "./keyFigure";
@@ -45,6 +46,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     article,
     regularEvent,
     majorEvent,
+    venue,
     loreEntry,
     sessionLog,
     keyFigure,

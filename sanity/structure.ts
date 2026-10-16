@@ -25,6 +25,7 @@ export const structure: StructureResolver = (S) =>
                     .items([
                       S.documentTypeListItem("majorEvent").title("Major Events"),
                       S.documentTypeListItem("regularEvent").title("Regular Events"),
+                      S.documentTypeListItem("venue").title("Venues"),
                     ]),
                 ),
               S.listItem()
